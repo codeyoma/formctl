@@ -387,6 +387,30 @@ describe("release readiness docs", () => {
     expect(featureRequest).toContain("Trust barrier");
   });
 
+  test("example before and after posts are ready for outreach", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");
+    const examplePosts = readFileSync(path.join(projectRoot, "docs", "EXAMPLE_POSTS.md"), "utf8");
+
+    expect(readme).toContain("[Example before/after posts](docs/EXAMPLE_POSTS.md)");
+    expect(outreach).toContain("Example posts: docs/EXAMPLE_POSTS.md");
+    expect(examplePosts).toContain("# Example Before And After Posts");
+    expect(examplePosts).toContain("## Expense report");
+    expect(examplePosts).toContain("## Admin invite");
+    expect(examplePosts).toContain("## Support refund");
+    expect(examplePosts).toContain("## Vendor onboarding");
+    expect(examplePosts).toContain("## Procurement approval");
+    expect(examplePosts).toContain("## CRM update");
+    expect(examplePosts).toContain("## Compliance attestation");
+    expect(examplePosts).toContain("Before:");
+    expect(examplePosts).toContain("After:");
+    expect(examplePosts).toContain("formctl submit expense-report");
+    expect(examplePosts).toContain("formctl submit crm-update");
+    expect(examplePosts).toContain("formctl submit compliance-attestation");
+    expect(examplePosts).toContain("--dry-run --json");
+    expect(examplePosts).toContain("--approve");
+  });
+
   test("trust and comparison docs answer security questions", () => {
     const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
     const launch = readFileSync(path.join(projectRoot, "docs", "LAUNCH.md"), "utf8");

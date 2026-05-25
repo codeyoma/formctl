@@ -32,6 +32,8 @@ What I want feedback on:
 
 Workflow request guide: `docs/WORKFLOW_REQUESTS.md`
 
+Example before/after posts: `docs/EXAMPLE_POSTS.md`
+
 Repo: https://github.com/codeyoma/formctl
 
 ## Short Post

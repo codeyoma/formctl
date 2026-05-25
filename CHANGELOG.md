@@ -21,6 +21,7 @@
 - Add a workflow request guide and richer feature request intake for launch feedback.
 - Add trust and comparison docs for dry-run, approval, audit logs, selector drift, and security boundaries.
 - Add an agent-angle article with JSON branching examples for dry-run, approval-required, and selector-mismatch outcomes.
+- Add before/after example posts for each local fixture workflow.
 
 ## 0.1.0 - 2026-05-26
 

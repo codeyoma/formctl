@@ -566,6 +566,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Write short before/after posts for CRM update and compliance attestation, then use them in outreach or repo docs.
 
+### 2026-05-26: Add Before And After Example Posts
+
+**Date:** 2026-05-26
+
+**Experiment:** Turn the local fixture set into short outreach-ready before/after posts.
+
+**Hypothesis:** Example fixtures are more useful for launch if each one has a compact story that contrasts the manual browser workflow with the `formctl submit ... --dry-run --json` and `--approve` path.
+
+**Result:** Passed. `docs/EXAMPLE_POSTS.md` now includes before/after posts for expense report, admin invite, support refund, vendor onboarding, procurement approval, CRM update, and compliance attestation. README, announcement, and outreach docs link to the example posts.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/EXAMPLE_POSTS.md` was missing. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "example before"`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**Decision:** The next useful growth step is not another fixture. Use the prepared example posts in one external channel or direct outreach and start measuring which workflow produces useful replies.
+
+**Next Step:** Post one example-led outreach message, or if external posting remains blocked, add a lightweight `docs/GROWTH_LOG.md` baseline for weekly star/download/lead tracking.
+
 ### Template
 
 **Date:** YYYY-MM-DD

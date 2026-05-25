@@ -6,6 +6,8 @@ Release: https://github.com/codeyoma/formctl/releases/tag/v0.1.0
 
 Workflow request guide: docs/WORKFLOW_REQUESTS.md
 
+Example posts: docs/EXAMPLE_POSTS.md
+
 Agent article: docs/WHY_FORM_CLIS.md
 
 ## Channel Plan
