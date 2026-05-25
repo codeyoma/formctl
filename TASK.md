@@ -183,11 +183,11 @@ formctl doctor
 
 **Goal:** Help agents use `formctl` safely.
 
-- [ ] Add `docs/agents.md` with safe usage rules.
-- [ ] Include examples for dry-run first, approval requirement, and artifact inspection.
-- [ ] Add a README section: "Using formctl from Codex, Claude Code, Cursor, or Copilot CLI."
-- [ ] Verify: An agent can infer that it should not submit without approval.
-- [ ] Record unclear instructions in `REVIEW.md`.
+- [x] Add `docs/agents.md` with safe usage rules.
+- [x] Include examples for dry-run first, approval requirement, and artifact inspection.
+- [x] Add a README section: "Using formctl from Codex, Claude Code, Cursor, or Copilot CLI."
+- [x] Verify: An agent can infer that it should not submit without approval.
+- [x] Record unclear instructions in `REVIEW.md`.
 
 ---
 

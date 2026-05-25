@@ -57,6 +57,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("failure.png");
     expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.");
     expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
+    expect(readme).toContain("[Agent safety guide](docs/agents.md)");
     expect(readme).toContain("Exit codes");
     expect(readme).toContain("5 approval required");
   });
@@ -155,5 +156,22 @@ describe("release readiness docs", () => {
     expect(outreach).toContain("Comments");
     expect(outreach).toContain("Workflow leads");
     expect(outreach).toContain("https://github.com/codeyoma/formctl/releases/tag/v0.1.0");
+  });
+
+  test("agent safety guide teaches approval-gated CLI usage", () => {
+    const agents = readFileSync(path.join(projectRoot, "docs", "agents.md"), "utf8");
+
+    expect(agents).toContain("# Agent Safety Guide");
+    expect(agents).toContain("Codex");
+    expect(agents).toContain("Claude Code");
+    expect(agents).toContain("Cursor");
+    expect(agents).toContain("Copilot CLI");
+    expect(agents).toContain("Always run `submit --dry-run --json` before any approved submit.");
+    expect(agents).toContain("Never pass `--approve` unless the user or policy explicitly authorizes submission.");
+    expect(agents).toContain("Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.");
+    expect(agents).toContain("Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `artifacts`.");
+    expect(agents).toContain("Treat exit code `5` as an approval gate, not a retryable failure.");
+    expect(agents).toContain("Do not print secrets, file contents, cookies, or private page data.");
+    expect(agents).toContain("Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
   });
 });

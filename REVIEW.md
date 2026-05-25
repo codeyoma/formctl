@@ -320,6 +320,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add `docs/agents.md` with explicit safe-use rules for agents, then post one outreach channel using the existing launch copy.
 
+### 2026-05-26: Add Agent Safety Guide
+
+**Date:** 2026-05-26
+
+**Experiment:** Document safe `formctl` usage for coding agents before broader outreach.
+
+**Hypothesis:** Agent users need explicit rules more than generic README prose: dry-run first, inspect artifacts, branch on JSON, and never infer approval.
+
+**Result:** Passed. `docs/agents.md` now covers Codex, Claude Code, Cursor, Copilot CLI, dry-run-first usage, approval gates, JSON branching, artifact inspection, selector mismatch failures, and secret handling. README links to the guide from Agent Usage.
+
+**Evidence:** RED failure was observed first: the agent safety test failed because `docs/agents.md` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 25 passing tests.
+
+**Decision:** The project now has enough agent safety guidance to support an agent-focused launch post.
+
+**Next Step:** Post one prepared outreach channel, preferably Reddit r/LocalLLaMA or Reddit r/commandline, then record stars, comments, and workflow leads.
+
 ### Template
 
 **Date:** YYYY-MM-DD

@@ -99,6 +99,8 @@ Workflow files are stored at:
 
 Agents should call `submit --dry-run --json` first, inspect the returned artifacts, and only use `--approve` when the user or policy explicitly allows submission.
 
+See the [Agent safety guide](docs/agents.md) for Codex, Claude Code, Cursor, Copilot CLI, and other coding agents.
+
 Approval-required JSON looks like:
 
 ```json

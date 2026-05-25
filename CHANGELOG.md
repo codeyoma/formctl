@@ -5,6 +5,7 @@
 - Write `.formctl/runs/<run-id>/audit.jsonl` for successful dry-run and approved submissions.
 - Expose the audit log path in run summaries and `submit --json` artifact output.
 - Write `failure.json`, `failure.png`, and `audit.jsonl` for selector-mismatch failures before any field filling or submission.
+- Add `docs/agents.md` with dry-run-first, approval-gated usage rules for coding agents.
 
 ## 0.1.0 - 2026-05-26
 
