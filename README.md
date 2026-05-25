@@ -173,6 +173,22 @@ See the [Agent safety guide](docs/agents.md) for Codex, Claude Code, Cursor, Cop
 
 See [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md) for JSON branching examples and the agent-specific rationale.
 
+## MCP Server
+
+`formctl-mcp` exposes the dry-run-safe parts of the CLI to MCP clients:
+
+```bash
+npx formctl-mcp
+```
+
+Tools:
+
+- `formctl_doctor`
+- `formctl_inspect`
+- `formctl_submit_dry_run`
+
+The MCP server does not expose approved submit. Agents still need a human or policy-approved CLI call to run `formctl submit ... --approve`.
+
 Approval-required JSON looks like:
 
 ```json

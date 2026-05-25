@@ -24,6 +24,7 @@
 - Add before/after example posts for each local fixture workflow.
 - Add a growth log baseline for the weekly 10k-star loop.
 - Add an example-led posting queue for Reddit and direct outreach.
+- Add a dry-run-safe MCP server binary, `formctl-mcp`, for agent clients.
 
 ## 0.1.0 - 2026-05-26
 

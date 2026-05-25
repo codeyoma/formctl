@@ -616,6 +616,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** A human should post the Reddit r/commandline candidate, then record the posted URL and 24-hour metrics.
 
+### 2026-05-26: Add Dry-Run-Safe MCP Wrapper
+
+**Date:** 2026-05-26
+
+**Experiment:** Add the smallest MCP wrapper that makes `formctl` discoverable to agent clients without exposing approved submission.
+
+**Hypothesis:** Since external posting and npm publish still require human-authenticated accounts, the best product improvement for agent users is a safe MCP surface that exposes doctor, inspect, and dry-run submit while keeping real submission behind the CLI approval path.
+
+**Result:** Passed. `formctl-mcp` now starts an MCP stdio server with `formctl_doctor`, `formctl_inspect`, and `formctl_submit_dry_run`. The dry-run tool builds `submit --dry-run --json --headless` arguments and rejects reserved field names such as `approve`.
+
+**Evidence:** RED was observed first in `tests/mcp.test.ts`: package metadata did not expose `formctl-mcp`, tool definitions were empty, and CLI argument generation returned `[]`. Focused GREEN passed with `npm test -- --run tests/mcp.test.ts`. An MCP SDK client smoke test listed the three tools from `dist/mcp.js` and successfully called `formctl_doctor`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first semantic GREEN attempt still failed because the safe tool definition did not include the literal `dry-run` wording expected by the test. The description now says the submit tool is a dry-run.
+
+**Decision:** Keep MCP narrow until real users ask for more. Approved submit should stay outside MCP because it needs explicit human or policy authorization.
+
+**Next Step:** Add an MCP client snippet to outreach if agent users ask how to wire `formctl-mcp`, or return to human posting/npm publish once credentials are available.
+
 ### Template
 
 **Date:** YYYY-MM-DD

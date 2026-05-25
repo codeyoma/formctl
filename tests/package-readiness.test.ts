@@ -9,7 +9,10 @@ describe("npm package readiness", () => {
   test("package metadata exposes a built formctl binary", () => {
     const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 
-    expect(packageJson.bin).toEqual({ formctl: "dist/cli.js" });
+    expect(packageJson.bin).toEqual({
+      formctl: "dist/cli.js",
+      "formctl-mcp": "dist/mcp.js",
+    });
     expect(packageJson.files).toEqual([
       "dist",
       "demo",

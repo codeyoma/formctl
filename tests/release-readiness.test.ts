@@ -65,7 +65,10 @@ describe("release readiness docs", () => {
       url: "https://github.com/codeyoma/formctl/issues",
     });
     expect(packageJson.homepage).toBe("https://github.com/codeyoma/formctl#readme");
-    expect(packageJson.bin).toEqual({ formctl: "dist/cli.js" });
+    expect(packageJson.bin).toEqual({
+      formctl: "dist/cli.js",
+      "formctl-mcp": "dist/mcp.js",
+    });
     expect(packageJson.keywords).toEqual([
       "agent",
       "browser-automation",

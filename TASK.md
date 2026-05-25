@@ -292,7 +292,7 @@ npx formctl doctor
 
 - [x] Publish "Why browser agents need form-specific CLIs."
 - [x] Add JSON output examples for agent use.
-- [ ] Add an MCP wrapper only after the CLI is stable.
+- [x] Add an MCP wrapper only after the CLI is stable.
 - [ ] Verify: At least three agent users run `formctl` in real workflows.
 - [x] Record agent-specific blockers in `REVIEW.md`.
 

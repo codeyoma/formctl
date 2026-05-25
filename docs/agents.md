@@ -34,6 +34,16 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 
 Treat exit code `5` as an approval gate, not a retryable failure.
 
+## MCP Server
+
+Run `formctl-mcp` when an MCP client should discover the safe command surface directly:
+
+```bash
+npx formctl-mcp
+```
+
+The MCP server exposes `formctl_doctor`, `formctl_inspect`, and `formctl_submit_dry_run`. It does not expose approved submit; agents must switch back to the CLI and get explicit authorization before running `formctl submit ... --approve`.
+
 ## Artifact Rules
 
 - Dry-run artifacts include `summary.json`, `dry-run.png`, and `audit.jsonl`.
