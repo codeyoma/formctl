@@ -176,6 +176,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Initialize git, add package metadata suitable for public release, add `LICENSE`, then run final verification before creating/pushing the GitHub repository.
 
+### 2026-05-26: Add Public Metadata And Initialize Git
+
+**Date:** 2026-05-26
+
+**Experiment:** Prepare the project for a public GitHub repository with package metadata, MIT license, and a real git history.
+
+**Hypothesis:** Before publishing, the repo should have a public package identity, license, release-readiness tests, synchronized lockfile metadata, and an initial commit on `main`.
+
+**Result:** Passed. `package.json` now includes public metadata for `codeyoma/formctl`, `LICENSE` uses MIT terms, `package-lock.json` is synchronized, and the directory is initialized as a git repository with an initial commit.
+
+**Evidence:** RED failure was observed first: package metadata was still private and `LICENSE` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`. Git was initialized with `main` and committed as `ca7b66e chore: prepare formctl MVP`.
+
+**Decision:** The repo is close to publishable. The remaining blocker is remote creation/push and a final sanity check of GitHub-facing naming.
+
+**Next Step:** Create the GitHub repository `codeyoma/formctl`, add it as `origin`, push `main`, then verify the public URL renders the README.
+
 ### Template
 
 **Date:** YYYY-MM-DD
