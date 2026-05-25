@@ -134,4 +134,21 @@ describe("release readiness docs", () => {
     expect(changelog).toContain("Fail fast on missing or ambiguous selectors with exit code `3`");
     expect(changelog).toContain("Publish the public GitHub MVP at https://github.com/codeyoma/formctl");
   });
+
+  test("outreach tracker defines first launch channels and metrics", () => {
+    const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");
+
+    expect(outreach).toContain("# formctl Outreach Tracker");
+    expect(outreach).toContain("Primary ask: share painful API-less workflows");
+    expect(outreach).toContain("Hacker News");
+    expect(outreach).toContain("Reddit r/commandline");
+    expect(outreach).toContain("Reddit r/LocalLLaMA");
+    expect(outreach).toContain("LinkedIn");
+    expect(outreach).toContain("Direct outreach");
+    expect(outreach).toContain("Stars before");
+    expect(outreach).toContain("Stars after 24h");
+    expect(outreach).toContain("Comments");
+    expect(outreach).toContain("Workflow leads");
+    expect(outreach).toContain("https://github.com/codeyoma/formctl/releases/tag/v0.1.0");
+  });
 });

@@ -272,6 +272,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Share the announcement draft to one external developer channel and measure stars, comments, clicks, issues, or interviews.
 
+### 2026-05-26: Add Channel-Specific Outreach Tracker
+
+**Date:** 2026-05-26
+
+**Experiment:** Turn the generic announcement draft into channel-specific outreach copy and metrics.
+
+**Hypothesis:** The fastest path to useful feedback is not another product feature; it is a repeatable outreach tracker that asks each audience for painful API-less workflows.
+
+**Result:** Passed. `docs/OUTREACH.md` now defines Hacker News, Reddit r/commandline, Reddit r/LocalLLaMA, LinkedIn, and direct outreach copy, plus per-channel metrics for stars, comments, and workflow leads. A public GitHub tracking issue was created at https://github.com/codeyoma/formctl/issues/1.
+
+**Evidence:** RED failure was observed first: the outreach tracker test failed because `docs/OUTREACH.md` did not exist. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 23 passing tests.
+
+**Decision:** The next highest-value task is posting one prepared channel, then recording actual metrics instead of adding more launch documents.
+
+**Next Step:** Post the Hacker News or Reddit r/commandline draft, update `docs/OUTREACH.md` with the posted URL and 24-hour metric baseline, and append the result under `Launch Attempts`.
+
 ### Template
 
 **Date:** YYYY-MM-DD
@@ -359,6 +375,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 **What Failed:** This is not yet a discovery channel by itself; it needs one external post or direct outreach to generate feedback.
 
 **Next Iteration:** Post the prepared announcement to one focused developer channel and record response metrics.
+
+### 2026-05-26: GitHub Issue Launch Outreach Tracker
+
+**Date:** 2026-05-26
+
+**Channel:** GitHub Issue
+
+**Message:** Public checklist for the first developer outreach channels, with the primary ask: share painful API-less workflows that should become safe, repeatable CLI commands.
+
+**Result:** Issue created at https://github.com/codeyoma/formctl/issues/1. No external discovery metrics yet; this is an execution tracker for the next launch posts.
+
+**What Worked:** The issue turns launch work into a public checklist and links it to the v0.1.0 release and outreach tracker.
+
+**What Failed:** A GitHub issue is still not an audience channel. It does not replace posting to Hacker News, Reddit, LinkedIn, or direct outreach.
+
+**Next Iteration:** Use the prepared `docs/OUTREACH.md` copy to post one channel and record stars before, stars after 24 hours, comments, and workflow leads.
 
 ### Template
 
