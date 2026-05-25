@@ -50,8 +50,22 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- record expense-report http://127.0.0.1:4173/expense --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --approve --json --headless");
+    expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("Exit codes");
     expect(readme).toContain("5 approval required");
+  });
+
+  test("demo media shows the core record dry-run approve flow", () => {
+    const demo = readFileSync(path.join(projectRoot, "docs", "assets", "demo.svg"), "utf8");
+
+    expect(demo).toContain("<svg");
+    expect(demo).toContain("formctl record expense-report");
+    expect(demo).toContain("submit expense-report --amount 120000");
+    expect(demo).toContain("--dry-run --json");
+    expect(demo).toContain("\"status\":\"dry-run\"");
+    expect(demo).toContain("\"exitCode\":5");
+    expect(demo).toContain("--approve --json");
+    expect(demo).toContain("\"status\":\"submitted\"");
   });
 
   test("demo fixture contains the fields used by README commands", () => {

@@ -224,6 +224,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Capture a 30-60 second demo GIF/video and link it from the README, then run the launch checklist before posting.
 
+### 2026-05-26: Add README Demo Media
+
+**Date:** 2026-05-26
+
+**Experiment:** Add a lightweight README demo visual that shows the core formctl flow.
+
+**Hypothesis:** A public repo should show record, dry-run JSON, approval-required JSON, and approved submit above the fold so visitors understand the product before running commands.
+
+**Result:** Passed. `README.md` now embeds `docs/assets/demo.svg`, and release-readiness tests verify that the asset contains the record, dry-run, approval gate, and approved-submit flow.
+
+**Evidence:** RED failure was observed first: README did not link demo media and `docs/assets/demo.svg` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 20 passing tests.
+
+**Decision:** The SVG is good enough as immediate README media. A recorded GIF/video can still replace or supplement it before broader launch.
+
+**Next Step:** Run the launch checklist end-to-end and post the first public announcement, then track channel response in this review log.
+
 ### Template
 
 **Date:** YYYY-MM-DD

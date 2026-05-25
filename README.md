@@ -12,6 +12,8 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
 ```
 
+![formctl demo](docs/assets/demo.svg)
+
 ## Two-Minute Local Demo
 
 Install dependencies:
