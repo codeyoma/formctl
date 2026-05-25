@@ -698,6 +698,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to first-run reliability, human posting, or npm publish once credentials are available.
 
+### 2026-05-26: Add Playwright Chromium Doctor Check
+
+**Date:** 2026-05-26
+
+**Experiment:** Catch missing Playwright Chromium before users or agents try browser-backed `record` and `submit` commands.
+
+**Hypothesis:** `formctl doctor --json` should report the Playwright Chromium executable path and the exact install command so first-run failures are diagnosable before a workflow run starts.
+
+**Result:** Passed. `doctor --json` now includes a `playwright-chromium` check with `executablePath` and `installCommand`, exits `1` if that browser is missing, and README install docs explain `npx playwright install chromium`.
+
+**Evidence:** RED failures were observed first: the focused CLI test failed because doctor checks only included `node` and `workspace`, and the package-readiness test failed because README did not document the Chromium check or install command. Focused GREEN passed with `npm test -- --run tests/cli.test.ts -t "doctor --json"` and `npm test -- --run tests/package-readiness.test.ts -t "README documents"`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, MCP SDK smoke, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Check the Chromium executable path without launching a browser. This keeps doctor fast while still catching the most common first-run setup failure.
+
+**Next Step:** Use the richer doctor output in support replies and npm install troubleshooting once publishing credentials are available.
+
 ### Template
 
 **Date:** YYYY-MM-DD

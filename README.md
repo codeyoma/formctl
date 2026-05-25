@@ -36,6 +36,12 @@ npx formctl --help
 npx formctl doctor
 ```
 
+`doctor` checks Node, the current workspace, and the Playwright Chromium browser used by record and submit. If the browser is missing, run:
+
+```bash
+npx playwright install chromium
+```
+
 ## Two-Minute Local Demo
 
 Install dependencies:

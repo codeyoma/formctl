@@ -46,6 +46,10 @@ describe("npm package readiness", () => {
     expect(readme).toContain("npm install -g formctl");
     expect(readme).toContain("npx formctl doctor");
     expect(readme).toContain("npx formctl --help");
+    expect(readme).toContain(
+      "`doctor` checks Node, the current workspace, and the Playwright Chromium browser used by record and submit.",
+    );
+    expect(readme).toContain("npx playwright install chromium");
   });
 
   test("source CLI has a node shebang for the compiled npm binary", () => {

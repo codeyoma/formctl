@@ -95,14 +95,22 @@ describe("formctl CLI", () => {
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
-    expect(JSON.parse(result.stdout)).toEqual({
+    const payload = JSON.parse(result.stdout);
+
+    expect(payload).toMatchObject({
       status: "ok",
       command: "doctor",
-      checks: [
-        { name: "node", status: "ok" },
-        { name: "workspace", status: "ok" },
-      ],
     });
+    expect(payload.checks).toEqual(expect.arrayContaining([
+      { name: "node", status: "ok" },
+      { name: "workspace", status: "ok" },
+      expect.objectContaining({
+        name: "playwright-chromium",
+        status: "ok",
+        executablePath: expect.stringContaining("chromium"),
+        installCommand: "npx playwright install chromium",
+      }),
+    ]));
   });
 
   test("inspect returns exit code 2 when the workflow does not exist", () => {

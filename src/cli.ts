@@ -42,6 +42,31 @@ type FailureArtifacts = {
   audit: string;
 };
 
+type DoctorCheck = {
+  name: string;
+  status: "ok" | "error";
+  executablePath?: string;
+  installCommand?: string;
+  message?: string;
+};
+
+function buildDoctorChecks(): DoctorCheck[] {
+  const chromiumExecutablePath = chromium.executablePath();
+  const chromiumInstalled = existsSync(chromiumExecutablePath);
+
+  return [
+    { name: "node", status: "ok" },
+    { name: "workspace", status: "ok" },
+    {
+      name: "playwright-chromium",
+      status: chromiumInstalled ? "ok" : "error",
+      executablePath: chromiumExecutablePath,
+      installCommand: "npx playwright install chromium",
+      ...(chromiumInstalled ? {} : { message: "Playwright Chromium is not installed." }),
+    },
+  ];
+}
+
 function readWorkflow(workflowName: string): { workflow?: Workflow; error?: string; path: string } {
   const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
   if (!existsSync(workflowPath)) {
@@ -207,20 +232,20 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
   }
 
   if (command === "doctor") {
+    const checks = buildDoctorChecks();
+    const status = checks.every((check) => check.status === "ok") ? "ok" : "error";
+
     if (flags.has("--json")) {
       stdout.write(`${JSON.stringify({
-        status: "ok",
+        status,
         command: "doctor",
-        checks: [
-          { name: "node", status: "ok" },
-          { name: "workspace", status: "ok" },
-        ],
+        checks,
       })}\n`);
-      return 0;
+      return status === "ok" ? 0 : 1;
     }
 
-    stdout.write("formctl doctor: ok\n");
-    return 0;
+    stdout.write(`formctl doctor: ${status}\n`);
+    return status === "ok" ? 0 : 1;
   }
 
   if (command === "inspect") {
