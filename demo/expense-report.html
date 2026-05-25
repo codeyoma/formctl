@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Expense Report Demo</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        max-width: 42rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 1rem 0;
+      }
+
+      input {
+        display: block;
+        font: inherit;
+        margin-top: 0.35rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Expense report</h1>
+    <form method="post" action="/submit" aria-label="Expense report">
+      <label>
+        Amount
+        <input name="amount" type="number" required />
+      </label>
+      <label>
+        Receipt
+        <input name="receipt" type="file" required />
+      </label>
+      <button type="submit">Submit expense</button>
+    </form>
+  </body>
+</html>
+

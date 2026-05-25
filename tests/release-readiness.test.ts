@@ -1,0 +1,66 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, test } from "vitest";
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+describe("release readiness docs", () => {
+  test("package metadata is ready for a public GitHub repository", () => {
+    const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
+
+    expect(packageJson.private).toBe(false);
+    expect(packageJson.description).toBe("Turn browser-recorded web forms into safe, repeatable CLI commands.");
+    expect(packageJson.license).toBe("MIT");
+    expect(packageJson.repository).toEqual({
+      type: "git",
+      url: "git+https://github.com/codeyoma/formctl.git",
+    });
+    expect(packageJson.bugs).toEqual({
+      url: "https://github.com/codeyoma/formctl/issues",
+    });
+    expect(packageJson.homepage).toBe("https://github.com/codeyoma/formctl#readme");
+    expect(packageJson.keywords).toEqual([
+      "agent",
+      "browser-automation",
+      "cli",
+      "forms",
+      "playwright",
+      "rpa",
+    ]);
+  });
+
+  test("LICENSE uses MIT terms", () => {
+    const license = readFileSync(path.join(projectRoot, "LICENSE"), "utf8");
+
+    expect(license).toContain("MIT License");
+    expect(license).toContain("Copyright (c) 2026 yoma");
+    expect(license).toContain("Permission is hereby granted, free of charge");
+    expect(license).toContain("THE SOFTWARE IS PROVIDED \"AS IS\"");
+  });
+
+  test("README explains the product and the two-minute local demo", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+
+    expect(readme).toContain("formctl turns any browser form into a safe, repeatable CLI command");
+    expect(readme).toContain("Record once. Submit safely forever.");
+    expect(readme).toContain("## Two-Minute Local Demo");
+    expect(readme).toContain("npm install");
+    expect(readme).toContain("npm run demo");
+    expect(readme).toContain("npm run formctl -- record expense-report http://127.0.0.1:4173/expense --headless");
+    expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
+    expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --approve --json --headless");
+    expect(readme).toContain("Exit codes");
+    expect(readme).toContain("5 approval required");
+  });
+
+  test("demo fixture contains the fields used by README commands", () => {
+    const html = readFileSync(path.join(projectRoot, "demo", "expense-report.html"), "utf8");
+
+    expect(html).toContain('action="/submit"');
+    expect(html).toContain('name="amount"');
+    expect(html).toContain('name="receipt"');
+    expect(html).toContain('type="file"');
+    expect(html).toContain('type="submit"');
+  });
+});

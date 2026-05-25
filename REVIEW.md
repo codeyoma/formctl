@@ -1,0 +1,293 @@
+# formctl Review Log
+
+This file stores decisions, experiments, failures, and growth lessons for `formctl`. Treat it as append-only. Do not rewrite old conclusions unless a later entry explicitly supersedes them.
+
+## Current Hypothesis
+
+Developers and AI agents need a safe CLI for web forms that have no useful API. The winning wedge is not "browser automation"; it is "reviewable, approval-gated form submission with dry-run screenshots and audit logs."
+
+## Review Rules
+
+- Append an entry after every meaningful task, launch attempt, user interview, or failed assumption.
+- Include evidence: command output, screenshot path, user quote, metric, or reproduction step.
+- Record what changed because of the evidence.
+- Prefer short, concrete entries over polished narratives.
+- Keep sensitive data out of this file.
+
+## Metrics Snapshot
+
+| Date | GitHub Stars | npm Downloads | Issues | Discussions | Demo Views | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 2026-05-25 | 0 | 0 | 0 | 0 | 0 | Project planning started. |
+
+## Decision Log
+
+### 2026-05-25: Start With A Local CLI, Not A Hosted Service
+
+**Decision:** Build `formctl` as a local CLI first.
+
+**Reasoning:** The sharpest initial audience is developers and agents already operating in terminal workflows. A hosted service adds auth, browser infrastructure, billing, and privacy concerns before the core value is proven.
+
+**Revisit When:** Users repeatedly ask for scheduled runs, shared team audit logs, or cloud-hosted browser execution.
+
+### 2026-05-25: Use Playwright As The Browser Engine
+
+**Decision:** Use Playwright for recording, replay, screenshots, headed/headless execution, and fixture tests.
+
+**Reasoning:** The product depends on reliable browser control. Playwright already handles the browser layer, so `formctl` can focus on workflow files, safety checks, CLI ergonomics, and auditability.
+
+**Revisit When:** The implementation needs browser-extension-level recording that Playwright cannot capture cleanly.
+
+### 2026-05-25: Detect Selector Breakage Before Healing It
+
+**Decision:** The first release should fail clearly when selectors break instead of trying to auto-heal them.
+
+**Reasoning:** Silent selector healing can submit the wrong form or fill the wrong field. Trust is more important than magic for this product.
+
+**Revisit When:** The failure reports are clear, the fixture suite is strong, and users understand the approval model.
+
+## Experiment Log
+
+### 2026-05-25: Start The CLI With TDD
+
+**Date:** 2026-05-25
+
+**Experiment:** Build the first `formctl` CLI slice with strict RED/GREEN cycles.
+
+**Hypothesis:** A small command surface can be locked down before browser recording work begins: `--help`, `doctor --json`, missing workflow handling, and workflow inspection.
+
+**Result:** Passed. The project now has a TypeScript/Vitest test harness, a minimal CLI entrypoint, JSON doctor output, workflow-not-found exit code `2`, and `inspect --json` for `.formctl/workflows/<name>.yml`.
+
+**Evidence:** RED failures were observed before each implementation: `--help` exited `1`, `doctor --json` exited `1`, missing workflow returned `1` instead of `2`, and `inspect --json` emitted text instead of JSON. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, `npm run formctl -- --help`, and `npm run formctl -- doctor --json`.
+
+**Decision:** Continue with narrow TDD slices. The next useful slice is `record <workflow-name> <url>` against a local fixture page, then `submit --dry-run` without pressing the final submit button.
+
+**Next Step:** Add a local fixture form and write the first failing Playwright-backed record test.
+
+### 2026-05-25: Record A Live Fixture Form
+
+**Date:** 2026-05-25
+
+**Experiment:** Implement the first `record <workflow-name> <url>` slice against a local HTTP fixture form.
+
+**Hypothesis:** `formctl record expense-report <url> --headless` can use Playwright to inspect a live form and write a reviewable `.formctl/workflows/expense-report.yml` file without implementing full interaction recording yet.
+
+**Result:** Passed. The CLI now records named inputs and the submit selector from a live page into YAML, and the existing `inspect --json` command can read that workflow file.
+
+**Evidence:** RED failure was observed first: `record` exited `1` because the command did not exist. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, `npm run formctl -- --help`, `npm run formctl -- doctor --json`, and a manual local-server smoke test that created `.formctl/workflows/expense-report.yml`.
+
+**Decision:** Keep the first record implementation intentionally small. It captures form structure, not full user event history.
+
+**Next Step:** Write the first failing `submit <workflow-name> --dry-run` test that fills the recorded form but does not trigger the submit button.
+
+### 2026-05-25: Dry-Run A Recorded Workflow
+
+**Date:** 2026-05-25
+
+**Experiment:** Implement `submit <workflow-name> --dry-run` for a recorded workflow with a number input and file input.
+
+**Hypothesis:** `formctl` can load `.formctl/workflows/<name>.yml`, fill fields from CLI flags, avoid the submit button, and leave enough artifacts to review the run.
+
+**Result:** Passed. The CLI now fills recorded fields in Playwright, stores `.formctl/runs/<run-id>/summary.json`, captures `.formctl/runs/<run-id>/dry-run.png`, and leaves the fixture server's POST count at zero.
+
+**Evidence:** RED failure was observed first: `submit --dry-run` exited `1` because the command did not exist. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, `npm run formctl -- --help`, `npm run formctl -- doctor --json`, and a manual smoke test showing `posts: 0`, a summary artifact, and a screenshot artifact.
+
+**Decision:** Keep dry-run separate from real submission. The CLI should continue to make "not submitted" observable through both exit behavior and artifacts.
+
+**Next Step:** Add an approval gate: `submit <workflow-name>` without `--dry-run` must return exit code `5`, while `--approve` performs the real submit and records a post-submit artifact.
+
+### 2026-05-25: Add Approval-Gated Submission
+
+**Date:** 2026-05-25
+
+**Experiment:** Add the first real submission path behind an explicit `--approve` flag.
+
+**Hypothesis:** `formctl submit <workflow-name>` should refuse to submit by default with exit code `5`, while `formctl submit <workflow-name> --approve` should fill the form, click the recorded submit selector, and store review artifacts.
+
+**Result:** Passed. Unapproved submit exits `5` without creating run artifacts or sending POST. Approved submit sends exactly one POST in the fixture test, creates `.formctl/runs/<run-id>/summary.json`, and captures `.formctl/runs/<run-id>/post-submit.png`.
+
+**Evidence:** RED failures were observed first: unapproved submit returned exit `1` instead of `5`, and approved submit returned exit `1` because it was not implemented. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, `npm run formctl -- --help`, `npm run formctl -- doctor --json`, and a manual smoke test showing blocked status `5`, approved status `0`, `posts: 1`, and post-submit artifacts.
+
+**Decision:** Keep explicit `--approve` as the only non-interactive approval source for now. Interactive confirmation can come later after the machine-readable path is stable.
+
+**Next Step:** Add selector breakage detection so missing or ambiguous recorded selectors fail with exit code `3` before filling or submitting.
+
+### 2026-05-25: Detect Broken Or Ambiguous Selectors
+
+**Date:** 2026-05-25
+
+**Experiment:** Add selector breakage detection before dry-run or approved submit mutates the page.
+
+**Hypothesis:** `formctl submit` should verify that every recorded field selector and submit selector resolves to exactly one element before filling fields or clicking submit.
+
+**Result:** Passed. Missing field selectors and ambiguous field selectors now exit `3`, print a clear selector mismatch message, avoid POSTs, and avoid creating run artifacts.
+
+**Evidence:** RED failure was observed first for a missing selector: the command eventually exited `1` after Playwright waited on `fill()` instead of failing fast with exit `3`. After adding preflight selector counts, the missing selector test passed quickly. The ambiguous selector regression test passed immediately because the same exactly-one-match rule covered both cases. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`.
+
+**Decision:** Keep selector healing out of the MVP. Failing fast is safer than guessing a replacement selector.
+
+**Next Step:** Add machine-readable `--json` output for `submit` success and selector mismatch failures so agents can branch on stable result fields.
+
+### 2026-05-26: Add Submit JSON Output
+
+**Date:** 2026-05-26
+
+**Experiment:** Add machine-readable `--json` output for `submit` success and selector mismatch failures.
+
+**Hypothesis:** Agents should be able to branch on stable JSON fields instead of parsing human output or stderr.
+
+**Result:** Passed. `submit --dry-run --json` now emits JSON with `status`, `workflow`, `runId`, `exitCode`, `submitted`, `requiresApproval`, `fields`, and artifact paths. Selector mismatch with `--json` exits `3` and emits a structured error object on stdout while leaving stderr empty.
+
+**Evidence:** RED failures were observed first: dry-run JSON parsing failed because stdout began with `Dry-run complete`, and selector mismatch JSON mode still wrote text to stderr. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`.
+
+**Decision:** Keep JSON output compact and single-object-per-command for now. Streaming JSONL audit logs should be a separate feature.
+
+**Next Step:** Add approval-required `--json` output for exit code `5`, then add a README and local demo instructions so the project can be evaluated by outside users.
+
+### 2026-05-26: Add Approval-Required JSON Output
+
+**Date:** 2026-05-26
+
+**Experiment:** Add machine-readable output for approval-required submit failures.
+
+**Hypothesis:** `formctl submit <workflow> --json` without `--dry-run` or `--approve` should let agents detect the approval gate from a stable JSON object and exit code `5`, without parsing stderr.
+
+**Result:** Passed. Approval-required JSON now emits `status: "error"`, `exitCode: 5`, `submitted: false`, `requiresApproval: true`, and an `approval_required` error object on stdout while keeping stderr empty.
+
+**Evidence:** RED failure was observed first: JSON mode still wrote the approval-required message to stderr. Final checks passed with `npm test -- --run tests/cli.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 13 passing tests.
+
+**Decision:** The core agent-facing exit contract now covers success, selector mismatch, missing workflow, approval required, dry-run, and approved submit paths.
+
+**Next Step:** Add a README with a 2-minute local demo path and CLI examples, then initialize git and prepare the repository for public GitHub release once docs and package metadata are credible.
+
+### 2026-05-26: Add README And Local Demo Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Add release-readiness docs and a local demo form that matches the README commands.
+
+**Hypothesis:** A credible public repo needs a first-screen pitch, a two-minute demo path, clear exit codes, and a fixture that lets outside users verify record/dry-run/approve behavior locally.
+
+**Result:** Passed. The repository now has `README.md`, `demo/expense-report.html`, `demo/receipt.txt`, `demo/server.mjs`, and `npm run demo`. A release-readiness test verifies that the README includes the core pitch, demo commands, and exit-code contract, and that the demo form has the fields used by the CLI examples.
+
+**Evidence:** RED failure was observed first: `README.md` and `demo/expense-report.html` were missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and a smoke test that started `demo/server.mjs` and recorded `.formctl/workflows/expense-report.yml`.
+
+**Decision:** The next release-readiness gap is repository metadata and packaging, not more CLI behavior.
+
+**Next Step:** Initialize git, add package metadata suitable for public release, add `LICENSE`, then run final verification before creating/pushing the GitHub repository.
+
+### Template
+
+**Date:** YYYY-MM-DD
+
+**Experiment:** One sentence describing what was tried.
+
+**Hypothesis:** What we expected to happen.
+
+**Result:** What actually happened.
+
+**Evidence:** Link, command, screenshot path, metric, or quote.
+
+**Decision:** Continue, change, or stop.
+
+**Next Step:** The next concrete action.
+
+---
+
+## Failure Log
+
+### 2026-05-25: Synchronous CLI Spawn Blocked The Fixture Server
+
+**Date:** 2026-05-25
+
+**Failure:** The first Playwright-backed record test hung until `page.goto` timed out.
+
+**Impact:** It looked like a product bug even though the local fixture server was the problem.
+
+**Root Cause:** The test used `spawnSync` while the fixture HTTP server was running in the same Vitest process. `spawnSync` blocked the event loop, so the server could not answer Playwright's request.
+
+**Fix:** Use async `spawn` for tests that need the fixture HTTP server to respond.
+
+**Verification:** The same record test passed after switching only that path to async process execution.
+
+### Template
+
+**Date:** YYYY-MM-DD
+
+**Failure:** What broke or failed to convince users.
+
+**Impact:** Who was affected and why it mattered.
+
+**Root Cause:** The smallest explanation that fits the evidence.
+
+**Fix:** The concrete change made or planned.
+
+**Verification:** How we know the fix worked.
+
+---
+
+## User Interview Notes
+
+### Template
+
+**Date:** YYYY-MM-DD
+
+**User Type:** Developer, operator, founder, AI-agent user, QA engineer, or other.
+
+**Workflow Pain:** The form workflow they want automated.
+
+**Current Workaround:** Manual process, browser macro, Playwright script, RPA, spreadsheet, or other.
+
+**Trust Barrier:** What would stop them from using `formctl`.
+
+**Quote:** A short non-sensitive quote.
+
+**Product Implication:** What should change in product, docs, or positioning.
+
+---
+
+## Launch Attempts
+
+### Template
+
+**Date:** YYYY-MM-DD
+
+**Channel:** GitHub, Hacker News, Reddit, X, LinkedIn, Discord, newsletter, blog, or direct outreach.
+
+**Message:** The exact launch angle used.
+
+**Result:** Stars, comments, clicks, installs, issues, or interviews.
+
+**What Worked:** Specific phrasing, demo, example, or audience.
+
+**What Failed:** Specific confusion, objection, or ignored claim.
+
+**Next Iteration:** The next message or demo change.
+
+---
+
+## Weekly Review
+
+### Template
+
+**Week Ending:** YYYY-MM-DD
+
+**Metrics:** Stars, downloads, issues, discussions, demo views.
+
+**Most Useful Feedback:** The highest-signal thing learned this week.
+
+**Biggest Risk:** The most likely reason the project will stall.
+
+**Shipped:** What changed in product, docs, examples, or launch assets.
+
+**Next Week Focus:** One narrow priority.
+
+---
+
+## Open Questions
+
+- Is the strongest first audience AI-agent users, ops teams, QA engineers, or internal-tool developers?
+- Is "web forms as CLI commands" clearer than "safe browser form automation"?
+- Should the first public demo use expense reports, admin invites, refunds, or vendor onboarding?
+- How much recording should happen automatically versus through explicit user annotation?
+- What artifact best earns trust: screenshot diff, audit log, workflow YAML, or replay test?

@@ -1,0 +1,39 @@
+{
+  "name": "formctl",
+  "version": "0.0.0",
+  "private": false,
+  "description": "Turn browser-recorded web forms into safe, repeatable CLI commands.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codeyoma/formctl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codeyoma/formctl/issues"
+  },
+  "homepage": "https://github.com/codeyoma/formctl#readme",
+  "keywords": [
+    "agent",
+    "browser-automation",
+    "cli",
+    "forms",
+    "playwright",
+    "rpa"
+  ],
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "demo": "node demo/server.mjs",
+    "formctl": "node --import tsx ./src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0",
+    "yaml": "^2.9.0"
+  }
+}

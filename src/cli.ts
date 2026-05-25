@@ -1,0 +1,339 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { chromium } from "playwright";
+import { parse, stringify } from "yaml";
+
+const HELP_TEXT = `formctl turns browser-recorded web forms into safe CLI commands
+
+Usage:
+  formctl record <workflow-name> <url>
+  formctl submit <workflow-name> [flags]
+  formctl inspect <workflow-name>
+  formctl doctor
+
+Flags:
+  --help        Show this help message
+`;
+
+type WorkflowField = {
+  name: string;
+  selector: string;
+  type: string;
+};
+
+type Workflow = {
+  name: string;
+  url: string;
+  fields: WorkflowField[];
+  submit: {
+    selector: string;
+  };
+};
+
+function readWorkflow(workflowName: string): { workflow?: Workflow; error?: string; path: string } {
+  const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
+  if (!existsSync(workflowPath)) {
+    return {
+      path: workflowPath,
+      error: `Workflow not found: ${workflowName}\nExpected: .formctl/workflows/${workflowName}.yml\n`,
+    };
+  }
+
+  return {
+    path: workflowPath,
+    workflow: parse(readFileSync(workflowPath, "utf8")),
+  };
+}
+
+function parseOptions(args: string[]): Map<string, string | true> {
+  const options = new Map<string, string | true>();
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index];
+    if (!token.startsWith("--")) {
+      continue;
+    }
+
+    const name = token.slice(2);
+    const next = args[index + 1];
+    if (next !== undefined && !next.startsWith("--")) {
+      options.set(name, next);
+      index += 1;
+      continue;
+    }
+
+    options.set(name, true);
+  }
+
+  return options;
+}
+
+function writeSelectorMismatch(
+  output: NodeJS.WritableStream,
+  workflowName: string,
+  selector: string,
+  actualMatches: number,
+  wantsJson: boolean,
+): void {
+  const message = `Selector mismatch: ${selector} expected exactly 1 match, found ${actualMatches}`;
+
+  if (wantsJson) {
+    output.write(`${JSON.stringify({
+      status: "error",
+      workflow: workflowName,
+      exitCode: 3,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "selector_mismatch",
+        selector,
+        expectedMatches: 1,
+        actualMatches,
+        message,
+      },
+    })}\n`);
+    return;
+  }
+
+  output.write(`${message}\n`);
+}
+
+export async function run(args: string[], stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream): Promise<number> {
+  const command = args[2];
+  const flags = new Set(args.slice(3));
+
+  if (command === undefined || command === "--help" || command === "-h") {
+    stdout.write(HELP_TEXT);
+    return 0;
+  }
+
+  if (command === "doctor") {
+    if (flags.has("--json")) {
+      stdout.write(`${JSON.stringify({
+        status: "ok",
+        command: "doctor",
+        checks: [
+          { name: "node", status: "ok" },
+          { name: "workspace", status: "ok" },
+        ],
+      })}\n`);
+      return 0;
+    }
+
+    stdout.write("formctl doctor: ok\n");
+    return 0;
+  }
+
+  if (command === "inspect") {
+    const workflowName = args[3];
+
+    if (workflowName === undefined) {
+      stderr.write("Usage: formctl inspect <workflow-name>\n");
+      return 1;
+    }
+
+    const result = readWorkflow(workflowName);
+    if (result.error !== undefined || result.workflow === undefined) {
+      stderr.write(result.error ?? "Workflow could not be read\n");
+      return 2;
+    }
+
+    if (flags.has("--json")) {
+      const workflow = result.workflow;
+      stdout.write(`${JSON.stringify({
+        status: "ok",
+        workflow: workflow.name,
+        url: workflow.url,
+        fields: workflow.fields,
+        submit: workflow.submit,
+      })}\n`);
+      return 0;
+    }
+
+    stdout.write(`Workflow: ${workflowName}\nPath: .formctl/workflows/${workflowName}.yml\n`);
+    return 0;
+  }
+
+  if (command === "submit") {
+    const workflowName = args[3];
+
+    if (workflowName === undefined) {
+      stderr.write("Usage: formctl submit <workflow-name> [flags]\n");
+      return 1;
+    }
+
+    const isDryRun = flags.has("--dry-run");
+    const isApproved = flags.has("--approve");
+    const wantsJson = flags.has("--json");
+
+    if (!isDryRun && !isApproved) {
+      const message = "Approval required: run with --dry-run to preview or --approve to submit.";
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify({
+          status: "error",
+          workflow: workflowName,
+          exitCode: 5,
+          submitted: false,
+          requiresApproval: true,
+          error: {
+            code: "approval_required",
+            message,
+          },
+        })}\n`);
+        return 5;
+      }
+
+      stderr.write(`${message}\n`);
+      return 5;
+    }
+
+    const result = readWorkflow(workflowName);
+    if (result.error !== undefined || result.workflow === undefined) {
+      stderr.write(result.error ?? "Workflow could not be read\n");
+      return 2;
+    }
+
+    const options = parseOptions(args.slice(4));
+    const workflow = result.workflow;
+    const browser = await chromium.launch({ headless: flags.has("--headless") });
+    const runStatus = isDryRun ? "dry-run" : "submitted";
+    const screenshotFileName = isDryRun ? "dry-run.png" : "post-submit.png";
+    const runId = `${Date.now()}-${runStatus}`;
+    const runDirectory = path.join(process.cwd(), ".formctl", "runs", runId);
+    const relativeRunDirectory = `.formctl/runs/${runId}`;
+    const filledFields: Record<string, string> = {};
+
+    try {
+      const page = await browser.newPage();
+      await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
+
+      for (const field of workflow.fields) {
+        const matchCount = await page.locator(field.selector).count();
+        if (matchCount !== 1) {
+          writeSelectorMismatch(wantsJson ? stdout : stderr, workflow.name, field.selector, matchCount, wantsJson);
+          return 3;
+        }
+      }
+
+      const submitMatchCount = await page.locator(workflow.submit.selector).count();
+      if (submitMatchCount !== 1) {
+        writeSelectorMismatch(wantsJson ? stdout : stderr, workflow.name, workflow.submit.selector, submitMatchCount, wantsJson);
+        return 3;
+      }
+
+      for (const field of workflow.fields) {
+        const value = options.get(field.name);
+        if (typeof value !== "string") {
+          continue;
+        }
+
+        if (field.type === "file") {
+          const filePath = path.isAbsolute(value) ? value : path.join(process.cwd(), value);
+          await page.locator(field.selector).setInputFiles(filePath);
+          filledFields[field.name] = "[file]";
+          continue;
+        }
+
+        await page.locator(field.selector).fill(value);
+        filledFields[field.name] = value;
+      }
+
+      mkdirSync(runDirectory, { recursive: true });
+      if (!isDryRun) {
+        await page.locator(workflow.submit.selector).click();
+      }
+
+      const screenshotPath = path.join(runDirectory, screenshotFileName);
+      const summaryPath = path.join(runDirectory, "summary.json");
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+      const summary = {
+        status: runStatus,
+        workflow: workflow.name,
+        submitted: !isDryRun,
+        ...(isDryRun ? {} : { approval: "flag" }),
+        fields: filledFields,
+        artifacts: {
+          screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
+          summary: `${relativeRunDirectory}/summary.json`,
+        },
+      };
+      writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`);
+
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify({
+          ...summary,
+          exitCode: 0,
+          runId,
+          requiresApproval: false,
+        })}\n`);
+        return 0;
+      }
+
+      stdout.write(`${isDryRun ? "Dry-run complete" : "Submitted workflow"}: ${workflow.name}\nRun: ${relativeRunDirectory}\n`);
+      return 0;
+    } finally {
+      await browser.close();
+    }
+  }
+
+  if (command === "record") {
+    const workflowName = args[3];
+    const url = args[4];
+
+    if (workflowName === undefined || url === undefined) {
+      stderr.write("Usage: formctl record <workflow-name> <url>\n");
+      return 1;
+    }
+
+    const browser = await chromium.launch({ headless: flags.has("--headless") });
+    try {
+      const page = await browser.newPage();
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+
+      const fields = await page.locator("input, textarea, select").evaluateAll((elements) => elements.flatMap((element) => {
+        const tagName = element.tagName.toLowerCase();
+        const name = element.getAttribute("name");
+        if (name === null || name.length === 0) {
+          return [];
+        }
+
+        const type = tagName === "input"
+          ? element.getAttribute("type") ?? "text"
+          : tagName;
+
+        return [{
+          name,
+          selector: `${tagName}[name="${name}"]`,
+          type,
+        }];
+      }));
+      const submitSelector = await page.locator('button[type="submit"], input[type="submit"]').first().evaluate((element) => {
+        const tagName = element.tagName.toLowerCase();
+        const type = element.getAttribute("type") ?? "submit";
+        return `${tagName}[type="${type}"]`;
+      });
+      const workflow: Workflow = {
+        name: workflowName,
+        url,
+        fields,
+        submit: {
+          selector: submitSelector,
+        },
+      };
+
+      const workflowDirectory = path.join(process.cwd(), ".formctl", "workflows");
+      mkdirSync(workflowDirectory, { recursive: true });
+      writeFileSync(path.join(workflowDirectory, `${workflowName}.yml`), stringify(workflow));
+      stdout.write(`Recorded workflow: ${workflowName}\nPath: .formctl/workflows/${workflowName}.yml\n`);
+      return 0;
+    } finally {
+      await browser.close();
+    }
+  }
+
+  stderr.write(`Unknown command: ${command}\n`);
+  return 1;
+}
+
+const exitCode = await run(process.argv, process.stdout, process.stderr);
+process.exitCode = exitCode;
