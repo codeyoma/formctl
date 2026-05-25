@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new formctl use case or capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us understand the API-less workflow you want formctl to make safer.
+  - type: textarea
+    id: workflow
+    attributes:
+      label: API-less workflow
+      description: What web form or internal tool do you want to turn into a CLI command?
+      placeholder: Expense report, admin invite, refund request, vendor onboarding, compliance attestation
+    validations:
+      required: true
+  - type: textarea
+    id: current-workaround
+    attributes:
+      label: Current workaround
+      description: What do you use today?
+      placeholder: Manual browser steps, raw Playwright script, RPA, spreadsheet, browser macro, or agent browser control
+    validations:
+      required: true
+  - type: textarea
+    id: formctl-fit
+    attributes:
+      label: Why should this be in formctl instead of a raw Playwright script?
+      description: Explain the safety, review, dry-run, approval, or audit benefit.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Safety concerns
+      description: What would make this unsafe to automate?
+      placeholder: Credentials, uploads, destructive actions, approvals, private data, compliance logs
+    validations:
+      required: false
+

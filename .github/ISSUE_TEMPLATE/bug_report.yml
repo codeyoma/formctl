@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a reproducible formctl failure.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a formctl issue. Please remove secrets, credentials, receipt contents, and private URLs before posting.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the failure and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: Paste the exact command, such as formctl doctor --json or submit --dry-run.
+      render: shell
+      placeholder: |
+        formctl doctor --json
+        formctl submit expense-report --amount 120000 --dry-run --json --headless
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste stdout/stderr. Include selector mismatch output when relevant.
+      render: text
+      placeholder: |
+        Selector mismatch: input[name="amount"] expected exactly 1 match, found 0
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Run artifacts
+      description: Summarize relevant local artifacts without uploading secrets.
+      placeholder: |
+        .formctl/runs/<run-id>/summary.json
+        .formctl/runs/<run-id>/dry-run.png
+    validations:
+      required: false
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow file
+      description: Paste a redacted .formctl/workflows/<name>.yml if possible.
+      render: yaml
+    validations:
+      required: false
+

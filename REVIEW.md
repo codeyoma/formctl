@@ -208,6 +208,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add a GitHub issue template and a launch checklist, then capture a short demo GIF/video for README and social launch.
 
+### 2026-05-26: Add Issue Templates And Launch Checklist
+
+**Date:** 2026-05-26
+
+**Experiment:** Add public repo operating assets for issue intake and launch execution.
+
+**Hypothesis:** After publishing, the highest-leverage work is making feedback reproducible and launch work repeatable, not adding broad product scope.
+
+**Result:** Passed. The repo now has GitHub issue templates for bug reports and feature requests plus `docs/LAUNCH.md` with verification, demo media, launch copy, first-500-star work, and the 10k-star loop.
+
+**Evidence:** RED failure was observed first: `.github/ISSUE_TEMPLATE/bug_report.yml` and `docs/LAUNCH.md` were missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 19 passing tests.
+
+**Decision:** The public repo is ready for early external feedback. The next blocker for launch quality is demo media, not more issue template detail.
+
+**Next Step:** Capture a 30-60 second demo GIF/video and link it from the README, then run the launch checklist before posting.
+
 ### Template
 
 **Date:** YYYY-MM-DD

@@ -63,4 +63,31 @@ describe("release readiness docs", () => {
     expect(html).toContain('type="file"');
     expect(html).toContain('type="submit"');
   });
+
+  test("GitHub issue templates collect reproducible form automation reports", () => {
+    const bugReport = readFileSync(path.join(projectRoot, ".github", "ISSUE_TEMPLATE", "bug_report.yml"), "utf8");
+    const featureRequest = readFileSync(path.join(projectRoot, ".github", "ISSUE_TEMPLATE", "feature_request.yml"), "utf8");
+
+    expect(bugReport).toContain("name: Bug report");
+    expect(bugReport).toContain("formctl doctor --json");
+    expect(bugReport).toContain("selector mismatch");
+    expect(bugReport).toContain(".formctl/runs/<run-id>/summary.json");
+    expect(bugReport).toContain("dry-run");
+    expect(featureRequest).toContain("name: Feature request");
+    expect(featureRequest).toContain("API-less workflow");
+    expect(featureRequest).toContain("Why should this be in formctl instead of a raw Playwright script?");
+  });
+
+  test("launch checklist is ready for public growth work", () => {
+    const launch = readFileSync(path.join(projectRoot, "docs", "LAUNCH.md"), "utf8");
+
+    expect(launch).toContain("# formctl Launch Checklist");
+    expect(launch).toContain("https://github.com/codeyoma/formctl");
+    expect(launch).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
+    expect(launch).toContain("npx tsc --noEmit");
+    expect(launch).toContain("npm run demo");
+    expect(launch).toContain("Capture a 30-60 second demo");
+    expect(launch).toContain("First 500 stars");
+    expect(launch).toContain("10k stars");
+  });
 });
