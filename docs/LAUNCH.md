@@ -15,10 +15,10 @@ Public repo: https://github.com/codeyoma/formctl
 
 ## Demo Media
 
-- [ ] Capture a 30-60 second demo showing record, dry-run JSON, screenshot artifact, approval-required JSON, and approved submit.
+- [ ] Review `docs/assets/demo.mp4` before posting.
 - [ ] Keep the terminal readable at 1280x720 or larger.
 - [ ] Avoid real credentials, private URLs, or private forms.
-- [ ] Add the demo media to the README after the file is small enough for GitHub.
+- [x] Add the demo media to the README after the file is small enough for GitHub.
 
 ## Launch Copy
 

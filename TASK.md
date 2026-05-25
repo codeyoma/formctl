@@ -255,11 +255,11 @@ npx formctl doctor
 
 **Goal:** Make the project instantly understandable on GitHub and social channels.
 
-- [ ] Add a 30-60 second demo video or GIF.
+- [x] Add a 30-60 second demo video or GIF.
 - [x] Add screenshots for dry-run preview, selector mismatch, and audit log.
 - [x] Add a `demo/` folder with the local form app and sample workflow.
 - [x] Verify: A reader can star the repo based on the GitHub page alone.
-- [ ] Record which asset gets the most engagement in `REVIEW.md`.
+- [ ] Record which asset gets the most engagement in `REVIEW.md` after the first outreach post.
 
 ---
 

@@ -5,6 +5,50 @@ import { describe, expect, test } from "vitest";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+function findMp4Box(buffer: Buffer, type: string, start = 0, end = buffer.length): { start: number; end: number } | undefined {
+  let offset = start;
+
+  while (offset + 8 <= end) {
+    const size = buffer.readUInt32BE(offset);
+    const boxType = buffer.toString("ascii", offset + 4, offset + 8);
+    const boxEnd = size === 0 ? end : offset + size;
+
+    if (boxType === type) {
+      return { start: offset + 8, end: boxEnd };
+    }
+
+    if (size < 8 || boxEnd <= offset) {
+      break;
+    }
+
+    offset = boxEnd;
+  }
+
+  return undefined;
+}
+
+function readMp4DurationSeconds(buffer: Buffer): number {
+  const moov = findMp4Box(buffer, "moov");
+  if (moov === undefined) {
+    throw new Error("MP4 is missing moov box");
+  }
+
+  const mvhd = findMp4Box(buffer, "mvhd", moov.start, moov.end);
+  if (mvhd === undefined) {
+    throw new Error("MP4 is missing mvhd box");
+  }
+
+  const version = buffer.readUInt8(mvhd.start);
+  const timescaleOffset = version === 1 ? mvhd.start + 20 : mvhd.start + 12;
+  const durationOffset = version === 1 ? mvhd.start + 24 : mvhd.start + 16;
+  const timescale = buffer.readUInt32BE(timescaleOffset);
+  const duration = version === 1
+    ? Number(buffer.readBigUInt64BE(durationOffset))
+    : buffer.readUInt32BE(durationOffset);
+
+  return duration / timescale;
+}
+
 describe("release readiness docs", () => {
   test("package metadata is ready for a public GitHub repository", () => {
     const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
@@ -86,6 +130,18 @@ describe("release readiness docs", () => {
     expect(demo).toContain("\"exitCode\":5");
     expect(demo).toContain("--approve --json");
     expect(demo).toContain("\"status\":\"submitted\"");
+  });
+
+  test("demo video is ready for social launch posts", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const video = readFileSync(path.join(projectRoot, "docs", "assets", "demo.mp4"));
+    const durationSeconds = readMp4DurationSeconds(video);
+
+    expect(readme).toContain("[Watch the 40-second demo video](docs/assets/demo.mp4)");
+    expect(video.toString("ascii", 4, 8)).toBe("ftyp");
+    expect(video.length).toBeGreaterThan(10_000);
+    expect(durationSeconds).toBeGreaterThanOrEqual(30);
+    expect(durationSeconds).toBeLessThanOrEqual(60);
   });
 
   test("README includes trust artifact screenshots for launch readers", () => {
@@ -206,7 +262,7 @@ describe("release readiness docs", () => {
     expect(launch).toContain("npm run build");
     expect(launch).toContain("npx tsc --noEmit");
     expect(launch).toContain("npm run demo");
-    expect(launch).toContain("Capture a 30-60 second demo");
+    expect(launch).toContain("Review `docs/assets/demo.mp4`");
     expect(launch).toContain("First 500 stars");
     expect(launch).toContain("10k stars");
   });
@@ -230,6 +286,7 @@ describe("release readiness docs", () => {
     expect(announcement).toContain("https://github.com/codeyoma/formctl");
     expect(announcement).toContain("record a browser form once");
     expect(announcement).toContain("dry-run screenshots");
+    expect(announcement).toContain("docs/assets/demo.mp4");
     expect(announcement).toContain("selector mismatch checks");
     expect(announcement).toContain("approval gates");
     expect(announcement).toContain("JSON output for agents");

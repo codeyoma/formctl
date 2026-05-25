@@ -8,6 +8,8 @@ I built formctl: record a browser form once, then run it as a CLI command with d
 
 It is for API-less workflows: internal tools, expense forms, admin panels, refund requests, vendor onboarding, and any browser form that is still manual because there is no useful API.
 
+Demo video: `docs/assets/demo.mp4`
+
 The safety model is intentionally boring:
 
 - `submit --dry-run` fills the form and captures review artifacts without clicking submit.

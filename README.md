@@ -14,6 +14,8 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
 
 ![formctl demo](docs/assets/demo.svg)
 
+[Watch the 40-second demo video](docs/assets/demo.mp4)
+
 ## Trust Artifacts
 
 ![Dry-run preview](docs/assets/dry-run-preview.svg)

@@ -466,6 +466,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Capture or generate the short GIF/video, then post one prepared outreach channel and record which asset drives engagement.
 
+### 2026-05-26: Add 40-Second Demo Video
+
+**Date:** 2026-05-26
+
+**Experiment:** Add a short README video asset that can be reused in social launch posts.
+
+**Hypothesis:** A 30-60 second video stitched from the existing demo and trust-artifact screens is enough to communicate the product loop without requiring a manual screen recording session.
+
+**Result:** Passed. `docs/assets/demo.mp4` is a 40-second video covering the core CLI flow, dry-run preview, selector mismatch failure, and audit log. README links it directly below the primary demo image.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/assets/demo.mp4` did not exist. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `ffprobe`/release-readiness duration checks showing a 40-second MP4. Playwright also rendered each source SVG frame at 1120x540 before ffmpeg assembly.
+
+**What Failed:** The first ffmpeg generation attempt failed because the temporary frame directory variable was not exported into the Node renderer process. Re-running with `export VIDEO_TMP` fixed it.
+
+**Decision:** Keep the video as MP4 rather than GIF to avoid a large binary. The README still has static SVGs for quick scanning.
+
+**Next Step:** Post one prepared outreach channel and record which README asset gets mentioned or clicked.
+
 ### Template
 
 **Date:** YYYY-MM-DD
