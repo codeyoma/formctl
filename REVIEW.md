@@ -600,6 +600,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one example-led outreach message, then update `docs/GROWTH_LOG.md` with the posted URL and 24-hour metrics.
 
+### 2026-05-26: Add Example-Led Posting Queue
+
+**Date:** 2026-05-26
+
+**Experiment:** Prepare a single next posting queue that a human can publish without reworking the launch copy.
+
+**Hypothesis:** Since npm publish still fails with `ENEEDAUTH` and external communities require human-authenticated accounts, the highest-leverage automated step is to remove ambiguity from the first example-led post.
+
+**Result:** Passed. `docs/POSTING_QUEUE.md` now has a first post candidate for Reddit r/commandline, an agent-oriented Reddit r/LocalLLaMA variant, direct outreach copy, posted URL placeholders, and 24-hour follow-up steps for `docs/GROWTH_LOG.md`, `docs/OUTREACH.md`, and `REVIEW.md`.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/POSTING_QUEUE.md` was missing. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "posting queue"`. `npm whoami` still returns `ENEEDAUTH`, confirming publish is blocked until npm auth is configured. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**Decision:** Treat posting as a human action. The repository now has the copy and tracking path ready; automation should not pretend that a GitHub issue comment is an external audience channel.
+
+**Next Step:** A human should post the Reddit r/commandline candidate, then record the posted URL and 24-hour metrics.
+
 ### Template
 
 **Date:** YYYY-MM-DD

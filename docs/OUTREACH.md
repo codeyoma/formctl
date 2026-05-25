@@ -10,6 +10,8 @@ Example posts: docs/EXAMPLE_POSTS.md
 
 Growth log: docs/GROWTH_LOG.md
 
+Posting queue: docs/POSTING_QUEUE.md
+
 Agent article: docs/WHY_FORM_CLIS.md
 
 ## Channel Plan

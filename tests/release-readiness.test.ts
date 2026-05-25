@@ -431,6 +431,29 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("Positioning Change");
   });
 
+  test("example-led posting queue is ready for a human to publish", () => {
+    const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");
+    const growthLog = readFileSync(path.join(projectRoot, "docs", "GROWTH_LOG.md"), "utf8");
+    const postingQueue = readFileSync(path.join(projectRoot, "docs", "POSTING_QUEUE.md"), "utf8");
+
+    expect(outreach).toContain("Posting queue: docs/POSTING_QUEUE.md");
+    expect(growthLog).toContain("docs/POSTING_QUEUE.md");
+    expect(postingQueue).toContain("# Posting Queue");
+    expect(postingQueue).toContain("First post candidate");
+    expect(postingQueue).toContain("Reddit r/commandline");
+    expect(postingQueue).toContain("Reddit r/LocalLLaMA");
+    expect(postingQueue).toContain("Direct outreach");
+    expect(postingQueue).toContain("Posted URL:");
+    expect(postingQueue).toContain("24-hour follow-up");
+    expect(postingQueue).toContain("Update `docs/GROWTH_LOG.md`");
+    expect(postingQueue).toContain("CRM update");
+    expect(postingQueue).toContain("Compliance attestation");
+    expect(postingQueue).toContain("formctl submit crm-update");
+    expect(postingQueue).toContain("formctl submit compliance-attestation");
+    expect(postingQueue).toContain("Trust notes: docs/TRUST.md");
+    expect(postingQueue).toContain("Example posts: docs/EXAMPLE_POSTS.md");
+  });
+
   test("trust and comparison docs answer security questions", () => {
     const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
     const launch = readFileSync(path.join(projectRoot, "docs", "LAUNCH.md"), "utf8");

@@ -6,7 +6,7 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 | Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-26 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |
+| 2026-05-26 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message from `docs/POSTING_QUEUE.md` |
 
 ## Source commands
 
