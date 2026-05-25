@@ -52,6 +52,7 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 - `audit.jsonl`
 - `dry-run.png` for previews
 - `post-submit.png` for approved submissions
+- `failure.json` and `failure.png` for selector mismatches
 
 Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.
 
@@ -77,8 +78,9 @@ Workflow files are stored at:
 - Real submission requires `--approve`.
 - Recorded selectors must match exactly one element.
 - Missing or ambiguous selectors fail before filling fields or submitting.
+  Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.
 - File inputs are redacted as `[file]` in summaries.
-- Audit logs are written for successful dry-run and approved runs.
+- Audit logs are written for successful dry-run, approved, and selector-mismatch failed runs.
 - JSON output is available for agent and automation callers.
 
 ## Exit codes

@@ -176,7 +176,7 @@ formctl doctor
 - [x] Write `.formctl/runs/<timestamp>/audit.jsonl` for successful dry-run and approved runs.
 - [x] Log page URL, command flags, redacted values, selector checks, screenshot paths, approval source, and final result for successful runs.
 - [x] Keep logs append-only within a run directory.
-- [ ] Verify: A failed run contains enough evidence to debug without rerunning.
+- [x] Verify: A failed selector-mismatch run contains enough evidence to debug without rerunning.
 - [x] Record missing audit fields in `REVIEW.md`.
 
 ### Task 2.3: Add Agent Instructions

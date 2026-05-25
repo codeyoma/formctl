@@ -53,7 +53,10 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --approve --json --headless");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
+    expect(readme).toContain("failure.json");
+    expect(readme).toContain("failure.png");
     expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.");
+    expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
     expect(readme).toContain("Exit codes");
     expect(readme).toContain("5 approval required");
   });

@@ -304,6 +304,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add failure audit artifacts for selector mismatch runs, including a failure screenshot and structured selector report, without making accidental submissions possible.
 
+### 2026-05-26: Add Selector Mismatch Failure Artifacts
+
+**Date:** 2026-05-26
+
+**Experiment:** Preserve debugging evidence when selector preflight fails.
+
+**Hypothesis:** Selector mismatch failures should be as reviewable as successful runs, while still failing before any field filling or submit click.
+
+**Result:** Passed. Missing and ambiguous selector runs now create `.formctl/runs/<run-id>-failed/` with `failure.json`, `failure.png`, and `audit.jsonl`. JSON mode includes `runId` and artifact paths in the selector mismatch response.
+
+**Evidence:** RED failure was observed first: selector mismatch tests failed because no run directory or JSON artifacts existed. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 24 passing tests.
+
+**Decision:** The audit-log slice now covers successful runs and selector mismatch failures. Other runtime failures can get structured artifacts later after their failure modes are clearer.
+
+**Next Step:** Add `docs/agents.md` with explicit safe-use rules for agents, then post one outreach channel using the existing launch copy.
+
 ### Template
 
 **Date:** YYYY-MM-DD

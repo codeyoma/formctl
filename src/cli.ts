@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 import { parse, stringify } from "yaml";
 
 const HELP_TEXT = `formctl turns browser-recorded web forms into safe CLI commands
@@ -31,6 +31,12 @@ type Workflow = {
 };
 
 type AuditEvent = Record<string, unknown>;
+
+type FailureArtifacts = {
+  screenshot: string;
+  failure: string;
+  audit: string;
+};
 
 function readWorkflow(workflowName: string): { workflow?: Workflow; error?: string; path: string } {
   const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
@@ -70,38 +76,117 @@ function parseOptions(args: string[]): Map<string, string | true> {
   return options;
 }
 
+function buildSelectorMismatchPayload(
+  workflowName: string,
+  selector: string,
+  actualMatches: number,
+): {
+  status: "error";
+  workflow: string;
+  exitCode: 3;
+  submitted: false;
+  requiresApproval: false;
+  error: {
+    code: "selector_mismatch";
+    selector: string;
+    expectedMatches: 1;
+    actualMatches: number;
+    message: string;
+  };
+} {
+  const message = `Selector mismatch: ${selector} expected exactly 1 match, found ${actualMatches}`;
+
+  return {
+    status: "error",
+    workflow: workflowName,
+    exitCode: 3,
+    submitted: false,
+    requiresApproval: false,
+    error: {
+      code: "selector_mismatch",
+      selector,
+      expectedMatches: 1,
+      actualMatches,
+      message,
+    },
+  };
+}
+
 function writeSelectorMismatch(
   output: NodeJS.WritableStream,
   workflowName: string,
   selector: string,
   actualMatches: number,
   wantsJson: boolean,
+  runId?: string,
+  artifacts?: FailureArtifacts,
 ): void {
-  const message = `Selector mismatch: ${selector} expected exactly 1 match, found ${actualMatches}`;
+  const payload = {
+    ...buildSelectorMismatchPayload(workflowName, selector, actualMatches),
+    ...(runId === undefined ? {} : { runId }),
+    ...(artifacts === undefined ? {} : { artifacts }),
+  };
 
   if (wantsJson) {
-    output.write(`${JSON.stringify({
-      status: "error",
-      workflow: workflowName,
-      exitCode: 3,
-      submitted: false,
-      requiresApproval: false,
-      error: {
-        code: "selector_mismatch",
-        selector,
-        expectedMatches: 1,
-        actualMatches,
-        message,
-      },
-    })}\n`);
+    output.write(`${JSON.stringify(payload)}\n`);
     return;
   }
 
-  output.write(`${message}\n`);
+  output.write(`${payload.error.message}\n`);
+  if (runId !== undefined) {
+    output.write(`Run: .formctl/runs/${runId}\n`);
+  }
 }
 
 function appendAuditEvent(auditPath: string, event: AuditEvent): void {
   appendFileSync(auditPath, `${JSON.stringify(event)}\n`);
+}
+
+async function writeSelectorMismatchFailureArtifacts(
+  page: Page,
+  workingDirectory: string,
+  workflow: Workflow,
+  selector: string,
+  actualMatches: number,
+  auditEvents: AuditEvent[],
+): Promise<{ runId: string; artifacts: FailureArtifacts }> {
+  const runId = `${Date.now()}-failed`;
+  const runDirectory = path.join(workingDirectory, ".formctl", "runs", runId);
+  const relativeRunDirectory = `.formctl/runs/${runId}`;
+  const artifacts = {
+    screenshot: `${relativeRunDirectory}/failure.png`,
+    failure: `${relativeRunDirectory}/failure.json`,
+    audit: `${relativeRunDirectory}/audit.jsonl`,
+  };
+  const screenshotPath = path.join(runDirectory, "failure.png");
+  const failurePath = path.join(runDirectory, "failure.json");
+  const auditPath = path.join(runDirectory, "audit.jsonl");
+  const failure = {
+    ...buildSelectorMismatchPayload(workflow.name, selector, actualMatches),
+    runId,
+    artifacts,
+  };
+
+  mkdirSync(runDirectory, { recursive: true });
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  writeFileSync(failurePath, `${JSON.stringify(failure, null, 2)}\n`);
+  auditEvents.push(
+    {
+      event: "screenshot_saved",
+      path: artifacts.screenshot,
+    },
+    {
+      event: "run_finished",
+      status: "error",
+      submitted: false,
+      artifacts,
+    },
+  );
+  for (const event of auditEvents) {
+    appendAuditEvent(auditPath, event);
+  }
+
+  return { runId, artifacts };
 }
 
 export async function run(args: string[], stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream): Promise<number> {
@@ -240,7 +325,23 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
           result: matchCount === 1 ? "ok" : "mismatch",
         });
         if (matchCount !== 1) {
-          writeSelectorMismatch(wantsJson ? stdout : stderr, workflow.name, field.selector, matchCount, wantsJson);
+          const failure = await writeSelectorMismatchFailureArtifacts(
+            page,
+            process.cwd(),
+            workflow,
+            field.selector,
+            matchCount,
+            auditEvents,
+          );
+          writeSelectorMismatch(
+            wantsJson ? stdout : stderr,
+            workflow.name,
+            field.selector,
+            matchCount,
+            wantsJson,
+            failure.runId,
+            failure.artifacts,
+          );
           return 3;
         }
       }
@@ -255,7 +356,23 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         result: submitMatchCount === 1 ? "ok" : "mismatch",
       });
       if (submitMatchCount !== 1) {
-        writeSelectorMismatch(wantsJson ? stdout : stderr, workflow.name, workflow.submit.selector, submitMatchCount, wantsJson);
+        const failure = await writeSelectorMismatchFailureArtifacts(
+          page,
+          process.cwd(),
+          workflow,
+          workflow.submit.selector,
+          submitMatchCount,
+          auditEvents,
+        );
+        writeSelectorMismatch(
+          wantsJson ? stdout : stderr,
+          workflow.name,
+          workflow.submit.selector,
+          submitMatchCount,
+          wantsJson,
+          failure.runId,
+          failure.artifacts,
+        );
         return 3;
       }
 

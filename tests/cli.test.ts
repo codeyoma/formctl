@@ -698,7 +698,84 @@ describe("formctl CLI", () => {
       expect(result.stderr).toContain("input[name=\"total\"]");
       expect(result.stderr).toContain("expected exactly 1 match, found 0");
       expect(fixture.postCount()).toBe(0);
-      expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+      const runsDirectory = path.join(workspace, ".formctl", "runs");
+      const runDirectories = existsSync(runsDirectory)
+        ? readdirSync(runsDirectory)
+        : [];
+      const runId = runDirectories[0] ?? "";
+      const runDirectory = path.join(runsDirectory, runId);
+      const auditPath = path.join(runDirectory, "audit.jsonl");
+      const failurePath = path.join(runDirectory, "failure.json");
+      const screenshotPath = path.join(runDirectory, "failure.png");
+      const auditEvents = readFileSync(auditPath, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+
+      expect(runDirectories).toHaveLength(1);
+      expect(runId).toMatch(/^\d+-failed$/);
+      expect(existsSync(auditPath)).toBe(true);
+      expect(existsSync(failurePath)).toBe(true);
+      expect(existsSync(screenshotPath)).toBe(true);
+      expect(JSON.parse(readFileSync(failurePath, "utf8"))).toEqual({
+        status: "error",
+        workflow: "expense-report",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        runId,
+        error: {
+          code: "selector_mismatch",
+          selector: 'input[name="total"]',
+          expectedMatches: 1,
+          actualMatches: 0,
+          message: 'Selector mismatch: input[name="total"] expected exactly 1 match, found 0',
+        },
+        artifacts: {
+          screenshot: `.formctl/runs/${runId}/failure.png`,
+          failure: `.formctl/runs/${runId}/failure.json`,
+          audit: `.formctl/runs/${runId}/audit.jsonl`,
+        },
+      });
+      expect(auditEvents).toEqual([
+        {
+          event: "run_started",
+          workflow: "expense-report",
+          url: fixture.url,
+          mode: "dry-run",
+          submitted: false,
+          approval: null,
+          command: {
+            dryRun: true,
+            approve: false,
+            headless: true,
+            json: false,
+          },
+        },
+        {
+          event: "selector_check",
+          role: "field",
+          field: "total",
+          selector: 'input[name="total"]',
+          expectedMatches: 1,
+          actualMatches: 0,
+          result: "mismatch",
+        },
+        {
+          event: "screenshot_saved",
+          path: `.formctl/runs/${runId}/failure.png`,
+        },
+        {
+          event: "run_finished",
+          status: "error",
+          submitted: false,
+          artifacts: {
+            screenshot: `.formctl/runs/${runId}/failure.png`,
+            failure: `.formctl/runs/${runId}/failure.json`,
+            audit: `.formctl/runs/${runId}/audit.jsonl`,
+          },
+        },
+      ]);
     } finally {
       await fixture.close();
     }
@@ -743,10 +820,11 @@ describe("formctl CLI", () => {
         "--json",
         "--headless",
       ], workspace);
+      const parsed = JSON.parse(result.stdout);
 
       expect(result.status).toBe(3);
       expect(result.stderr).toBe("");
-      expect(JSON.parse(result.stdout)).toEqual({
+      expect(parsed).toMatchObject({
         status: "error",
         workflow: "expense-report",
         exitCode: 3,
@@ -760,8 +838,16 @@ describe("formctl CLI", () => {
           message: 'Selector mismatch: input[name="total"] expected exactly 1 match, found 0',
         },
       });
+      expect(parsed.runId).toMatch(/^\d+-failed$/);
+      expect(parsed.artifacts).toEqual({
+        screenshot: `.formctl/runs/${parsed.runId}/failure.png`,
+        failure: `.formctl/runs/${parsed.runId}/failure.json`,
+        audit: `.formctl/runs/${parsed.runId}/audit.jsonl`,
+      });
+      expect(existsSync(path.join(workspace, parsed.artifacts.screenshot))).toBe(true);
+      expect(existsSync(path.join(workspace, parsed.artifacts.failure))).toBe(true);
+      expect(existsSync(path.join(workspace, parsed.artifacts.audit))).toBe(true);
       expect(fixture.postCount()).toBe(0);
-      expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
     } finally {
       await fixture.close();
     }
@@ -813,7 +899,17 @@ describe("formctl CLI", () => {
       expect(result.stderr).toContain("input[name=\"amount\"]");
       expect(result.stderr).toContain("expected exactly 1 match, found 2");
       expect(fixture.postCount()).toBe(0);
-      expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+      const runsDirectory = path.join(workspace, ".formctl", "runs");
+      const runDirectories = existsSync(runsDirectory)
+        ? readdirSync(runsDirectory)
+        : [];
+      const runId = runDirectories[0] ?? "";
+
+      expect(runDirectories).toHaveLength(1);
+      expect(runId).toMatch(/^\d+-failed$/);
+      expect(existsSync(path.join(runsDirectory, runId, "audit.jsonl"))).toBe(true);
+      expect(existsSync(path.join(runsDirectory, runId, "failure.json"))).toBe(true);
+      expect(existsSync(path.join(runsDirectory, runId, "failure.png"))).toBe(true);
     } finally {
       await fixture.close();
     }
