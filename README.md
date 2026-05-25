@@ -14,6 +14,14 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
 
 ![formctl demo](docs/assets/demo.svg)
 
+## Trust Artifacts
+
+![Dry-run preview](docs/assets/dry-run-preview.svg)
+
+![Selector mismatch](docs/assets/selector-mismatch.svg)
+
+![Audit log](docs/assets/audit-log.svg)
+
 ## Install
 
 ```bash

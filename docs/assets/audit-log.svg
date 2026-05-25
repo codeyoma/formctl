@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="540" viewBox="0 0 1120 540" role="img" aria-labelledby="title desc">
+  <title id="title">formctl audit log screenshot</title>
+  <desc id="desc">Terminal-style screenshot showing audit.jsonl events for selector checks, redacted file values, screenshots, and final result.</desc>
+  <rect width="1120" height="540" fill="#0b1120"/>
+  <rect x="28" y="28" width="1064" height="484" rx="8" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <circle cx="64" cy="62" r="8" fill="#ef4444"/>
+  <circle cx="92" cy="62" r="8" fill="#f59e0b"/>
+  <circle cx="120" cy="62" r="8" fill="#22c55e"/>
+  <text x="48" y="114" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="18">$ tail .formctl/runs/1779738550249-dry-run/audit.jsonl</text>
+  <text x="48" y="158" fill="#e0f2fe" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"event":"run_started","workflow":"expense-report","mode":"dry-run","submitted":false}</text>
+  <text x="48" y="202" fill="#e0f2fe" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"event":"selector_check","role":"field","field":"amount","result":"ok"}</text>
+  <text x="48" y="246" fill="#e0f2fe" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"event":"selector_check","role":"submit","selector":"button[type=\"submit\"]","result":"ok"}</text>
+  <text x="48" y="290" fill="#e0f2fe" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"event":"fields_resolved","fields":{"amount":"120000","receipt":"[file]"}}</text>
+  <text x="48" y="334" fill="#e0f2fe" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"event":"screenshot_saved","path":".formctl/runs/1779738550249-dry-run/dry-run.png"}</text>
+  <text x="48" y="378" fill="#e0f2fe" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"event":"run_finished","status":"dry-run","submitted":false,"artifacts":{"audit":"audit.jsonl"}}</text>
+  <text x="48" y="444" fill="#94a3b8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">audit.jsonl is append-only per run, so agents can review what was checked before approval.</text>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="540" viewBox="0 0 1120 540" role="img" aria-labelledby="title desc">
+  <title id="title">formctl dry-run preview screenshot</title>
+  <desc id="desc">Terminal-style screenshot showing submit --dry-run JSON output with submitted false and dry-run screenshot artifact.</desc>
+  <rect width="1120" height="540" fill="#0f172a"/>
+  <rect x="28" y="28" width="1064" height="484" rx="8" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <circle cx="64" cy="62" r="8" fill="#ef4444"/>
+  <circle cx="92" cy="62" r="8" fill="#f59e0b"/>
+  <circle cx="120" cy="62" r="8" fill="#22c55e"/>
+  <text x="48" y="114" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="18">$ formctl submit expense-report --amount 120000 --receipt receipt.png --dry-run --json</text>
+  <text x="48" y="158" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">{</text>
+  <text x="76" y="190" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"status":"dry-run",</text>
+  <text x="76" y="222" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"workflow":"expense-report",</text>
+  <text x="76" y="254" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"submitted":false,</text>
+  <text x="76" y="286" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"fields":{"amount":"120000","receipt":"[file]"},</text>
+  <text x="76" y="318" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"artifacts":{</text>
+  <text x="104" y="350" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"screenshot":".formctl/runs/1779738550249-dry-run/dry-run.png",</text>
+  <text x="104" y="382" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"summary":".formctl/runs/1779738550249-dry-run/summary.json",</text>
+  <text x="104" y="414" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"audit":".formctl/runs/1779738550249-dry-run/audit.jsonl"</text>
+  <text x="76" y="446" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">}</text>
+  <text x="48" y="478" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="17">}</text>
+</svg>

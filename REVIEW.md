@@ -450,6 +450,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Authenticate npm and run `npm publish`, or post one prepared outreach channel while npm publishing is pending.
 
+### 2026-05-26: Add Trust Artifact Launch Screenshots
+
+**Date:** 2026-05-26
+
+**Experiment:** Improve the GitHub first impression with visual proof of the core trust contract.
+
+**Hypothesis:** Readers evaluating an automation CLI need to see the dry-run preview, selector mismatch failure, and audit log before they trust the README claim.
+
+**Result:** Passed. README now includes a `Trust Artifacts` section with SVG screenshot cards for dry-run JSON, selector mismatch JSON, and `audit.jsonl` events.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/assets/dry-run-preview.svg` did not exist. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`.
+
+**Decision:** Use static SVG screenshot cards for now because they are reviewable in git and render reliably in README. A 30-60 second GIF or video is still useful before broader outreach.
+
+**Next Step:** Capture or generate the short GIF/video, then post one prepared outreach channel and record which asset drives engagement.
+
 ### Template
 
 **Date:** YYYY-MM-DD

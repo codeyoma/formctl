@@ -88,6 +88,30 @@ describe("release readiness docs", () => {
     expect(demo).toContain("\"status\":\"submitted\"");
   });
 
+  test("README includes trust artifact screenshots for launch readers", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const dryRun = readFileSync(path.join(projectRoot, "docs", "assets", "dry-run-preview.svg"), "utf8");
+    const selectorMismatch = readFileSync(path.join(projectRoot, "docs", "assets", "selector-mismatch.svg"), "utf8");
+    const auditLog = readFileSync(path.join(projectRoot, "docs", "assets", "audit-log.svg"), "utf8");
+
+    expect(readme).toContain("## Trust Artifacts");
+    expect(readme).toContain("![Dry-run preview](docs/assets/dry-run-preview.svg)");
+    expect(readme).toContain("![Selector mismatch](docs/assets/selector-mismatch.svg)");
+    expect(readme).toContain("![Audit log](docs/assets/audit-log.svg)");
+    expect(dryRun).toContain("<svg");
+    expect(dryRun).toContain('"status":"dry-run"');
+    expect(dryRun).toContain('"submitted":false');
+    expect(dryRun).toContain("dry-run.png");
+    expect(selectorMismatch).toContain("<svg");
+    expect(selectorMismatch).toContain("selector_mismatch");
+    expect(selectorMismatch).toContain('"exitCode":3');
+    expect(selectorMismatch).toContain("failure.png");
+    expect(auditLog).toContain("<svg");
+    expect(auditLog).toContain("audit.jsonl");
+    expect(auditLog).toContain("selector_check");
+    expect(auditLog).toContain("[file]");
+  });
+
   test("demo fixture contains the fields used by README commands", () => {
     const expenseReport = readFileSync(path.join(projectRoot, "demo", "expense-report.html"), "utf8");
     const adminInvite = readFileSync(path.join(projectRoot, "demo", "admin-invite.html"), "utf8");

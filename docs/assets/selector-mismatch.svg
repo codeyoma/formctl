@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="540" viewBox="0 0 1120 540" role="img" aria-labelledby="title desc">
+  <title id="title">formctl selector mismatch screenshot</title>
+  <desc id="desc">Terminal-style screenshot showing selector mismatch JSON with exit code 3 and failure artifacts.</desc>
+  <rect width="1120" height="540" fill="#111827"/>
+  <rect x="28" y="28" width="1064" height="484" rx="8" fill="#1f2937" stroke="#475569" stroke-width="2"/>
+  <circle cx="64" cy="62" r="8" fill="#ef4444"/>
+  <circle cx="92" cy="62" r="8" fill="#f59e0b"/>
+  <circle cx="120" cy="62" r="8" fill="#22c55e"/>
+  <text x="48" y="114" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="18">$ formctl submit expense-report --amount 120000 --dry-run --json</text>
+  <text x="48" y="158" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">{</text>
+  <text x="76" y="190" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"status":"error",</text>
+  <text x="76" y="222" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"exitCode":3,</text>
+  <text x="76" y="254" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"submitted":false,</text>
+  <text x="76" y="286" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"error":{"code":"selector_mismatch","selector":"input[name=\"amount\"]"},</text>
+  <text x="76" y="318" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"artifacts":{</text>
+  <text x="104" y="350" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"screenshot":".formctl/runs/1779738550249-failed/failure.png",</text>
+  <text x="104" y="382" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"failure":".formctl/runs/1779738550249-failed/failure.json",</text>
+  <text x="104" y="414" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">"audit":".formctl/runs/1779738550249-failed/audit.jsonl"</text>
+  <text x="76" y="446" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">}</text>
+  <text x="48" y="478" fill="#fecaca" font-family="SFMono-Regular, Consolas, monospace" font-size="17">}</text>
+</svg>
