@@ -17,6 +17,7 @@
 - Add README trust-artifact screenshots for dry-run previews, selector mismatch failures, and audit logs.
 - Add a 40-second README demo video built from the launch asset sequence.
 - Add a workflow request guide and richer feature request intake for launch feedback.
+- Add trust and comparison docs for dry-run, approval, audit logs, selector drift, and security boundaries.
 
 ## 0.1.0 - 2026-05-26
 

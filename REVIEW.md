@@ -500,6 +500,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one prepared outreach channel, record the posted URL and 24-hour metrics, then turn the best workflow request into the next fixture.
 
+### 2026-05-26: Add Trust And Comparison Docs
+
+**Date:** 2026-05-26
+
+**Experiment:** Make security and positioning questions answerable with docs instead of ad hoc explanations.
+
+**Hypothesis:** Before broader outreach, `formctl` should directly answer the predictable objections: whether dry-run truly avoids submit, whether approval is mandatory, what audit logs contain, what happens on selector drift, how secrets are handled, and how this differs from raw Playwright scripts, browser agents, and RPA.
+
+**Result:** Passed. `docs/TRUST.md` now documents dry-run, approval gates, audit logs, selector breakage, secret handling, and what `formctl` does not do. `docs/COMPARISON.md` positions `formctl` against raw Playwright scripts, browser agents, and RPA. README, launch checklist, and announcement copy link to both docs.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/TRUST.md` was missing. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "trust and comparison"`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**Decision:** Keep trust claims conservative. The docs should say what the MVP does and does not do, especially that it does not store credentials, bypass authentication, solve CAPTCHA, silently heal selectors, encrypt local artifacts, or replace human approval.
+
+**Next Step:** Use these docs in the first external outreach reply path, then record which objections still come up after readers see them.
+
 ### Template
 
 **Date:** YYYY-MM-DD

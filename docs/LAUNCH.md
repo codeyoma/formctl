@@ -16,6 +16,7 @@ Public repo: https://github.com/codeyoma/formctl
 ## Demo Media
 
 - [ ] Review `docs/assets/demo.mp4` before posting.
+- [ ] Review `docs/TRUST.md` and `docs/COMPARISON.md` before answering safety or positioning questions.
 - [ ] Keep the terminal readable at 1280x720 or larger.
 - [ ] Avoid real credentials, private URLs, or private forms.
 - [x] Add the demo media to the README after the file is small enough for GitHub.

@@ -350,6 +350,41 @@ describe("release readiness docs", () => {
     expect(featureRequest).toContain("Trust barrier");
   });
 
+  test("trust and comparison docs answer security questions", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const launch = readFileSync(path.join(projectRoot, "docs", "LAUNCH.md"), "utf8");
+    const announcement = readFileSync(path.join(projectRoot, "docs", "ANNOUNCEMENT.md"), "utf8");
+    const trust = readFileSync(path.join(projectRoot, "docs", "TRUST.md"), "utf8");
+    const comparison = readFileSync(path.join(projectRoot, "docs", "COMPARISON.md"), "utf8");
+
+    expect(readme).toContain("[Trust and security notes](docs/TRUST.md)");
+    expect(readme).toContain("[Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md)");
+    expect(launch).toContain("docs/TRUST.md");
+    expect(launch).toContain("docs/COMPARISON.md");
+    expect(announcement).toContain("docs/TRUST.md");
+    expect(announcement).toContain("docs/COMPARISON.md");
+    expect(trust).toContain("# Trust And Security Notes");
+    expect(trust).toContain("Dry-run");
+    expect(trust).toContain("Approval gate");
+    expect(trust).toContain("Audit logs");
+    expect(trust).toContain("Selector breakage");
+    expect(trust).toContain("Secret handling");
+    expect(trust).toContain("What formctl does not do");
+    expect(trust).toContain("does not store credentials");
+    expect(trust).toContain("does not bypass authentication");
+    expect(trust).toContain("does not solve CAPTCHA");
+    expect(trust).toContain("does not silently heal selectors");
+    expect(comparison).toContain("# Comparison");
+    expect(comparison).toContain("formctl");
+    expect(comparison).toContain("Raw Playwright scripts");
+    expect(comparison).toContain("Browser agents");
+    expect(comparison).toContain("RPA");
+    expect(comparison).toContain("dry-run");
+    expect(comparison).toContain("approval");
+    expect(comparison).toContain("audit");
+    expect(comparison).toContain("selector drift");
+  });
+
   test("agent safety guide teaches approval-gated CLI usage", () => {
     const agents = readFileSync(path.join(projectRoot, "docs", "agents.md"), "utf8");
 

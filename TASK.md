@@ -300,11 +300,11 @@ npx formctl doctor
 
 **Goal:** Separate `formctl` from fragile browser macros.
 
-- [ ] Write docs for dry-run, approval, audit logs, selector breakage, and secret handling.
-- [ ] Add a comparison page: `formctl` vs raw Playwright scripts vs browser agents vs RPA.
-- [ ] Add security notes explaining what `formctl` does not do.
-- [ ] Verify: Security questions can be answered by linking to docs.
-- [ ] Record trust objections in `REVIEW.md`.
+- [x] Write docs for dry-run, approval, audit logs, selector breakage, and secret handling.
+- [x] Add a comparison page: `formctl` vs raw Playwright scripts vs browser agents vs RPA.
+- [x] Add security notes explaining what `formctl` does not do.
+- [x] Verify: Security questions can be answered by linking to docs.
+- [x] Record trust objections in `REVIEW.md`.
 
 ### Task 5.5: Weekly Growth Loop
 

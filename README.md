@@ -6,7 +6,7 @@ Record once. Submit safely forever.
 
 `formctl` is for developers, operators, and AI agents that need reliable automation for web forms with no useful API. It records a form workflow, stores it as reviewable YAML, previews changes with dry-run artifacts, and requires explicit approval before real submission.
 
-[Workflow request guide](docs/WORKFLOW_REQUESTS.md)
+[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Trust and security notes](docs/TRUST.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md)
 
 ```bash
 formctl record expense-report https://example.internal/expense
@@ -25,6 +25,8 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
 ![Selector mismatch](docs/assets/selector-mismatch.svg)
 
 ![Audit log](docs/assets/audit-log.svg)
+
+See [Trust and security notes](docs/TRUST.md) for dry-run, approval, audit log, selector breakage, and secret-handling details. See [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) for when `formctl` is the right layer.
 
 ## Install
 

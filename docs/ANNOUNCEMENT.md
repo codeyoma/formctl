@@ -10,6 +10,10 @@ It is for API-less workflows: internal tools, expense forms, admin panels, refun
 
 Demo video: `docs/assets/demo.mp4`
 
+Trust notes: `docs/TRUST.md`
+
+Comparison: `docs/COMPARISON.md`
+
 The safety model is intentionally boring:
 
 - `submit --dry-run` fills the form and captures review artifacts without clicking submit.
