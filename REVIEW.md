@@ -240,6 +240,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Run the launch checklist end-to-end and post the first public announcement, then track channel response in this review log.
 
+### 2026-05-26: Prepare First Announcement
+
+**Date:** 2026-05-26
+
+**Experiment:** Prepare a first public announcement draft and run the launch checklist verification commands.
+
+**Hypothesis:** The first announcement should ask for concrete API-less workflow feedback and point to the public GitHub repo, while the repo remains verifiably healthy.
+
+**Result:** Passed. `docs/ANNOUNCEMENT.md` now includes a primary post, short post, feedback asks, and the verification commands used before launch.
+
+**Evidence:** RED failure was observed first: `docs/ANNOUNCEMENT.md` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 21 passing tests.
+
+**Decision:** The project has a publishable repo and announcement draft. Actual public posting should be tracked as a launch attempt with channel-specific results.
+
+**Next Step:** Post the announcement to one focused developer channel, then append a `Launch Attempts` entry with stars, comments, clicks, installs, issues, or interviews.
+
 ### Template
 
 **Date:** YYYY-MM-DD

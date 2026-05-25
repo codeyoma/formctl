@@ -104,4 +104,21 @@ describe("release readiness docs", () => {
     expect(launch).toContain("First 500 stars");
     expect(launch).toContain("10k stars");
   });
+
+  test("announcement draft is ready for first public launch post", () => {
+    const announcement = readFileSync(path.join(projectRoot, "docs", "ANNOUNCEMENT.md"), "utf8");
+
+    expect(announcement).toContain("# formctl Announcement Draft");
+    expect(announcement).toContain("https://github.com/codeyoma/formctl");
+    expect(announcement).toContain("record a browser form once");
+    expect(announcement).toContain("dry-run screenshots");
+    expect(announcement).toContain("selector mismatch checks");
+    expect(announcement).toContain("approval gates");
+    expect(announcement).toContain("JSON output for agents");
+    expect(announcement).toContain("What I want feedback on");
+    expect(announcement).toContain("API-less workflows");
+    expect(announcement).toContain("Launch checklist run");
+    expect(announcement).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
+    expect(announcement).toContain("npx tsc --noEmit");
+  });
 });
