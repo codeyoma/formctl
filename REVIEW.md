@@ -256,6 +256,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the announcement to one focused developer channel, then append a `Launch Attempts` entry with stars, comments, clicks, installs, issues, or interviews.
 
+### 2026-05-26: Cut v0.1.0 GitHub Release
+
+**Date:** 2026-05-26
+
+**Experiment:** Create the first public GitHub Release as the initial focused launch channel.
+
+**Hypothesis:** A versioned GitHub Release gives the public repo a concrete launch artifact before posting to broader communities.
+
+**Result:** Passed. Package metadata now says `0.1.0`, `CHANGELOG.md` documents the first public MVP, and GitHub Release `v0.1.0` is live.
+
+**Evidence:** RED failure was observed first: package version was `0.0.0` and `CHANGELOG.md` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 22 passing tests. `gh release create v0.1.0 --title "formctl v0.1.0" --notes-file CHANGELOG.md` created https://github.com/codeyoma/formctl/releases/tag/v0.1.0.
+
+**Decision:** Treat GitHub Releases as the first controlled launch channel. Broader community posts should link to the release or README after initial repo rendering is stable.
+
+**Next Step:** Share the announcement draft to one external developer channel and measure stars, comments, clicks, issues, or interviews.
+
 ### Template
 
 **Date:** YYYY-MM-DD
@@ -327,6 +343,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 ---
 
 ## Launch Attempts
+
+### 2026-05-26: GitHub Release v0.1.0
+
+**Date:** 2026-05-26
+
+**Channel:** GitHub Release
+
+**Message:** First public MVP release: record live forms, dry-run with artifacts, require approval for submit, fail on selector drift, and expose JSON output for agents.
+
+**Result:** Release created at https://github.com/codeyoma/formctl/releases/tag/v0.1.0. Initial metrics not yet measured after publication.
+
+**What Worked:** The repo already had README demo media, release-readiness tests, changelog, issue templates, and a launch announcement draft, so creating a release was low friction.
+
+**What Failed:** This is not yet a discovery channel by itself; it needs one external post or direct outreach to generate feedback.
+
+**Next Iteration:** Post the prepared announcement to one focused developer channel and record response metrics.
 
 ### Template
 
