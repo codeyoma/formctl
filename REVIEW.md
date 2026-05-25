@@ -674,13 +674,29 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Hypothesis:** Setting `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"` at workflow scope should opt `actions/checkout@v4` and `actions/setup-node@v4` into the Node.js 24 action runtime without changing the project test Node version.
 
-**Result:** Passed locally. `.github/workflows/ci.yml` now sets the opt-in env var at workflow scope while keeping the test matrix on Node 22.
+**Result:** Partial. `.github/workflows/ci.yml` set the opt-in env var at workflow scope while keeping the test matrix on Node 22, and the pushed CI run passed, but GitHub still emitted an annotation because the v4 actions target Node.js 20 and were only being forced onto Node.js 24.
 
 **Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because the CI workflow did not contain `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"`. Focused GREEN passed after adding the env var.
 
-**Decision:** Prefer the workflow-scope opt-in over changing action versions right now because the warning explicitly offered this path and it keeps the CI change minimal.
+**Decision:** The workflow-scope opt-in is not enough to remove the annotation. The next change should upgrade the action versions themselves.
 
-**Next Step:** Watch the pushed GitHub Actions run and confirm the Node.js 20 deprecation annotation disappears.
+**Next Step:** Upgrade `actions/checkout` and `actions/setup-node` to versions whose action metadata uses `node24`.
+
+### 2026-05-26: Upgrade CI Actions To Node 24 Targets
+
+**Date:** 2026-05-26
+
+**Experiment:** Remove the remaining GitHub Actions Node.js 20 annotation by upgrading action versions instead of forcing the runtime.
+
+**Hypothesis:** Since `actions/checkout@v5` and `actions/setup-node@v5` both declare `using: node24` in `action.yml`, switching from v4 to v5 should remove the target-Node.js-20 annotation while keeping the project test runtime on Node 22.
+
+**Result:** Pending push verification. `.github/workflows/ci.yml` now uses `actions/checkout@v5` and `actions/setup-node@v5`, and the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` env var was removed.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because CI still used `actions/checkout@v4`, `actions/setup-node@v4`, and the force env var. GitHub API checks confirmed both v5 action metadata files declare `using: node24`. Focused GREEN passed after upgrading both actions.
+
+**Decision:** Use v5 instead of v6 for now because it is the smallest major-version move that targets Node 24.
+
+**Next Step:** Watch the pushed GitHub Actions run and confirm there is no Node.js 20 annotation.
 
 ### Template
 

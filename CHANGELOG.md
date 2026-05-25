@@ -27,7 +27,7 @@
 - Add a dry-run-safe MCP server binary, `formctl-mcp`, for agent clients.
 - Add an MCP setup guide with local-checkout and npm client configuration snippets.
 - Add the MCP wrapper test to CI so the agent-safe tool surface cannot regress unnoticed.
-- Opt CI into the GitHub Actions Node.js 24 JavaScript action runtime to avoid Node.js 20 deprecation warnings.
+- Upgrade GitHub Actions checkout/setup-node steps to Node.js 24-target action versions.
 
 ## 0.1.0 - 2026-05-26
 
