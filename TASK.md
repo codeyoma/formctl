@@ -173,11 +173,11 @@ formctl doctor
 
 **Goal:** Make every run reviewable after the fact.
 
-- [ ] Write `.formctl/runs/<timestamp>/audit.jsonl`.
-- [ ] Log page URL, command flags, redacted values, selector checks, screenshot paths, approval source, and final result.
-- [ ] Keep logs append-only within a run directory.
+- [x] Write `.formctl/runs/<timestamp>/audit.jsonl` for successful dry-run and approved runs.
+- [x] Log page URL, command flags, redacted values, selector checks, screenshot paths, approval source, and final result for successful runs.
+- [x] Keep logs append-only within a run directory.
 - [ ] Verify: A failed run contains enough evidence to debug without rerunning.
-- [ ] Record missing audit fields in `REVIEW.md`.
+- [x] Record missing audit fields in `REVIEW.md`.
 
 ### Task 2.3: Add Agent Instructions
 
@@ -347,4 +347,3 @@ npx formctl doctor
 - Credential vault.
 - Smart selector healing that silently changes behavior.
 - Automating real government or banking sites in examples.
-

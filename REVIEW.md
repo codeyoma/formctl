@@ -288,6 +288,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the Hacker News or Reddit r/commandline draft, update `docs/OUTREACH.md` with the posted URL and 24-hour metric baseline, and append the result under `Launch Attempts`.
 
+### 2026-05-26: Add Successful Run Audit Logs
+
+**Date:** 2026-05-26
+
+**Experiment:** Add append-only `audit.jsonl` artifacts for successful dry-run and approved submit runs.
+
+**Hypothesis:** Before broader launch, the product should back up its trust positioning with a machine-readable audit trail that records what was checked, redacted, previewed, and finally produced.
+
+**Result:** Passed for successful runs. `submit --dry-run` and `submit --approve` now write `.formctl/runs/<run-id>/audit.jsonl`, and both `summary.json` and `submit --json` expose the audit artifact path.
+
+**Evidence:** RED failure was observed first: the audit-log test failed with `ENOENT` because `audit.jsonl` did not exist. README readiness also failed until `audit.jsonl` was documented. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the suite now has 24 passing tests.
+
+**Decision:** Successful-run audit logs are enough to support the current README promise, but selector-mismatch failures still intentionally avoid creating run directories.
+
+**Next Step:** Add failure audit artifacts for selector mismatch runs, including a failure screenshot and structured selector report, without making accidental submissions possible.
+
 ### Template
 
 **Date:** YYYY-MM-DD

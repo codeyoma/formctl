@@ -49,8 +49,11 @@ npm run formctl -- submit expense-report --amount 120000 --approve --json --head
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`
+- `audit.jsonl`
 - `dry-run.png` for previews
 - `post-submit.png` for approved submissions
+
+Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.
 
 ## Commands
 
@@ -75,6 +78,7 @@ Workflow files are stored at:
 - Recorded selectors must match exactly one element.
 - Missing or ambiguous selectors fail before filling fields or submitting.
 - File inputs are redacted as `[file]` in summaries.
+- Audit logs are written for successful dry-run and approved runs.
 - JSON output is available for agent and automation callers.
 
 ## Exit codes

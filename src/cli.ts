@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 import { parse, stringify } from "yaml";
@@ -29,6 +29,8 @@ type Workflow = {
     selector: string;
   };
 };
+
+type AuditEvent = Record<string, unknown>;
 
 function readWorkflow(workflowName: string): { workflow?: Workflow; error?: string; path: string } {
   const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
@@ -96,6 +98,10 @@ function writeSelectorMismatch(
   }
 
   output.write(`${message}\n`);
+}
+
+function appendAuditEvent(auditPath: string, event: AuditEvent): void {
+  appendFileSync(auditPath, `${JSON.stringify(event)}\n`);
 }
 
 export async function run(args: string[], stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream): Promise<number> {
@@ -202,13 +208,37 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
     const runDirectory = path.join(process.cwd(), ".formctl", "runs", runId);
     const relativeRunDirectory = `.formctl/runs/${runId}`;
     const filledFields: Record<string, string> = {};
+    const auditEvents: AuditEvent[] = [];
 
     try {
       const page = await browser.newPage();
       await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
+      auditEvents.push({
+        event: "run_started",
+        workflow: workflow.name,
+        url: workflow.url,
+        mode: runStatus,
+        submitted: !isDryRun,
+        approval: isDryRun ? null : "flag",
+        command: {
+          dryRun: isDryRun,
+          approve: isApproved,
+          headless: flags.has("--headless"),
+          json: wantsJson,
+        },
+      });
 
       for (const field of workflow.fields) {
         const matchCount = await page.locator(field.selector).count();
+        auditEvents.push({
+          event: "selector_check",
+          role: "field",
+          field: field.name,
+          selector: field.selector,
+          expectedMatches: 1,
+          actualMatches: matchCount,
+          result: matchCount === 1 ? "ok" : "mismatch",
+        });
         if (matchCount !== 1) {
           writeSelectorMismatch(wantsJson ? stdout : stderr, workflow.name, field.selector, matchCount, wantsJson);
           return 3;
@@ -216,6 +246,14 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
       }
 
       const submitMatchCount = await page.locator(workflow.submit.selector).count();
+      auditEvents.push({
+        event: "selector_check",
+        role: "submit",
+        selector: workflow.submit.selector,
+        expectedMatches: 1,
+        actualMatches: submitMatchCount,
+        result: submitMatchCount === 1 ? "ok" : "mismatch",
+      });
       if (submitMatchCount !== 1) {
         writeSelectorMismatch(wantsJson ? stdout : stderr, workflow.name, workflow.submit.selector, submitMatchCount, wantsJson);
         return 3;
@@ -239,12 +277,22 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
       }
 
       mkdirSync(runDirectory, { recursive: true });
+      auditEvents.push({
+        event: "fields_resolved",
+        fields: filledFields,
+      });
       if (!isDryRun) {
         await page.locator(workflow.submit.selector).click();
       }
 
       const screenshotPath = path.join(runDirectory, screenshotFileName);
       const summaryPath = path.join(runDirectory, "summary.json");
+      const auditPath = path.join(runDirectory, "audit.jsonl");
+      const artifacts = {
+        screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
+        summary: `${relativeRunDirectory}/summary.json`,
+        audit: `${relativeRunDirectory}/audit.jsonl`,
+      };
       await page.screenshot({ path: screenshotPath, fullPage: true });
       const summary = {
         status: runStatus,
@@ -252,12 +300,24 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         submitted: !isDryRun,
         ...(isDryRun ? {} : { approval: "flag" }),
         fields: filledFields,
-        artifacts: {
-          screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
-          summary: `${relativeRunDirectory}/summary.json`,
-        },
+        artifacts,
       };
       writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`);
+      auditEvents.push(
+        {
+          event: "screenshot_saved",
+          path: artifacts.screenshot,
+        },
+        {
+          event: "run_finished",
+          status: runStatus,
+          submitted: !isDryRun,
+          artifacts,
+        },
+      );
+      for (const event of auditEvents) {
+        appendAuditEvent(auditPath, event);
+      }
 
       if (wantsJson) {
         stdout.write(`${JSON.stringify({

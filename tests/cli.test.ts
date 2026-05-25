@@ -253,6 +253,7 @@ describe("formctl CLI", () => {
       const runId = runDirectories[0] ?? "";
       const summaryPath = path.join(runDirectory, "summary.json");
       const screenshotPath = path.join(runDirectory, "dry-run.png");
+      const auditPath = path.join(runDirectory, "audit.jsonl");
 
       expect(result.status).toBe(0);
       expect(result.stderr).toBe("");
@@ -261,6 +262,7 @@ describe("formctl CLI", () => {
       expect(runDirectories).toHaveLength(1);
       expect(existsSync(summaryPath)).toBe(true);
       expect(existsSync(screenshotPath)).toBe(true);
+      expect(existsSync(auditPath)).toBe(true);
       expect(JSON.parse(readFileSync(summaryPath, "utf8"))).toEqual({
         status: "dry-run",
         workflow: "expense-report",
@@ -272,8 +274,131 @@ describe("formctl CLI", () => {
         artifacts: {
           screenshot: `.formctl/runs/${runId}/dry-run.png`,
           summary: `.formctl/runs/${runId}/summary.json`,
+          audit: `.formctl/runs/${runId}/audit.jsonl`,
         },
       });
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  test("submit --dry-run writes an audit log with redacted values and artifacts", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <input name="receipt" type="file" />
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-audit-dry-run-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(path.join(workspace, "receipt.txt"), "receipt fixture\n");
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "  - name: receipt",
+        "    selector: input[name=\"receipt\"]",
+        "    type: file",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--receipt",
+        "receipt.txt",
+        "--dry-run",
+        "--headless",
+      ], workspace);
+      const runDirectories = readdirSync(path.join(workspace, ".formctl", "runs"));
+      const runId = runDirectories[0] ?? "";
+      const auditPath = path.join(workspace, ".formctl", "runs", runId, "audit.jsonl");
+      const auditEvents = readFileSync(auditPath, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+
+      expect(result.status).toBe(0);
+      expect(auditEvents).toEqual([
+        {
+          event: "run_started",
+          workflow: "expense-report",
+          url: fixture.url,
+          mode: "dry-run",
+          submitted: false,
+          approval: null,
+          command: {
+            dryRun: true,
+            approve: false,
+            headless: true,
+            json: false,
+          },
+        },
+        {
+          event: "selector_check",
+          role: "field",
+          field: "amount",
+          selector: 'input[name="amount"]',
+          expectedMatches: 1,
+          actualMatches: 1,
+          result: "ok",
+        },
+        {
+          event: "selector_check",
+          role: "field",
+          field: "receipt",
+          selector: 'input[name="receipt"]',
+          expectedMatches: 1,
+          actualMatches: 1,
+          result: "ok",
+        },
+        {
+          event: "selector_check",
+          role: "submit",
+          selector: 'button[type="submit"]',
+          expectedMatches: 1,
+          actualMatches: 1,
+          result: "ok",
+        },
+        {
+          event: "fields_resolved",
+          fields: {
+            amount: "120000",
+            receipt: "[file]",
+          },
+        },
+        {
+          event: "screenshot_saved",
+          path: `.formctl/runs/${runId}/dry-run.png`,
+        },
+        {
+          event: "run_finished",
+          status: "dry-run",
+          submitted: false,
+          artifacts: {
+            screenshot: `.formctl/runs/${runId}/dry-run.png`,
+            summary: `.formctl/runs/${runId}/summary.json`,
+            audit: `.formctl/runs/${runId}/audit.jsonl`,
+          },
+        },
+      ]);
     } finally {
       await fixture.close();
     }
@@ -336,6 +461,7 @@ describe("formctl CLI", () => {
       expect(parsed.artifacts).toEqual({
         screenshot: `.formctl/runs/${parsed.runId}/dry-run.png`,
         summary: `.formctl/runs/${parsed.runId}/summary.json`,
+        audit: `.formctl/runs/${parsed.runId}/audit.jsonl`,
       });
       expect(fixture.postCount()).toBe(0);
     } finally {
@@ -498,6 +624,7 @@ describe("formctl CLI", () => {
       const runId = runDirectories[0] ?? "";
       const summaryPath = path.join(runDirectory, "summary.json");
       const screenshotPath = path.join(runDirectory, "post-submit.png");
+      const auditPath = path.join(runDirectory, "audit.jsonl");
 
       expect(result.status).toBe(0);
       expect(result.stderr).toBe("");
@@ -506,6 +633,7 @@ describe("formctl CLI", () => {
       expect(runDirectories).toHaveLength(1);
       expect(existsSync(summaryPath)).toBe(true);
       expect(existsSync(screenshotPath)).toBe(true);
+      expect(existsSync(auditPath)).toBe(true);
       expect(JSON.parse(readFileSync(summaryPath, "utf8"))).toEqual({
         status: "submitted",
         workflow: "expense-report",
@@ -517,6 +645,7 @@ describe("formctl CLI", () => {
         artifacts: {
           screenshot: `.formctl/runs/${runId}/post-submit.png`,
           summary: `.formctl/runs/${runId}/summary.json`,
+          audit: `.formctl/runs/${runId}/audit.jsonl`,
         },
       });
     } finally {
