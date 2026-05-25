@@ -314,6 +314,7 @@ describe("release readiness docs", () => {
     expect(packageJson.scripts["test:replay"]).toBe("vitest run tests/demo-replay.test.ts");
     expect(ci).toContain("pull_request");
     expect(ci).toContain("npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts");
+    expect(ci).toContain("tests/mcp.test.ts");
     expect(ci).toContain("npm run test:replay");
     expect(ci).toContain("npm run build");
     expect(ci).toContain("npx tsc --noEmit");

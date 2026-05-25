@@ -650,6 +650,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If agent users ask for a named client, add a tested client-specific snippet after verifying that client's current config format.
 
+### 2026-05-26: Add MCP Test To CI
+
+**Date:** 2026-05-26
+
+**Experiment:** Close the CI gap introduced by adding `tests/mcp.test.ts`.
+
+**Hypothesis:** If the MCP wrapper is part of the agent safety promise, CI must run its test suite separately so tool exposure and reserved-flag guards cannot regress unnoticed.
+
+**Result:** Passed. `.github/workflows/ci.yml` now runs `npm test -- --run tests/mcp.test.ts` after the existing release-readiness suite.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because `.github/workflows/ci.yml` did not contain `tests/mcp.test.ts`. Focused GREEN passed after adding the CI step.
+
+**Decision:** Keep the MCP CI step separate from the browser-backed suite so it is easy to identify MCP contract failures in GitHub Actions logs.
+
+**Next Step:** Watch the next GitHub Actions run after push; if startup time becomes noisy, merge the MCP test into the main vitest invocation later.
+
 ### Template
 
 **Date:** YYYY-MM-DD

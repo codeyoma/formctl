@@ -18,6 +18,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts
+      - run: npm test -- --run tests/mcp.test.ts
       - run: npm run test:replay
       - run: npm run build
       - run: npx tsc --noEmit
