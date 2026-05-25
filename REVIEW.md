@@ -690,13 +690,13 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Hypothesis:** Since `actions/checkout@v5` and `actions/setup-node@v5` both declare `using: node24` in `action.yml`, switching from v4 to v5 should remove the target-Node.js-20 annotation while keeping the project test runtime on Node 22.
 
-**Result:** Pending push verification. `.github/workflows/ci.yml` now uses `actions/checkout@v5` and `actions/setup-node@v5`, and the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` env var was removed.
+**Result:** Passed. `.github/workflows/ci.yml` now uses `actions/checkout@v5` and `actions/setup-node@v5`, and the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` env var was removed. The pushed GitHub Actions run completed without the previous Node.js 20 annotation.
 
-**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because CI still used `actions/checkout@v4`, `actions/setup-node@v4`, and the force env var. GitHub API checks confirmed both v5 action metadata files declare `using: node24`. Focused GREEN passed after upgrading both actions.
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because CI still used `actions/checkout@v4`, `actions/setup-node@v4`, and the force env var. GitHub API checks confirmed both v5 action metadata files declare `using: node24`. Focused GREEN passed after upgrading both actions. Push verification passed with GitHub Actions run `26424059093`.
 
 **Decision:** Use v5 instead of v6 for now because it is the smallest major-version move that targets Node 24.
 
-**Next Step:** Watch the pushed GitHub Actions run and confirm there is no Node.js 20 annotation.
+**Next Step:** Return to first-run reliability, human posting, or npm publish once credentials are available.
 
 ### Template
 
