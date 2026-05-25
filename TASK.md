@@ -280,7 +280,7 @@ npx formctl doctor
 
 **Goal:** Convert user pain into star-worthy demos.
 
-- [ ] Add examples for expense reports, admin invites, refund requests, CRM updates, and compliance attestations. Expense report, admin invite, support refund, and vendor onboarding examples are done.
+- [ ] Add examples for expense reports, admin invites, refund requests, CRM updates, and compliance attestations. Expense report, admin invite, support refund, vendor onboarding, and CRM update examples are done.
 - [ ] Keep examples local or mock-backed to avoid legal and credential issues.
 - [ ] Write short posts showing each workflow before and after `formctl`.
 - [ ] Verify: At least one example produces repeated inbound interest.

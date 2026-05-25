@@ -534,6 +534,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Use the agent article in Reddit r/LocalLLaMA or direct outreach, then record agent-specific blockers and workflow leads.
 
+### 2026-05-26: Add CRM Update Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Add a CRM update demo as the next local example for API-less internal tools.
+
+**Hypothesis:** A CRM account update fixture broadens the demo set beyond finance/procurement/vendor workflows and gives outreach readers another common "no useful API" form to map onto their own work.
+
+**Result:** Passed. `demo/crm-update.html` now covers account name, pipeline stage, owner email, next contact date, priority flag, notes, and approved submit routing. README includes record and dry-run commands, and replay tests cover record, dry-run without submit, and approved submit exactly once.
+
+**Evidence:** RED failures were observed first: release-readiness and replay both failed because `demo/crm-update.html` was missing. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "demo fixture"` and `npm run test:replay`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**Decision:** Keep examples local and mock-backed. This avoids legal, credential, and site-permission issues while still showing realistic internal-tool workflows.
+
+**Next Step:** Add the compliance attestation fixture, then write before/after posts for CRM update and compliance attestation.
+
 ### Template
 
 **Date:** YYYY-MM-DD

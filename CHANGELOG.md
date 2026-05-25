@@ -13,6 +13,7 @@
 - Add demo replay tests and a CI workflow that runs them on pull requests.
 - Add browser mode defaults and `--headed`/`--headless` overrides for browser-backed commands.
 - Add a local procurement approval demo fixture with an open modal, two visible steps, and a confirmation page.
+- Add a local CRM update demo fixture with pipeline stage, owner email, next contact date, priority flag, and notes.
 - Add npm package build metadata, install docs, and tarball install verification.
 - Add README trust-artifact screenshots for dry-run previews, selector mismatch failures, and audit logs.
 - Add a 40-second README demo video built from the launch asset sequence.

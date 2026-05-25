@@ -114,6 +114,34 @@ const replayCases: ReplayCase[] = [
       urgent: "true",
     },
   },
+  {
+    name: "crm-update",
+    route: "/crm-update",
+    submitRoute: "/crm-update/submit",
+    htmlFile: "crm-update.html",
+    args: [
+      "--accountName",
+      "Northwind Traders",
+      "--stage",
+      "renewal",
+      "--ownerEmail",
+      "ae@example.com",
+      "--nextContactDate",
+      "2026-06-03",
+      "--priority",
+      "true",
+      "--notes",
+      "Renewal risk flagged",
+    ],
+    expectedFields: {
+      accountName: "Northwind Traders",
+      stage: "renewal",
+      ownerEmail: "ae@example.com",
+      nextContactDate: "2026-06-03",
+      priority: "true",
+      notes: "Renewal risk flagged",
+    },
+  },
 ];
 
 function runFormctlAsync(args: string[], cwd: string) {

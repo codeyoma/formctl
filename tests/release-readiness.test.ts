@@ -104,6 +104,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- submit vendor-onboarding --legalName \"Acme Supplies\" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes \"Approved vendor\" --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- record procurement-approval http://127.0.0.1:4173/procurement-approval --headless");
     expect(readme).toContain("npm run formctl -- submit procurement-approval --requestorEmail buyer@example.com --department finance --amount 98000 --neededBy 2026-06-01 --justification \"Quarterly laptop refresh\" --urgent true --dry-run --json --headless");
+    expect(readme).toContain("npm run formctl -- record crm-update http://127.0.0.1:4173/crm-update --headless");
+    expect(readme).toContain("npm run formctl -- submit crm-update --accountName \"Northwind Traders\" --stage renewal --ownerEmail ae@example.com --nextContactDate 2026-06-03 --priority true --notes \"Renewal risk flagged\" --dry-run --json --headless");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -174,6 +176,7 @@ describe("release readiness docs", () => {
     const supportRefund = readFileSync(path.join(projectRoot, "demo", "support-refund.html"), "utf8");
     const vendorOnboarding = readFileSync(path.join(projectRoot, "demo", "vendor-onboarding.html"), "utf8");
     const procurementApproval = readFileSync(path.join(projectRoot, "demo", "procurement-approval.html"), "utf8");
+    const crmUpdate = readFileSync(path.join(projectRoot, "demo", "crm-update.html"), "utf8");
     const taxForm = readFileSync(path.join(projectRoot, "demo", "tax-form.txt"), "utf8");
     const server = readFileSync(path.join(projectRoot, "demo", "server.mjs"), "utf8");
 
@@ -227,6 +230,19 @@ describe("release readiness docs", () => {
     expect(procurementApproval).toContain("<textarea");
     expect(procurementApproval).toContain('name="urgent"');
     expect(procurementApproval).toContain('type="checkbox"');
+    expect(crmUpdate).toContain('action="/crm-update/submit"');
+    expect(crmUpdate).toContain('name="accountName"');
+    expect(crmUpdate).toContain('name="stage"');
+    expect(crmUpdate).toContain("<select");
+    expect(crmUpdate).toContain('value="renewal"');
+    expect(crmUpdate).toContain('name="ownerEmail"');
+    expect(crmUpdate).toContain('type="email"');
+    expect(crmUpdate).toContain('name="nextContactDate"');
+    expect(crmUpdate).toContain('type="date"');
+    expect(crmUpdate).toContain('name="priority"');
+    expect(crmUpdate).toContain('type="checkbox"');
+    expect(crmUpdate).toContain('name="notes"');
+    expect(crmUpdate).toContain("<textarea");
     expect(taxForm).toContain("Sample vendor tax form");
     expect(server).toContain('"/admin-invite"');
     expect(server).toContain('"/admin-invite/submit"');
@@ -237,6 +253,9 @@ describe("release readiness docs", () => {
     expect(server).toContain('"/procurement-approval"');
     expect(server).toContain('"/procurement-approval/submit"');
     expect(server).toContain("Procurement approved");
+    expect(server).toContain('"/crm-update"');
+    expect(server).toContain('"/crm-update/submit"');
+    expect(server).toContain("CRM updated");
   });
 
   test("GitHub issue templates collect reproducible form automation reports", () => {

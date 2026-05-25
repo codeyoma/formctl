@@ -96,6 +96,13 @@ npm run formctl -- record procurement-approval http://127.0.0.1:4173/procurement
 npm run formctl -- submit procurement-approval --requestorEmail buyer@example.com --department finance --amount 98000 --neededBy 2026-06-01 --justification "Quarterly laptop refresh" --urgent true --dry-run --json --headless
 ```
 
+Try a CRM update fixture with a pipeline stage, owner, next contact date, priority flag, and notes:
+
+```bash
+npm run formctl -- record crm-update http://127.0.0.1:4173/crm-update --headless
+npm run formctl -- submit crm-update --accountName "Northwind Traders" --stage renewal --ownerEmail ae@example.com --nextContactDate 2026-06-03 --priority true --notes "Renewal risk flagged" --dry-run --json --headless
+```
+
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`
