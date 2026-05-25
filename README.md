@@ -60,6 +60,13 @@ npm run formctl -- record support-refund http://127.0.0.1:4173/support-refund --
 npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason "Duplicate charge" --dry-run --json --headless
 ```
 
+Try a vendor onboarding fixture with file upload, select, checkbox, date, and notes:
+
+```bash
+npm run formctl -- record vendor-onboarding http://127.0.0.1:4173/vendor-onboarding --headless
+npm run formctl -- submit vendor-onboarding --legalName "Acme Supplies" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes "Approved vendor" --dry-run --json --headless
+```
+
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`

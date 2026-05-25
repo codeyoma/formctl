@@ -368,6 +368,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one outreach channel using the support-refund/internal-tool angle, or add a vendor onboarding fixture if external posting is still unavailable.
 
+### 2026-05-26: Add Vendor Onboarding Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Complete the Phase 3.1 fixture set with a vendor onboarding workflow.
+
+**Hypothesis:** Vendor onboarding is a strong demo for API-less internal tools because it combines file upload, select, checkbox, date, URL, and notes fields in one workflow.
+
+**Result:** Passed. `demo/vendor-onboarding.html` now covers legal name, website, tax form upload, risk tier, NDA checkbox, onboarding date, and notes. The demo server serves `/vendor-onboarding` and `/vendor-onboarding/submit`, README includes vendor-onboarding record and dry-run commands, and `demo/tax-form.txt` provides a local file input fixture.
+
+**Evidence:** RED failure was observed first: release-readiness failed because README lacked vendor-onboarding commands and `demo/vendor-onboarding.html` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and a local demo smoke test for vendor-onboarding record, dry-run, and approved submit; the suite now has 27 passing tests.
+
+**Decision:** The core fixture set is complete for Phase 3.1. Modal and true multi-step workflows remain separate reliability work because they need product behavior beyond static form replay.
+
+**Next Step:** Add replay tests that load the committed fixture workflows or post one outreach channel with the four-fixture demo set.
+
 ### Template
 
 **Date:** YYYY-MM-DD

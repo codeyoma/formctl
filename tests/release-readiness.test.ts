@@ -55,6 +55,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- record support-refund http://127.0.0.1:4173/support-refund --headless");
     expect(readme).toContain("npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason \"Duplicate charge\" --dry-run --json --headless");
+    expect(readme).toContain("npm run formctl -- record vendor-onboarding http://127.0.0.1:4173/vendor-onboarding --headless");
+    expect(readme).toContain("npm run formctl -- submit vendor-onboarding --legalName \"Acme Supplies\" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes \"Approved vendor\" --dry-run --json --headless");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -83,6 +85,8 @@ describe("release readiness docs", () => {
     const expenseReport = readFileSync(path.join(projectRoot, "demo", "expense-report.html"), "utf8");
     const adminInvite = readFileSync(path.join(projectRoot, "demo", "admin-invite.html"), "utf8");
     const supportRefund = readFileSync(path.join(projectRoot, "demo", "support-refund.html"), "utf8");
+    const vendorOnboarding = readFileSync(path.join(projectRoot, "demo", "vendor-onboarding.html"), "utf8");
+    const taxForm = readFileSync(path.join(projectRoot, "demo", "tax-form.txt"), "utf8");
     const server = readFileSync(path.join(projectRoot, "demo", "server.mjs"), "utf8");
 
     expect(expenseReport).toContain('action="/submit"');
@@ -104,10 +108,27 @@ describe("release readiness docs", () => {
     expect(supportRefund).toContain('type="date"');
     expect(supportRefund).toContain('name="reason"');
     expect(supportRefund).toContain("<textarea");
+    expect(vendorOnboarding).toContain('action="/vendor-onboarding/submit"');
+    expect(vendorOnboarding).toContain('name="legalName"');
+    expect(vendorOnboarding).toContain('name="website"');
+    expect(vendorOnboarding).toContain('type="url"');
+    expect(vendorOnboarding).toContain('name="taxForm"');
+    expect(vendorOnboarding).toContain('type="file"');
+    expect(vendorOnboarding).toContain('name="riskTier"');
+    expect(vendorOnboarding).toContain("<select");
+    expect(vendorOnboarding).toContain('name="ndaSigned"');
+    expect(vendorOnboarding).toContain('type="checkbox"');
+    expect(vendorOnboarding).toContain('name="onboardingDate"');
+    expect(vendorOnboarding).toContain('type="date"');
+    expect(vendorOnboarding).toContain('name="notes"');
+    expect(vendorOnboarding).toContain("<textarea");
+    expect(taxForm).toContain("Sample vendor tax form");
     expect(server).toContain('"/admin-invite"');
     expect(server).toContain('"/admin-invite/submit"');
     expect(server).toContain('"/support-refund"');
     expect(server).toContain('"/support-refund/submit"');
+    expect(server).toContain('"/vendor-onboarding"');
+    expect(server).toContain('"/vendor-onboarding/submit"');
   });
 
   test("GitHub issue templates collect reproducible form automation reports", () => {

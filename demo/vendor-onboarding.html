@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Vendor Onboarding Demo</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        max-width: 42rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 1rem 0;
+      }
+
+      input,
+      select,
+      textarea {
+        display: block;
+        font: inherit;
+        margin-top: 0.35rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+
+      input[type="checkbox"] {
+        display: inline-block;
+        margin-right: 0.4rem;
+        width: auto;
+      }
+
+      textarea {
+        min-height: 6rem;
+      }
+
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Vendor onboarding</h1>
+    <form method="post" action="/vendor-onboarding/submit" aria-label="Vendor onboarding">
+      <label>
+        Legal name
+        <input name="legalName" type="text" required />
+      </label>
+      <label>
+        Website
+        <input name="website" type="url" required />
+      </label>
+      <label>
+        Tax form
+        <input name="taxForm" type="file" required />
+      </label>
+      <label>
+        Risk tier
+        <select name="riskTier" required>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </label>
+      <label>
+        <input name="ndaSigned" type="checkbox" />
+        NDA signed
+      </label>
+      <label>
+        Onboarding date
+        <input name="onboardingDate" type="date" required />
+      </label>
+      <label>
+        Notes
+        <textarea name="notes"></textarea>
+      </label>
+      <button type="submit">Onboard vendor</button>
+    </form>
+  </body>
+</html>
