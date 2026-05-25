@@ -142,6 +142,10 @@ function appendAuditEvent(auditPath: string, event: AuditEvent): void {
   appendFileSync(auditPath, `${JSON.stringify(event)}\n`);
 }
 
+function parseCheckboxValue(value: string): boolean {
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
 async function writeSelectorMismatchFailureArtifacts(
   page: Page,
   workingDirectory: string,
@@ -386,6 +390,19 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
           const filePath = path.isAbsolute(value) ? value : path.join(process.cwd(), value);
           await page.locator(field.selector).setInputFiles(filePath);
           filledFields[field.name] = "[file]";
+          continue;
+        }
+
+        if (field.type === "select") {
+          await page.locator(field.selector).selectOption(value);
+          filledFields[field.name] = value;
+          continue;
+        }
+
+        if (field.type === "checkbox") {
+          const shouldCheck = parseCheckboxValue(value);
+          await page.locator(field.selector).setChecked(shouldCheck);
+          filledFields[field.name] = String(shouldCheck);
           continue;
         }
 

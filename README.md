@@ -46,6 +46,13 @@ Submit only after explicit approval:
 npm run formctl -- submit expense-report --amount 120000 --approve --json --headless
 ```
 
+Try a second fixture with a select field and checkbox:
+
+```bash
+npm run formctl -- record admin-invite http://127.0.0.1:4173/admin-invite --headless
+npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless
+```
+
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`

@@ -6,6 +6,8 @@
 - Expose the audit log path in run summaries and `submit --json` artifact output.
 - Write `failure.json`, `failure.png`, and `audit.jsonl` for selector-mismatch failures before any field filling or submission.
 - Add `docs/agents.md` with dry-run-first, approval-gated usage rules for coding agents.
+- Support `select` and `checkbox` fields during submit replay.
+- Add a local admin invite demo fixture for internal-tool workflows.
 
 ## 0.1.0 - 2026-05-26
 

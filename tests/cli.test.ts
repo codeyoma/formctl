@@ -404,6 +404,80 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit --dry-run supports select fields and checkboxes", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/invite" aria-label="Admin invite">
+            <input name="email" type="email" />
+            <select name="role">
+              <option value="viewer">Viewer</option>
+              <option value="admin">Admin</option>
+            </select>
+            <input name="notify" type="checkbox" />
+            <button type="submit">Invite user</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-select-checkbox-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "admin-invite.yml"),
+      [
+        "name: admin-invite",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: email",
+        "    selector: input[name=\"email\"]",
+        "    type: email",
+        "  - name: role",
+        "    selector: select[name=\"role\"]",
+        "    type: select",
+        "  - name: notify",
+        "    selector: input[name=\"notify\"]",
+        "    type: checkbox",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "admin-invite",
+        "--email",
+        "ops@example.com",
+        "--role",
+        "admin",
+        "--notify",
+        "true",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toMatchObject({
+        status: "dry-run",
+        workflow: "admin-invite",
+        submitted: false,
+        fields: {
+          email: "ops@example.com",
+          role: "admin",
+          notify: "true",
+        },
+      });
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
   test("submit --dry-run --json reports machine-readable artifacts", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

@@ -51,6 +51,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- record expense-report http://127.0.0.1:4173/expense --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --approve --json --headless");
+    expect(readme).toContain("npm run formctl -- record admin-invite http://127.0.0.1:4173/admin-invite --headless");
+    expect(readme).toContain("npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -76,13 +78,25 @@ describe("release readiness docs", () => {
   });
 
   test("demo fixture contains the fields used by README commands", () => {
-    const html = readFileSync(path.join(projectRoot, "demo", "expense-report.html"), "utf8");
+    const expenseReport = readFileSync(path.join(projectRoot, "demo", "expense-report.html"), "utf8");
+    const adminInvite = readFileSync(path.join(projectRoot, "demo", "admin-invite.html"), "utf8");
+    const server = readFileSync(path.join(projectRoot, "demo", "server.mjs"), "utf8");
 
-    expect(html).toContain('action="/submit"');
-    expect(html).toContain('name="amount"');
-    expect(html).toContain('name="receipt"');
-    expect(html).toContain('type="file"');
-    expect(html).toContain('type="submit"');
+    expect(expenseReport).toContain('action="/submit"');
+    expect(expenseReport).toContain('name="amount"');
+    expect(expenseReport).toContain('name="receipt"');
+    expect(expenseReport).toContain('type="file"');
+    expect(expenseReport).toContain('type="submit"');
+    expect(adminInvite).toContain('action="/admin-invite/submit"');
+    expect(adminInvite).toContain('name="email"');
+    expect(adminInvite).toContain('type="email"');
+    expect(adminInvite).toContain('name="role"');
+    expect(adminInvite).toContain("<select");
+    expect(adminInvite).toContain('value="admin"');
+    expect(adminInvite).toContain('name="notify"');
+    expect(adminInvite).toContain('type="checkbox"');
+    expect(server).toContain('"/admin-invite"');
+    expect(server).toContain('"/admin-invite/submit"');
   });
 
   test("GitHub issue templates collect reproducible form automation reports", () => {

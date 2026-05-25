@@ -336,6 +336,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one prepared outreach channel, preferably Reddit r/LocalLLaMA or Reddit r/commandline, then record stars, comments, and workflow leads.
 
+### 2026-05-26: Add Admin Invite Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Add a second local demo workflow for internal-tool admin invites.
+
+**Hypothesis:** A second fixture with a select field and checkbox makes the launch demo less expense-report-specific and proves `formctl` can handle common internal-tool controls.
+
+**Result:** Passed. `demo/admin-invite.html` now covers email, role select, and notify checkbox fields. The demo server serves `/admin-invite` and `/admin-invite/submit`, README includes record and dry-run commands, and submit replay supports `select` and `checkbox` fields.
+
+**Evidence:** RED failures were observed first: the CLI select/checkbox test exited `1`, README lacked admin-invite commands, and `demo/admin-invite.html` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and a local demo smoke test for admin-invite record, dry-run, and approved submit; the suite now has 26 passing tests.
+
+**Decision:** Fixture coverage is broader but still not enough for Phase 3.1. Refund/vendor examples and richer patterns like modal, multi-step, date picker, and confirmation pages remain.
+
+**Next Step:** Post one outreach channel using the agent/internal-tool angle, or add a support refund fixture if external posting is still unavailable.
+
 ### Template
 
 **Date:** YYYY-MM-DD

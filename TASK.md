@@ -197,10 +197,10 @@ formctl doctor
 
 **Goal:** Test against realistic forms without relying on external services.
 
-- [ ] Add fixture pages for expense report, admin user invite, support refund, and vendor onboarding.
-- [ ] Include common UI patterns: modal forms, multi-step forms, file upload, date picker, and confirmation page.
-- [ ] Verify: Every fixture supports record, dry-run, and approved submit.
-- [ ] Record fixture gaps in `REVIEW.md`.
+- [ ] Add fixture pages for expense report, admin user invite, support refund, and vendor onboarding. Expense report and admin invite are done; support refund and vendor onboarding remain.
+- [ ] Include common UI patterns: modal forms, multi-step forms, file upload, date picker, and confirmation page. Current fixtures cover file upload, select, and checkbox.
+- [ ] Verify: Every fixture supports record, dry-run, and approved submit. Current expense-report and admin-invite fixtures are smoke-checked.
+- [x] Record fixture gaps in `REVIEW.md`.
 
 ### Task 3.2: Add Replay Tests
 
@@ -280,7 +280,7 @@ npx formctl doctor
 
 **Goal:** Convert user pain into star-worthy demos.
 
-- [ ] Add examples for expense reports, admin invites, refund requests, CRM updates, and compliance attestations.
+- [ ] Add examples for expense reports, admin invites, refund requests, CRM updates, and compliance attestations. Expense report and admin invite examples are done.
 - [ ] Keep examples local or mock-backed to avoid legal and credential issues.
 - [ ] Write short posts showing each workflow before and after `formctl`.
 - [ ] Verify: At least one example produces repeated inbound interest.

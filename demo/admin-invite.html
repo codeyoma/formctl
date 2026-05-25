@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Admin Invite Demo</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        max-width: 42rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 1rem 0;
+      }
+
+      input,
+      select {
+        display: block;
+        font: inherit;
+        margin-top: 0.35rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+
+      input[type="checkbox"] {
+        display: inline-block;
+        margin-right: 0.4rem;
+        width: auto;
+      }
+
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Admin invite</h1>
+    <form method="post" action="/admin-invite/submit" aria-label="Admin invite">
+      <label>
+        Email
+        <input name="email" type="email" required />
+      </label>
+      <label>
+        Role
+        <select name="role" required>
+          <option value="viewer">Viewer</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
+      <label>
+        <input name="notify" type="checkbox" />
+        Send invite email
+      </label>
+      <button type="submit">Invite user</button>
+    </form>
+  </body>
+</html>
