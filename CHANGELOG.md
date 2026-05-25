@@ -10,6 +10,7 @@
 - Add a local admin invite demo fixture for internal-tool workflows.
 - Add a local support refund demo fixture with date and textarea fields.
 - Add a local vendor onboarding demo fixture with file, select, checkbox, date, URL, and textarea fields.
+- Add demo replay tests and a CI workflow that runs them on pull requests.
 
 ## 0.1.0 - 2026-05-26
 

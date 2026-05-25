@@ -158,6 +158,17 @@ describe("release readiness docs", () => {
     expect(launch).toContain("10k stars");
   });
 
+  test("CI runs demo replay tests on pull requests", () => {
+    const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
+    const ci = readFileSync(path.join(projectRoot, ".github", "workflows", "ci.yml"), "utf8");
+
+    expect(packageJson.scripts["test:replay"]).toBe("vitest run tests/demo-replay.test.ts");
+    expect(ci).toContain("pull_request");
+    expect(ci).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
+    expect(ci).toContain("npm run test:replay");
+    expect(ci).toContain("npx tsc --noEmit");
+  });
+
   test("announcement draft is ready for first public launch post", () => {
     const announcement = readFileSync(path.join(projectRoot, "docs", "ANNOUNCEMENT.md"), "utf8");
 

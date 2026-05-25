@@ -23,6 +23,7 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
+    "test:replay": "vitest run tests/demo-replay.test.ts",
     "demo": "node demo/server.mjs",
     "formctl": "node --import tsx ./src/cli.ts"
   },

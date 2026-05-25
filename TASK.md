@@ -206,12 +206,12 @@ formctl doctor
 
 **Goal:** Prevent regressions in recorded workflows.
 
-- [ ] Add end-to-end tests that record or load fixture workflows.
-- [ ] Test dry-run does not submit.
-- [ ] Test approval does submit.
-- [ ] Test broken selectors fail with exit code `3`.
-- [ ] Verify: CI runs replay tests on every pull request.
-- [ ] Record flaky tests in `REVIEW.md`.
+- [x] Add end-to-end tests that record or load fixture workflows.
+- [x] Test dry-run does not submit.
+- [x] Test approval does submit.
+- [x] Test broken selectors fail with exit code `3`.
+- [x] Verify: CI runs replay tests on every pull request.
+- [x] Record flaky tests in `REVIEW.md`.
 
 ### Task 3.3: Support Headed And Headless Modes
 

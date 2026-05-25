@@ -384,6 +384,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add replay tests that load the committed fixture workflows or post one outreach channel with the four-fixture demo set.
 
+### 2026-05-26: Add Demo Replay Tests And CI
+
+**Date:** 2026-05-26
+
+**Experiment:** Turn the four committed demo fixtures into regression tests.
+
+**Hypothesis:** The demos should not only be launch assets; they should continuously prove record, dry-run, and approved submit behavior for the workflows used in outreach.
+
+**Result:** Passed. `tests/demo-replay.test.ts` starts a local fixture server from committed demo HTML, records all four workflows, verifies dry-run sends zero POSTs, and verifies approved submit sends exactly one POST per workflow. `npm run test:replay` and `.github/workflows/ci.yml` now run the replay suite on pull requests.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `.github/workflows/ci.yml` was missing. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`; the main suite has 28 passing tests and the replay suite has 1 passing test.
+
+**Decision:** Phase 3.2 is complete enough for the current MVP. Future reliability work should target headed/headless defaults and richer modal or multi-step fixtures.
+
+**Next Step:** Post one outreach channel with the four-fixture demo set, or implement headed/headless mode defaults if external posting remains unavailable.
+
 ### Template
 
 **Date:** YYYY-MM-DD
