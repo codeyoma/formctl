@@ -53,6 +53,13 @@ npm run formctl -- record admin-invite http://127.0.0.1:4173/admin-invite --head
 npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless
 ```
 
+Try a support refund fixture with a date input and textarea:
+
+```bash
+npm run formctl -- record support-refund http://127.0.0.1:4173/support-refund --headless
+npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason "Duplicate charge" --dry-run --json --headless
+```
+
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`

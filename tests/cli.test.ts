@@ -478,6 +478,77 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit --dry-run supports textarea and date fields", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/refund" aria-label="Support refund">
+            <input name="orderId" type="text" />
+            <input name="refundDate" type="date" />
+            <textarea name="reason"></textarea>
+            <button type="submit">Request refund</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-textarea-date-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "support-refund.yml"),
+      [
+        "name: support-refund",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: orderId",
+        "    selector: input[name=\"orderId\"]",
+        "    type: text",
+        "  - name: refundDate",
+        "    selector: input[name=\"refundDate\"]",
+        "    type: date",
+        "  - name: reason",
+        "    selector: textarea[name=\"reason\"]",
+        "    type: textarea",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "support-refund",
+        "--orderId",
+        "ORD-1001",
+        "--refundDate",
+        "2026-05-26",
+        "--reason",
+        "Duplicate charge",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toMatchObject({
+        status: "dry-run",
+        workflow: "support-refund",
+        submitted: false,
+        fields: {
+          orderId: "ORD-1001",
+          refundDate: "2026-05-26",
+          reason: "Duplicate charge",
+        },
+      });
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
   test("submit --dry-run --json reports machine-readable artifacts", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

@@ -8,6 +8,7 @@
 - Add `docs/agents.md` with dry-run-first, approval-gated usage rules for coding agents.
 - Support `select` and `checkbox` fields during submit replay.
 - Add a local admin invite demo fixture for internal-tool workflows.
+- Add a local support refund demo fixture with date and textarea fields.
 
 ## 0.1.0 - 2026-05-26
 

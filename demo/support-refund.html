@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Support Refund Demo</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        max-width: 42rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 1rem 0;
+      }
+
+      input,
+      textarea {
+        display: block;
+        font: inherit;
+        margin-top: 0.35rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+
+      textarea {
+        min-height: 7rem;
+      }
+
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Support refund</h1>
+    <form method="post" action="/support-refund/submit" aria-label="Support refund">
+      <label>
+        Order ID
+        <input name="orderId" type="text" required />
+      </label>
+      <label>
+        Refund date
+        <input name="refundDate" type="date" required />
+      </label>
+      <label>
+        Reason
+        <textarea name="reason" required></textarea>
+      </label>
+      <button type="submit">Request refund</button>
+    </form>
+  </body>
+</html>

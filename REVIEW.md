@@ -352,6 +352,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one outreach channel using the agent/internal-tool angle, or add a support refund fixture if external posting is still unavailable.
 
+### 2026-05-26: Add Support Refund Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Add a third local workflow fixture for support refund requests.
+
+**Hypothesis:** Refund requests are a clearer API-less admin workflow than another generic form, and date plus textarea fields broaden the replay coverage without adding risky external dependencies.
+
+**Result:** Passed. `demo/support-refund.html` now covers order ID, refund date, and refund reason fields. The demo server serves `/support-refund` and `/support-refund/submit`, and README includes support-refund record and dry-run commands.
+
+**Evidence:** RED failure was observed first: release-readiness failed because README lacked support-refund commands and `demo/support-refund.html` was missing. The textarea/date CLI test passed because the existing fill path already supports those controls. Final checks passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and a local demo smoke test for support-refund record, dry-run, and approved submit; the suite now has 27 passing tests.
+
+**Decision:** The demo set now covers expense reports, admin invites, and support refunds. Vendor onboarding remains the last Phase 3.1 fixture and should include richer multi-step or confirmation-page behavior.
+
+**Next Step:** Post one outreach channel using the support-refund/internal-tool angle, or add a vendor onboarding fixture if external posting is still unavailable.
+
 ### Template
 
 **Date:** YYYY-MM-DD

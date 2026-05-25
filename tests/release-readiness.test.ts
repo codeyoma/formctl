@@ -53,6 +53,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --approve --json --headless");
     expect(readme).toContain("npm run formctl -- record admin-invite http://127.0.0.1:4173/admin-invite --headless");
     expect(readme).toContain("npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless");
+    expect(readme).toContain("npm run formctl -- record support-refund http://127.0.0.1:4173/support-refund --headless");
+    expect(readme).toContain("npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason \"Duplicate charge\" --dry-run --json --headless");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -80,6 +82,7 @@ describe("release readiness docs", () => {
   test("demo fixture contains the fields used by README commands", () => {
     const expenseReport = readFileSync(path.join(projectRoot, "demo", "expense-report.html"), "utf8");
     const adminInvite = readFileSync(path.join(projectRoot, "demo", "admin-invite.html"), "utf8");
+    const supportRefund = readFileSync(path.join(projectRoot, "demo", "support-refund.html"), "utf8");
     const server = readFileSync(path.join(projectRoot, "demo", "server.mjs"), "utf8");
 
     expect(expenseReport).toContain('action="/submit"');
@@ -95,8 +98,16 @@ describe("release readiness docs", () => {
     expect(adminInvite).toContain('value="admin"');
     expect(adminInvite).toContain('name="notify"');
     expect(adminInvite).toContain('type="checkbox"');
+    expect(supportRefund).toContain('action="/support-refund/submit"');
+    expect(supportRefund).toContain('name="orderId"');
+    expect(supportRefund).toContain('name="refundDate"');
+    expect(supportRefund).toContain('type="date"');
+    expect(supportRefund).toContain('name="reason"');
+    expect(supportRefund).toContain("<textarea");
     expect(server).toContain('"/admin-invite"');
     expect(server).toContain('"/admin-invite/submit"');
+    expect(server).toContain('"/support-refund"');
+    expect(server).toContain('"/support-refund/submit"');
   });
 
   test("GitHub issue templates collect reproducible form automation reports", () => {
