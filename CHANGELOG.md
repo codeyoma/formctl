@@ -11,6 +11,7 @@
 - Add a local support refund demo fixture with date and textarea fields.
 - Add a local vendor onboarding demo fixture with file, select, checkbox, date, URL, and textarea fields.
 - Add demo replay tests and a CI workflow that runs them on pull requests.
+- Add browser mode defaults and `--headed`/`--headless` overrides for browser-backed commands.
 
 ## 0.1.0 - 2026-05-26
 

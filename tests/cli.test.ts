@@ -86,6 +86,8 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("formctl submit <workflow-name> [flags]");
     expect(result.stdout).toContain("formctl inspect <workflow-name>");
     expect(result.stdout).toContain("formctl doctor");
+    expect(result.stdout).toContain("--headed");
+    expect(result.stdout).toContain("--headless");
   });
 
   test("doctor --json reports a machine-readable ok status", () => {
@@ -399,6 +401,64 @@ describe("formctl CLI", () => {
           },
         },
       ]);
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  test("submit --dry-run defaults to headless mode without an explicit mode flag", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-default-headless-dry-run-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+      ], workspace);
+      const runDirectories = readdirSync(path.join(workspace, ".formctl", "runs"));
+      const runId = runDirectories[0] ?? "";
+      const auditPath = path.join(workspace, ".formctl", "runs", runId, "audit.jsonl");
+      const [runStarted] = readFileSync(auditPath, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(runStarted.command).toMatchObject({
+        dryRun: true,
+        approve: false,
+        headless: true,
+      });
+      expect(fixture.postCount()).toBe(0);
     } finally {
       await fixture.close();
     }

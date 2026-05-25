@@ -217,11 +217,11 @@ formctl doctor
 
 **Goal:** Work for humans locally and agents in automation.
 
-- [ ] Default `record` to headed mode.
-- [ ] Default `submit --dry-run` to headless mode when no interactive approval is needed.
-- [ ] Add `--headed` and `--headless` flags.
-- [ ] Verify: The same workflow passes in both modes on fixture sites.
-- [ ] Record mode-specific failures in `REVIEW.md`.
+- [x] Default `record` to headed mode.
+- [x] Default `submit --dry-run` to headless mode when no interactive approval is needed.
+- [x] Add `--headed` and `--headless` flags.
+- [x] Verify: The same workflow passes in both modes on fixture sites.
+- [x] Record mode-specific failures in `REVIEW.md`.
 
 ---
 

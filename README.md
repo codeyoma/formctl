@@ -87,6 +87,12 @@ formctl submit <workflow-name> --approve [flags]
 formctl doctor [--json]
 ```
 
+## Browser mode defaults
+
+- `record` defaults to `--headed` so humans can watch login and form discovery.
+- `submit --dry-run` defaults to `--headless` for repeatable agent and CI previews.
+- Use `--headed` or `--headless` to override the default for any browser-backed command.
+
 Workflow files are stored at:
 
 ```text

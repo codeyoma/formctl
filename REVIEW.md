@@ -400,6 +400,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one outreach channel with the four-fixture demo set, or implement headed/headless mode defaults if external posting remains unavailable.
 
+### 2026-05-26: Support Headed And Headless Modes
+
+**Date:** 2026-05-26
+
+**Experiment:** Make browser execution defaults match human and agent workflows.
+
+**Hypothesis:** `record` should default to a visible browser for human-guided setup, while `submit --dry-run` should default to headless because it needs no interactive approval. Explicit `--headed` and `--headless` flags should override those defaults.
+
+**Result:** Passed. `src/browser-mode.ts` now centralizes mode selection, `record` defaults to headed, `submit --dry-run` defaults to headless, and the CLI help/README document both override flags.
+
+**Evidence:** RED failures were observed first: the mode resolver module was missing, `submit --dry-run` without a mode flag wrote `headless: false` to the audit log, and README lacked browser mode default docs. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and local fixture smoke checks for both `--headless` and `--headed` dry-runs.
+
+**Decision:** Keep committed CI on headless browser paths and cover `--headed` through pure mode-resolution tests plus local smoke checks. Headed Playwright runs are useful for humans but brittle on Linux CI without a display server.
+
+**Next Step:** Add a modal or multi-step fixture, or post the prepared outreach copy now that mode defaults are documented.
+
 ### Template
 
 **Date:** YYYY-MM-DD

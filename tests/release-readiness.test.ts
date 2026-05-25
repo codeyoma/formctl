@@ -66,6 +66,10 @@ describe("release readiness docs", () => {
     expect(readme).toContain("[Agent safety guide](docs/agents.md)");
     expect(readme).toContain("Exit codes");
     expect(readme).toContain("5 approval required");
+    expect(readme).toContain("Browser mode defaults");
+    expect(readme).toContain("`record` defaults to `--headed` so humans can watch login and form discovery.");
+    expect(readme).toContain("`submit --dry-run` defaults to `--headless` for repeatable agent and CI previews.");
+    expect(readme).toContain("Use `--headed` or `--headless` to override the default for any browser-backed command.");
   });
 
   test("demo media shows the core record dry-run approve flow", () => {

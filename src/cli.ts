@@ -2,6 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import path from "node:path";
 import { chromium, type Page } from "playwright";
 import { parse, stringify } from "yaml";
+import { resolveBrowserHeadless } from "./browser-mode.js";
 
 const HELP_TEXT = `formctl turns browser-recorded web forms into safe CLI commands
 
@@ -13,6 +14,8 @@ Usage:
 
 Flags:
   --help        Show this help message
+  --headed      Run with a visible browser
+  --headless    Run without a visible browser
 `;
 
 type WorkflowField = {
@@ -290,7 +293,8 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
 
     const options = parseOptions(args.slice(4));
     const workflow = result.workflow;
-    const browser = await chromium.launch({ headless: flags.has("--headless") });
+    const browserHeadless = resolveBrowserHeadless({ command: "submit", flags, isDryRun });
+    const browser = await chromium.launch({ headless: browserHeadless });
     const runStatus = isDryRun ? "dry-run" : "submitted";
     const screenshotFileName = isDryRun ? "dry-run.png" : "post-submit.png";
     const runId = `${Date.now()}-${runStatus}`;
@@ -312,7 +316,7 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         command: {
           dryRun: isDryRun,
           approve: isApproved,
-          headless: flags.has("--headless"),
+          headless: browserHeadless,
           json: wantsJson,
         },
       });
@@ -479,7 +483,9 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
       return 1;
     }
 
-    const browser = await chromium.launch({ headless: flags.has("--headless") });
+    const browser = await chromium.launch({
+      headless: resolveBrowserHeadless({ command: "record", flags, isDryRun: false }),
+    });
     try {
       const page = await browser.newPage();
       await page.goto(url, { waitUntil: "domcontentloaded" });
