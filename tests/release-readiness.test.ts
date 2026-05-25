@@ -9,6 +9,7 @@ describe("release readiness docs", () => {
   test("package metadata is ready for a public GitHub repository", () => {
     const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 
+    expect(packageJson.version).toBe("0.1.0");
     expect(packageJson.private).toBe(false);
     expect(packageJson.description).toBe("Turn browser-recorded web forms into safe, repeatable CLI commands.");
     expect(packageJson.license).toBe("MIT");
@@ -120,5 +121,17 @@ describe("release readiness docs", () => {
     expect(announcement).toContain("Launch checklist run");
     expect(announcement).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
     expect(announcement).toContain("npx tsc --noEmit");
+  });
+
+  test("CHANGELOG documents the first public release", () => {
+    const changelog = readFileSync(path.join(projectRoot, "CHANGELOG.md"), "utf8");
+
+    expect(changelog).toContain("# Changelog");
+    expect(changelog).toContain("## 0.1.0 - 2026-05-26");
+    expect(changelog).toContain("Record live forms into `.formctl/workflows/<name>.yml`");
+    expect(changelog).toContain("Run `submit --dry-run` with screenshots and JSON summaries");
+    expect(changelog).toContain("Require `--approve` before clicking the recorded submit selector");
+    expect(changelog).toContain("Fail fast on missing or ambiguous selectors with exit code `3`");
+    expect(changelog).toContain("Publish the public GitHub MVP at https://github.com/codeyoma/formctl");
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "formctl",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": false,
   "description": "Turn browser-recorded web forms into safe, repeatable CLI commands.",
   "license": "MIT",
