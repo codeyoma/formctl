@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Compliance Attestation Demo</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        max-width: 42rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 1rem 0;
+      }
+
+      input,
+      select,
+      textarea {
+        display: block;
+        font: inherit;
+        margin-top: 0.35rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+
+      input[type="checkbox"] {
+        display: inline-block;
+        margin-right: 0.4rem;
+        width: auto;
+      }
+
+      textarea {
+        min-height: 5rem;
+      }
+
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Compliance attestation</h1>
+    <form method="post" action="/compliance-attestation/submit" aria-label="Compliance attestation">
+      <label>
+        Employee email
+        <input name="employeeEmail" type="email" required />
+      </label>
+      <label>
+        Control area
+        <select name="controlArea" required>
+          <option value="security">Security</option>
+          <option value="privacy">Privacy</option>
+          <option value="finance">Finance</option>
+          <option value="operations">Operations</option>
+        </select>
+      </label>
+      <label>
+        Attestation date
+        <input name="attestationDate" type="date" required />
+      </label>
+      <label>
+        <input name="compliant" type="checkbox" />
+        I attest this control is compliant
+      </label>
+      <label>
+        Notes
+        <textarea name="notes" required></textarea>
+      </label>
+      <button type="submit">Submit attestation</button>
+    </form>
+  </body>
+</html>

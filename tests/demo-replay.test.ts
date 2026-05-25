@@ -142,6 +142,31 @@ const replayCases: ReplayCase[] = [
       notes: "Renewal risk flagged",
     },
   },
+  {
+    name: "compliance-attestation",
+    route: "/compliance-attestation",
+    submitRoute: "/compliance-attestation/submit",
+    htmlFile: "compliance-attestation.html",
+    args: [
+      "--employeeEmail",
+      "auditor@example.com",
+      "--controlArea",
+      "security",
+      "--attestationDate",
+      "2026-06-15",
+      "--compliant",
+      "true",
+      "--notes",
+      "Quarterly access review complete",
+    ],
+    expectedFields: {
+      employeeEmail: "auditor@example.com",
+      controlArea: "security",
+      attestationDate: "2026-06-15",
+      compliant: "true",
+      notes: "Quarterly access review complete",
+    },
+  },
 ];
 
 function runFormctlAsync(args: string[], cwd: string) {

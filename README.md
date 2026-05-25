@@ -103,6 +103,13 @@ npm run formctl -- record crm-update http://127.0.0.1:4173/crm-update --headless
 npm run formctl -- submit crm-update --accountName "Northwind Traders" --stage renewal --ownerEmail ae@example.com --nextContactDate 2026-06-03 --priority true --notes "Renewal risk flagged" --dry-run --json --headless
 ```
 
+Try a compliance attestation fixture with a control area, attestation date, checkbox, and notes:
+
+```bash
+npm run formctl -- record compliance-attestation http://127.0.0.1:4173/compliance-attestation --headless
+npm run formctl -- submit compliance-attestation --employeeEmail auditor@example.com --controlArea security --attestationDate 2026-06-15 --compliant true --notes "Quarterly access review complete" --dry-run --json --headless
+```
+
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`

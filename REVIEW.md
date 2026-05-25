@@ -550,6 +550,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add the compliance attestation fixture, then write before/after posts for CRM update and compliance attestation.
 
+### 2026-05-26: Add Compliance Attestation Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Complete the initial example set with a compliance attestation workflow.
+
+**Hypothesis:** Compliance attestations are a strong `formctl` demo because they are repetitive, approval-sensitive, audit-friendly, and often live inside API-less internal tools.
+
+**Result:** Passed. `demo/compliance-attestation.html` now covers employee email, control area, attestation date, compliance checkbox, and notes. README includes record and dry-run commands, and replay tests cover record, dry-run without submit, and approved submit exactly once.
+
+**Evidence:** RED failures were observed first: release-readiness and replay both failed because `demo/compliance-attestation.html` was missing. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "demo fixture"` and `npm run test:replay`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**Decision:** The initial local example set now covers expense reports, admin invites, refund requests, vendor onboarding, procurement approval, CRM update, and compliance attestation. The next growth task should turn these into before/after posts instead of adding more fixtures.
+
+**Next Step:** Write short before/after posts for CRM update and compliance attestation, then use them in outreach or repo docs.
+
 ### Template
 
 **Date:** YYYY-MM-DD
