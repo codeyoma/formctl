@@ -666,6 +666,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Watch the next GitHub Actions run after push; if startup time becomes noisy, merge the MCP test into the main vitest invocation later.
 
+### 2026-05-26: Opt CI Into Node 24 Action Runtime
+
+**Date:** 2026-05-26
+
+**Experiment:** Remove the GitHub Actions warning about JavaScript actions still running on Node.js 20.
+
+**Hypothesis:** Setting `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"` at workflow scope should opt `actions/checkout@v4` and `actions/setup-node@v4` into the Node.js 24 action runtime without changing the project test Node version.
+
+**Result:** Passed locally. `.github/workflows/ci.yml` now sets the opt-in env var at workflow scope while keeping the test matrix on Node 22.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because the CI workflow did not contain `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"`. Focused GREEN passed after adding the env var.
+
+**Decision:** Prefer the workflow-scope opt-in over changing action versions right now because the warning explicitly offered this path and it keeps the CI change minimal.
+
+**Next Step:** Watch the pushed GitHub Actions run and confirm the Node.js 20 deprecation annotation disappears.
+
 ### Template
 
 **Date:** YYYY-MM-DD
