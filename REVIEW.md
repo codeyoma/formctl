@@ -192,6 +192,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Create the GitHub repository `codeyoma/formctl`, add it as `origin`, push `main`, then verify the public URL renders the README.
 
+### 2026-05-26: Publish GitHub Repository
+
+**Date:** 2026-05-26
+
+**Experiment:** Publish the MVP as a public GitHub repository.
+
+**Hypothesis:** The current MVP is credible enough to publish because it has a working record/dry-run/approve flow, JSON output for agents, selector mismatch protection, tests, README, local demo, license, and package metadata.
+
+**Result:** Passed. The public repository `codeyoma/formctl` was created, `main` was pushed, and repository description/homepage/topics were configured.
+
+**Evidence:** `gh repo create codeyoma/formctl --public --source=. --remote=origin --push` succeeded and set `main` to track `origin/main`. `gh repo view codeyoma/formctl` reports `visibility: PUBLIC`, URL `https://github.com/codeyoma/formctl`, description `Turn browser-recorded web forms into safe, repeatable CLI commands.`, and topics `agent`, `browser-automation`, `cli`, `forms`, `playwright`, `rpa`.
+
+**Decision:** The project is now public. Next work should improve first-run polish and launch assets rather than adding broad scope.
+
+**Next Step:** Add a GitHub issue template and a launch checklist, then capture a short demo GIF/video for README and social launch.
+
 ### Template
 
 **Date:** YYYY-MM-DD
