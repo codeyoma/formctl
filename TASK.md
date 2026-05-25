@@ -290,11 +290,11 @@ npx formctl doctor
 
 **Goal:** Make `formctl` the default answer for agents that need safe browser form submission.
 
-- [ ] Publish "Why browser agents need form-specific CLIs."
-- [ ] Add JSON output examples for agent use.
+- [x] Publish "Why browser agents need form-specific CLIs."
+- [x] Add JSON output examples for agent use.
 - [ ] Add an MCP wrapper only after the CLI is stable.
 - [ ] Verify: At least three agent users run `formctl` in real workflows.
-- [ ] Record agent-specific blockers in `REVIEW.md`.
+- [x] Record agent-specific blockers in `REVIEW.md`.
 
 ### Task 5.4: Create Trust Content
 

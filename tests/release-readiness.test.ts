@@ -401,4 +401,25 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Do not print secrets, file contents, cookies, or private page data.");
     expect(agents).toContain("Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
   });
+
+  test("agent angle article gives agents JSON branching examples", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");
+    const article = readFileSync(path.join(projectRoot, "docs", "WHY_FORM_CLIS.md"), "utf8");
+
+    expect(readme).toContain("[Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)");
+    expect(outreach).toContain("docs/WHY_FORM_CLIS.md");
+    expect(article).toContain("# Why Browser Agents Need Form-Specific CLIs");
+    expect(article).toContain("Browser agents are good at exploration");
+    expect(article).toContain("formctl is for the moment after exploration");
+    expect(article).toContain("`submit --dry-run --json`");
+    expect(article).toContain("\"status\": \"dry-run\"");
+    expect(article).toContain("\"requiresApproval\": true");
+    expect(article).toContain("\"exitCode\": 5");
+    expect(article).toContain("\"code\": \"selector_mismatch\"");
+    expect(article).toContain("approval gate");
+    expect(article).toContain("audit.jsonl");
+    expect(article).toContain("failure.json");
+    expect(article).toContain("Do not pass `--approve`");
+  });
 });

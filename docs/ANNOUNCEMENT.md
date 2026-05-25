@@ -14,6 +14,8 @@ Trust notes: `docs/TRUST.md`
 
 Comparison: `docs/COMPARISON.md`
 
+Agent article: `docs/WHY_FORM_CLIS.md`
+
 The safety model is intentionally boring:
 
 - `submit --dry-run` fills the form and captures review artifacts without clicking submit.

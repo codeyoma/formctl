@@ -6,6 +6,8 @@ Release: https://github.com/codeyoma/formctl/releases/tag/v0.1.0
 
 Workflow request guide: docs/WORKFLOW_REQUESTS.md
 
+Agent article: docs/WHY_FORM_CLIS.md
+
 ## Channel Plan
 
 | Channel | Angle | Status | Stars before | Stars after 24h | Comments | Workflow leads | Notes |

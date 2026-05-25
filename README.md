@@ -6,7 +6,7 @@ Record once. Submit safely forever.
 
 `formctl` is for developers, operators, and AI agents that need reliable automation for web forms with no useful API. It records a form workflow, stores it as reviewable YAML, previews changes with dry-run artifacts, and requires explicit approval before real submission.
 
-[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Trust and security notes](docs/TRUST.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md)
+[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Trust and security notes](docs/TRUST.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
 
 ```bash
 formctl record expense-report https://example.internal/expense
@@ -156,6 +156,8 @@ Workflow files are stored at:
 Agents should call `submit --dry-run --json` first, inspect the returned artifacts, and only use `--approve` when the user or policy explicitly allows submission.
 
 See the [Agent safety guide](docs/agents.md) for Codex, Claude Code, Cursor, Copilot CLI, and other coding agents.
+
+See [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md) for JSON branching examples and the agent-specific rationale.
 
 Approval-required JSON looks like:
 

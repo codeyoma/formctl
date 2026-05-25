@@ -516,6 +516,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Use these docs in the first external outreach reply path, then record which objections still come up after readers see them.
 
+### 2026-05-26: Add Agent Angle Article
+
+**Date:** 2026-05-26
+
+**Experiment:** Turn the agent positioning into a public article-style doc with concrete JSON branch examples.
+
+**Hypothesis:** Agent users need a sharper reason to use `formctl`: browser agents are useful for exploration, but known form submissions should become commands with dry-run, approval, selector drift stops, and audit artifacts.
+
+**Result:** Passed. `docs/WHY_FORM_CLIS.md` now explains why form-specific CLIs matter for browser agents and includes JSON examples for dry-run success, approval-required exit `5`, and selector-mismatch exit `3`. README, announcement, and outreach docs link to it.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/WHY_FORM_CLIS.md` was missing. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "agent angle"`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first GREEN attempt failed because the article wrapped `formctl` in backticks while the release-readiness test expected the positioning sentence as plain text. The doc was adjusted so the launch phrase can be searched and quoted directly.
+
+**Decision:** Keep MCP work out of scope until real agent users validate the CLI shape. The current blocker is not more integration surface; it is getting at least three agent users to run the CLI on real workflows.
+
+**Next Step:** Use the agent article in Reddit r/LocalLLaMA or direct outreach, then record agent-specific blockers and workflow leads.
+
 ### Template
 
 **Date:** YYYY-MM-DD
