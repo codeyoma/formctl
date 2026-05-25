@@ -39,7 +39,8 @@ https://github.com/codeyoma/formctl
 Last local verification before this draft:
 
 ```bash
-npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts
+npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts
+npm run build
 npx tsc --noEmit
 npm run formctl -- doctor --json
 ```
@@ -51,4 +52,3 @@ Expected result:
 - `doctor --json` returns status `ok`.
 - README demo media is present.
 - GitHub repo is public at https://github.com/codeyoma/formctl.
-

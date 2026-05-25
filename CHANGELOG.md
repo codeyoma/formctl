@@ -13,6 +13,7 @@
 - Add demo replay tests and a CI workflow that runs them on pull requests.
 - Add browser mode defaults and `--headed`/`--headless` overrides for browser-backed commands.
 - Add a local procurement approval demo fixture with an open modal, two visible steps, and a confirmation page.
+- Add npm package build metadata, install docs, and tarball install verification.
 
 ## 0.1.0 - 2026-05-26
 

@@ -14,6 +14,14 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
 
 ![formctl demo](docs/assets/demo.svg)
 
+## Install
+
+```bash
+npm install -g formctl
+npx formctl --help
+npx formctl doctor
+```
+
 ## Two-Minute Local Demo
 
 Install dependencies:

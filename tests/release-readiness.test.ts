@@ -21,6 +21,7 @@ describe("release readiness docs", () => {
       url: "https://github.com/codeyoma/formctl/issues",
     });
     expect(packageJson.homepage).toBe("https://github.com/codeyoma/formctl#readme");
+    expect(packageJson.bin).toEqual({ formctl: "dist/cli.js" });
     expect(packageJson.keywords).toEqual([
       "agent",
       "browser-automation",
@@ -177,7 +178,8 @@ describe("release readiness docs", () => {
 
     expect(launch).toContain("# formctl Launch Checklist");
     expect(launch).toContain("https://github.com/codeyoma/formctl");
-    expect(launch).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
+    expect(launch).toContain("npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts");
+    expect(launch).toContain("npm run build");
     expect(launch).toContain("npx tsc --noEmit");
     expect(launch).toContain("npm run demo");
     expect(launch).toContain("Capture a 30-60 second demo");
@@ -191,8 +193,9 @@ describe("release readiness docs", () => {
 
     expect(packageJson.scripts["test:replay"]).toBe("vitest run tests/demo-replay.test.ts");
     expect(ci).toContain("pull_request");
-    expect(ci).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
+    expect(ci).toContain("npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts");
     expect(ci).toContain("npm run test:replay");
+    expect(ci).toContain("npm run build");
     expect(ci).toContain("npx tsc --noEmit");
   });
 
@@ -209,7 +212,8 @@ describe("release readiness docs", () => {
     expect(announcement).toContain("What I want feedback on");
     expect(announcement).toContain("API-less workflows");
     expect(announcement).toContain("Launch checklist run");
-    expect(announcement).toContain("npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts");
+    expect(announcement).toContain("npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts");
+    expect(announcement).toContain("npm run build");
     expect(announcement).toContain("npx tsc --noEmit");
   });
 

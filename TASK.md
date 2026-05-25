@@ -231,17 +231,17 @@ formctl doctor
 
 **Goal:** Make installation trivial.
 
-- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable.
-- [ ] Ensure `npx formctl --help` works.
-- [ ] Add install docs:
+- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `npm view formctl` currently returns `E404`, but `npm whoami` returns `ENEEDAUTH`; publish is blocked until npm auth is configured.
+- [x] Ensure `npx formctl --help` works.
+- [x] Add install docs:
 
 ```bash
 npm install -g formctl
 npx formctl doctor
 ```
 
-- [ ] Verify: A clean machine can install and run the local demo.
-- [ ] Record install friction in `REVIEW.md`.
+- [x] Verify: A clean machine can install and run the local demo.
+- [x] Record install friction in `REVIEW.md`.
 
 ### Task 4.2: Add Homebrew Later
 

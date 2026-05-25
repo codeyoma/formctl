@@ -432,6 +432,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Move to distribution work, starting with local npm package verification and install docs, or post one prepared outreach channel.
 
+### 2026-05-26: Prepare npm Package Install Path
+
+**Date:** 2026-05-26
+
+**Experiment:** Make the package installable as a real npm CLI before attempting registry publish.
+
+**Hypothesis:** `formctl` needs a built `dist/cli.js` binary, `bin` metadata, install docs, and a tarball install smoke test before `npm publish` is credible.
+
+**Result:** Partially passed. The local package now builds with `npm run build`, exposes `bin.formctl`, includes package files for dist/demo/docs, and README documents `npm install -g formctl`, `npx formctl --help`, and `npx formctl doctor`. A tarball installed into a clean prefix runs `formctl --help`, `formctl doctor --json`, and the packaged demo record/dry-run path.
+
+**Evidence:** RED failures were observed first: package-readiness failed because `bin` was missing, `tsconfig.build.json` did not exist, README lacked install docs, and `src/cli.ts` had no shebang. CI readiness also failed until package-readiness and `npm run build` were included. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, `npm pack --pack-destination ... --json`, `npm publish --dry-run`, tarball install smoke, and `npm exec --package <tarball> -- formctl --help`.
+
+**What Failed:** `npm view formctl` returned `E404`, so the name appears available, but `npm whoami` returned `ENEEDAUTH`. Actual registry publish is blocked until npm auth is configured.
+
+**Decision:** Do not invent a scoped fallback yet because the desired unscoped name appears available. Keep publish unchecked until an authenticated npm session is available.
+
+**Next Step:** Authenticate npm and run `npm publish`, or post one prepared outreach channel while npm publishing is pending.
+
 ### Template
 
 **Date:** YYYY-MM-DD
