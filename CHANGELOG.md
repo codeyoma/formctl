@@ -25,6 +25,7 @@
 - Add a growth log baseline for the weekly 10k-star loop.
 - Add an example-led posting queue for Reddit and direct outreach.
 - Add a dry-run-safe MCP server binary, `formctl-mcp`, for agent clients.
+- Add an MCP setup guide with local-checkout and npm client configuration snippets.
 
 ## 0.1.0 - 2026-05-26
 

@@ -634,6 +634,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add an MCP client snippet to outreach if agent users ask how to wire `formctl-mcp`, or return to human posting/npm publish once credentials are available.
 
+### 2026-05-26: Add MCP Setup Guide
+
+**Date:** 2026-05-26
+
+**Experiment:** Make `formctl-mcp` usable from a generic MCP stdio client without requiring npm publish first.
+
+**Hypothesis:** Since npm publish is still blocked by `ENEEDAUTH`, agent users need a local-checkout MCP setup path now and an `npx formctl-mcp` setup path later.
+
+**Result:** Passed. `docs/MCP.md` now includes local checkout config with `node dist/mcp.js`, post-publish config with `npx formctl-mcp`, the exposed tool list, the approval boundary, and an MCP SDK smoke test.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "MCP setup guide"` failed because `docs/MCP.md` did not exist. Focused GREEN passed after adding the guide and links from README, `docs/agents.md`, `docs/OUTREACH.md`, and `docs/POSTING_QUEUE.md`.
+
+**Decision:** Keep the guide generic to MCP stdio clients instead of claiming support for a specific client configuration that may drift.
+
+**Next Step:** If agent users ask for a named client, add a tested client-specific snippet after verifying that client's current config format.
+
 ### Template
 
 **Date:** YYYY-MM-DD

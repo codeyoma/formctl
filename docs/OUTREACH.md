@@ -14,6 +14,8 @@ Posting queue: docs/POSTING_QUEUE.md
 
 Agent article: docs/WHY_FORM_CLIS.md
 
+MCP setup guide: docs/MCP.md
+
 ## Channel Plan
 
 | Channel | Angle | Status | Stars before | Stars after 24h | Comments | Workflow leads | Notes |

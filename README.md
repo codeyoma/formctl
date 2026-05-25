@@ -171,7 +171,7 @@ Agents should call `submit --dry-run --json` first, inspect the returned artifac
 
 See the [Agent safety guide](docs/agents.md) for Codex, Claude Code, Cursor, Copilot CLI, and other coding agents.
 
-See [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md) for JSON branching examples and the agent-specific rationale.
+See [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md) for JSON branching examples and the agent-specific rationale. See the [MCP setup guide](docs/MCP.md) for local-checkout and npm-based client configuration.
 
 ## MCP Server
 

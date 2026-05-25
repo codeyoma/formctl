@@ -509,6 +509,33 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
   });
 
+  test("MCP setup guide is copy-pasteable before and after npm publish", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const agents = readFileSync(path.join(projectRoot, "docs", "agents.md"), "utf8");
+    const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");
+    const postingQueue = readFileSync(path.join(projectRoot, "docs", "POSTING_QUEUE.md"), "utf8");
+    const mcp = readFileSync(path.join(projectRoot, "docs", "MCP.md"), "utf8");
+
+    expect(readme).toContain("[MCP setup guide](docs/MCP.md)");
+    expect(agents).toContain("MCP setup guide: docs/MCP.md");
+    expect(outreach).toContain("MCP setup guide: docs/MCP.md");
+    expect(postingQueue).toContain("MCP setup guide: docs/MCP.md");
+    expect(mcp).toContain("# MCP Setup Guide");
+    expect(mcp).toContain("Run from a local checkout");
+    expect(mcp).toContain("npm run build");
+    expect(mcp).toContain("\"command\": \"node\"");
+    expect(mcp).toContain("\"args\": [\"dist/mcp.js\"]");
+    expect(mcp).toContain("Run after npm publish");
+    expect(mcp).toContain("\"command\": \"npx\"");
+    expect(mcp).toContain("\"args\": [\"formctl-mcp\"]");
+    expect(mcp).toContain("formctl_doctor");
+    expect(mcp).toContain("formctl_inspect");
+    expect(mcp).toContain("formctl_submit_dry_run");
+    expect(mcp).toContain("does not expose approved submit");
+    expect(mcp).toContain("approval stays in the CLI");
+    expect(mcp).toContain("MCP SDK smoke test");
+  });
+
   test("agent angle article gives agents JSON branching examples", () => {
     const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
     const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");

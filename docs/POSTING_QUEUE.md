@@ -42,6 +42,8 @@ Example posts: docs/EXAMPLE_POSTS.md
 https://github.com/codeyoma/formctl/blob/main/docs/EXAMPLE_POSTS.md
 Trust notes: docs/TRUST.md
 https://github.com/codeyoma/formctl/blob/main/docs/TRUST.md
+MCP setup guide: docs/MCP.md
+https://github.com/codeyoma/formctl/blob/main/docs/MCP.md
 
 What API-less form workflow would you want turned into a safe CLI command?
 ```
@@ -72,6 +74,8 @@ Agent article: docs/WHY_FORM_CLIS.md
 https://github.com/codeyoma/formctl/blob/main/docs/WHY_FORM_CLIS.md
 Trust notes: docs/TRUST.md
 https://github.com/codeyoma/formctl/blob/main/docs/TRUST.md
+MCP setup guide: docs/MCP.md
+https://github.com/codeyoma/formctl/blob/main/docs/MCP.md
 
 Where would a form-specific CLI be safer than raw browser control?
 ```
