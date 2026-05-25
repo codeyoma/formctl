@@ -197,8 +197,8 @@ formctl doctor
 
 **Goal:** Test against realistic forms without relying on external services.
 
-- [x] Add fixture pages for expense report, admin user invite, support refund, and vendor onboarding.
-- [ ] Include common UI patterns: modal forms, multi-step forms, file upload, date picker, and confirmation page. Current fixtures cover file upload, select, checkbox, date input, and textarea; modal and multi-step remain.
+- [x] Add fixture pages for expense report, admin user invite, support refund, vendor onboarding, and procurement approval.
+- [x] Include common UI patterns: modal forms, multi-step forms, file upload, date picker, and confirmation page.
 - [x] Verify: Every fixture supports record, dry-run, and approved submit.
 - [x] Record fixture gaps in `REVIEW.md`.
 

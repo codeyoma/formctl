@@ -86,6 +86,34 @@ const replayCases: ReplayCase[] = [
       notes: "Approved vendor",
     },
   },
+  {
+    name: "procurement-approval",
+    route: "/procurement-approval",
+    submitRoute: "/procurement-approval/submit",
+    htmlFile: "procurement-approval.html",
+    args: [
+      "--requestorEmail",
+      "buyer@example.com",
+      "--department",
+      "finance",
+      "--amount",
+      "98000",
+      "--neededBy",
+      "2026-06-01",
+      "--justification",
+      "Quarterly laptop refresh",
+      "--urgent",
+      "true",
+    ],
+    expectedFields: {
+      requestorEmail: "buyer@example.com",
+      department: "finance",
+      amount: "98000",
+      neededBy: "2026-06-01",
+      justification: "Quarterly laptop refresh",
+      urgent: "true",
+    },
+  },
 ];
 
 function runFormctlAsync(args: string[], cwd: string) {

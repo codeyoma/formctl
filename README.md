@@ -67,6 +67,13 @@ npm run formctl -- record vendor-onboarding http://127.0.0.1:4173/vendor-onboard
 npm run formctl -- submit vendor-onboarding --legalName "Acme Supplies" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes "Approved vendor" --dry-run --json --headless
 ```
 
+Try a procurement approval fixture with an open modal, two visible steps, and a confirmation page:
+
+```bash
+npm run formctl -- record procurement-approval http://127.0.0.1:4173/procurement-approval --headless
+npm run formctl -- submit procurement-approval --requestorEmail buyer@example.com --department finance --amount 98000 --neededBy 2026-06-01 --justification "Quarterly laptop refresh" --urgent true --dry-run --json --headless
+```
+
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`

@@ -416,6 +416,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add a modal or multi-step fixture, or post the prepared outreach copy now that mode defaults are documented.
 
+### 2026-05-26: Add Modal Multi-Step Fixture
+
+**Date:** 2026-05-26
+
+**Experiment:** Close the remaining fixture realism gap with a modal procurement approval workflow.
+
+**Hypothesis:** A fixture with an open modal, two visible form steps, mixed field types, and a post-submit confirmation page will make the demo set broad enough for early launch conversations without requiring event-history recording yet.
+
+**Result:** Passed. `demo/procurement-approval.html` adds an open `<dialog>` with two `data-step` sections, email/select/number/date/textarea/checkbox fields, and the demo server returns a "Procurement approved" confirmation page after approved submit. README and replay tests now cover the new workflow.
+
+**Evidence:** RED failures were observed first: release-readiness and replay tests failed because `demo/procurement-approval.html` did not exist. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and a local demo smoke test for procurement record, dry-run, and approved submit.
+
+**Decision:** Keep this fixture as an open modal with visible steps. Hidden wizard steps would require recorded click/navigation events, which is a larger product feature than fixture coverage.
+
+**Next Step:** Move to distribution work, starting with local npm package verification and install docs, or post one prepared outreach channel.
+
 ### Template
 
 **Date:** YYYY-MM-DD
