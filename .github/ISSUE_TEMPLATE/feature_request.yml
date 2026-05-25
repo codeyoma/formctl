@@ -31,6 +31,33 @@ body:
     validations:
       required: true
   - type: textarea
+    id: trust-barrier
+    attributes:
+      label: Trust barrier
+      description: What would stop you from trusting automation for this workflow?
+      placeholder: File uploads, approvals, money movement, private data, compliance records, selector drift
+    validations:
+      required: true
+  - type: textarea
+    id: expected-cli
+    attributes:
+      label: Expected CLI command
+      description: Sketch the command you wish existed.
+      placeholder: formctl submit compliance-attestation --period 2026-05 --attestation ./signed.pdf --dry-run
+    validations:
+      required: false
+  - type: dropdown
+    id: fixture-permission
+    attributes:
+      label: Fixture permission
+      description: Can this become a public mock fixture with fake data?
+      options:
+        - "Yes, public mock fixture is okay"
+        - "Maybe, but details need review"
+        - "No, keep it private"
+    validations:
+      required: true
+  - type: textarea
     id: risks
     attributes:
       label: Safety concerns
@@ -38,4 +65,3 @@ body:
       placeholder: Credentials, uploads, destructive actions, approvals, private data, compliance logs
     validations:
       required: false
-

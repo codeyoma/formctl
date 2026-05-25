@@ -16,6 +16,7 @@
 - Add npm package build metadata, install docs, and tarball install verification.
 - Add README trust-artifact screenshots for dry-run previews, selector mismatch failures, and audit logs.
 - Add a 40-second README demo video built from the launch asset sequence.
+- Add a workflow request guide and richer feature request intake for launch feedback.
 
 ## 0.1.0 - 2026-05-26
 

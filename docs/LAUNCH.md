@@ -41,7 +41,7 @@ GitHub: https://github.com/codeyoma/formctl
 ## First 500 stars
 
 - [ ] Post the demo to developer communities that care about CLI tools, browser automation, internal tools, and AI agents.
-- [ ] Ask for painful API-less workflows, not generic feature requests.
+- [ ] Ask for painful API-less workflows using `docs/WORKFLOW_REQUESTS.md`, not generic feature requests.
 - [ ] Convert the best requests into local fixture examples.
 - [ ] Keep README first-run time under two minutes.
 

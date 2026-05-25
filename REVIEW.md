@@ -484,6 +484,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one prepared outreach channel and record which README asset gets mentioned or clicked.
 
+### 2026-05-26: Prepare Workflow Request Intake
+
+**Date:** 2026-05-26
+
+**Experiment:** Make early launch feedback easier to turn into fixture examples.
+
+**Hypothesis:** Outreach should ask for specific painful API-less workflows, but users need a concrete template that filters out vague requests and avoids private data.
+
+**Result:** Passed. `docs/WORKFLOW_REQUESTS.md` now asks for the painful workflow, current workaround, trust barrier, expected CLI command, and fixture permission. README, OUTREACH, ANNOUNCEMENT, and the GitHub feature request template now point users toward the same intake shape.
+
+**Evidence:** RED failures were observed first: release-readiness failed because the outreach tracker did not link the workflow request guide and `docs/WORKFLOW_REQUESTS.md` did not exist. A second RED check failed until the announcement draft referenced the guide. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, and `npm run formctl -- doctor --json`.
+
+**Decision:** Keep actual external posting blocked until a human-authenticated account posts to Hacker News, Reddit, LinkedIn, or direct outreach. The repo is now ready to collect useful workflow leads once posted.
+
+**Next Step:** Post one prepared outreach channel, record the posted URL and 24-hour metrics, then turn the best workflow request into the next fixture.
+
 ### Template
 
 **Date:** YYYY-MM-DD

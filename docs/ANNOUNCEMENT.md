@@ -24,6 +24,8 @@ What I want feedback on:
 - Is the approval model strict enough for agent use?
 - Which fixture examples would make this easier to evaluate?
 
+Workflow request guide: `docs/WORKFLOW_REQUESTS.md`
+
 Repo: https://github.com/codeyoma/formctl
 
 ## Short Post

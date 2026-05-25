@@ -315,6 +315,7 @@ describe("release readiness docs", () => {
 
     expect(outreach).toContain("# formctl Outreach Tracker");
     expect(outreach).toContain("Primary ask: share painful API-less workflows");
+    expect(outreach).toContain("Workflow request guide: docs/WORKFLOW_REQUESTS.md");
     expect(outreach).toContain("Hacker News");
     expect(outreach).toContain("Reddit r/commandline");
     expect(outreach).toContain("Reddit r/LocalLLaMA");
@@ -325,6 +326,28 @@ describe("release readiness docs", () => {
     expect(outreach).toContain("Comments");
     expect(outreach).toContain("Workflow leads");
     expect(outreach).toContain("https://github.com/codeyoma/formctl/releases/tag/v0.1.0");
+  });
+
+  test("workflow request intake is ready for launch feedback", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const workflowRequests = readFileSync(path.join(projectRoot, "docs", "WORKFLOW_REQUESTS.md"), "utf8");
+    const announcement = readFileSync(path.join(projectRoot, "docs", "ANNOUNCEMENT.md"), "utf8");
+    const featureRequest = readFileSync(path.join(projectRoot, ".github", "ISSUE_TEMPLATE", "feature_request.yml"), "utf8");
+
+    expect(readme).toContain("[Workflow request guide](docs/WORKFLOW_REQUESTS.md)");
+    expect(announcement).toContain("docs/WORKFLOW_REQUESTS.md");
+    expect(workflowRequests).toContain("# Workflow Request Guide");
+    expect(workflowRequests).toContain("Painful API-less workflow");
+    expect(workflowRequests).toContain("Current workaround");
+    expect(workflowRequests).toContain("Trust barrier");
+    expect(workflowRequests).toContain("Expected CLI command");
+    expect(workflowRequests).toContain("Fixture permission");
+    expect(workflowRequests).toContain("Do not include credentials, cookies, private URLs, or production data.");
+    expect(workflowRequests).toContain("CRM update");
+    expect(workflowRequests).toContain("compliance attestation");
+    expect(featureRequest).toContain("Expected CLI command");
+    expect(featureRequest).toContain("Fixture permission");
+    expect(featureRequest).toContain("Trust barrier");
   });
 
   test("agent safety guide teaches approval-gated CLI usage", () => {

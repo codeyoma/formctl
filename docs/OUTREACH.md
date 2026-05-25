@@ -4,6 +4,8 @@ Primary ask: share painful API-less workflows that should become safe, repeatabl
 
 Release: https://github.com/codeyoma/formctl/releases/tag/v0.1.0
 
+Workflow request guide: docs/WORKFLOW_REQUESTS.md
+
 ## Channel Plan
 
 | Channel | Angle | Status | Stars before | Stars after 24h | Comments | Workflow leads | Notes |
@@ -88,4 +90,3 @@ Do you have any internal tool, admin panel, expense, refund, vendor, or complian
 - Count useful comments separately from total comments when possible.
 - Treat Workflow leads as the main signal, not likes.
 - Append every completed channel to the Launch Attempts section in `REVIEW.md`.
-
