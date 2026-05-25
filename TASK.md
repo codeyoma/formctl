@@ -310,7 +310,7 @@ npx formctl doctor
 
 **Goal:** Keep iterating until 10k stars.
 
-- [ ] Every week, record stars, forks, npm downloads, issues, discussions, and demo views.
+- [ ] Every week, record stars, forks, npm downloads, issues, discussions, and demo views. Baseline started in `docs/GROWTH_LOG.md`.
 - [ ] Identify the highest-signal user request.
 - [ ] Ship one improvement that improves the first-run experience or expands a real use case.
 - [ ] Publish one artifact: release note, demo, article, comparison, or example.

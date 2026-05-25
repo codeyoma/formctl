@@ -8,6 +8,8 @@ Workflow request guide: docs/WORKFLOW_REQUESTS.md
 
 Example posts: docs/EXAMPLE_POSTS.md
 
+Growth log: docs/GROWTH_LOG.md
+
 Agent article: docs/WHY_FORM_CLIS.md
 
 ## Channel Plan

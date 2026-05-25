@@ -48,7 +48,7 @@ GitHub: https://github.com/codeyoma/formctl
 
 ## 10k stars Loop
 
-- [ ] Every week, record stars, forks, issues, discussions, and demo views in `REVIEW.md`.
+- [ ] Every week, record stars, forks, issues, discussions, and demo views in `docs/GROWTH_LOG.md`.
 - [ ] Ship one first-run or trust improvement.
 - [ ] Publish one artifact: demo, example, comparison, or short technical post.
 - [ ] Keep positioning focused on safe form submission, not generic RPA.

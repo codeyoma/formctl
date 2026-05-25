@@ -22,6 +22,7 @@
 - Add trust and comparison docs for dry-run, approval, audit logs, selector drift, and security boundaries.
 - Add an agent-angle article with JSON branching examples for dry-run, approval-required, and selector-mismatch outcomes.
 - Add before/after example posts for each local fixture workflow.
+- Add a growth log baseline for the weekly 10k-star loop.
 
 ## 0.1.0 - 2026-05-26
 

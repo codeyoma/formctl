@@ -411,6 +411,26 @@ describe("release readiness docs", () => {
     expect(examplePosts).toContain("--approve");
   });
 
+  test("growth log captures the weekly 10k-star loop baseline", () => {
+    const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
+    const launch = readFileSync(path.join(projectRoot, "docs", "LAUNCH.md"), "utf8");
+    const outreach = readFileSync(path.join(projectRoot, "docs", "OUTREACH.md"), "utf8");
+    const growthLog = readFileSync(path.join(projectRoot, "docs", "GROWTH_LOG.md"), "utf8");
+
+    expect(readme).toContain("[Growth log](docs/GROWTH_LOG.md)");
+    expect(launch).toContain("docs/GROWTH_LOG.md");
+    expect(outreach).toContain("Growth log: docs/GROWTH_LOG.md");
+    expect(growthLog).toContain("# Growth Log");
+    expect(growthLog).toContain("## Baseline: 2026-05-26");
+    expect(growthLog).toContain("| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |");
+    expect(growthLog).toContain("gh repo view codeyoma/formctl");
+    expect(growthLog).toContain("npm view formctl");
+    expect(growthLog).toContain("npm publish blocked until npm auth is configured");
+    expect(growthLog).toContain("Post one example-led outreach message");
+    expect(growthLog).toContain("Weekly Review Template");
+    expect(growthLog).toContain("Positioning Change");
+  });
+
   test("trust and comparison docs answer security questions", () => {
     const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
     const launch = readFileSync(path.join(projectRoot, "docs", "LAUNCH.md"), "utf8");

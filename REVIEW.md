@@ -582,6 +582,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post one example-led outreach message, or if external posting remains blocked, add a lightweight `docs/GROWTH_LOG.md` baseline for weekly star/download/lead tracking.
 
+### 2026-05-26: Add Growth Log Baseline
+
+**Date:** 2026-05-26
+
+**Experiment:** Start the weekly 10k-star loop with a measured baseline before any external post.
+
+**Hypothesis:** If outreach remains blocked by human-authenticated accounts, the next best move is to make growth tracking explicit so future posts can record stars, forks, issues, npm publish status, demo views, workflow leads, and positioning changes in one place.
+
+**Result:** Passed. `docs/GROWTH_LOG.md` now records the baseline: 0 GitHub stars, 0 forks, 1 open issue, npm package not published because `npm view formctl` returns `E404`, demo views not measured, and 0 workflow leads. README, launch checklist, and outreach docs link to it.
+
+**Evidence:** RED failure was observed first: release-readiness failed because `docs/GROWTH_LOG.md` was missing. The baseline metrics came from `gh api repos/codeyoma/formctl`, `gh issue list --repo codeyoma/formctl --state open`, and `npm view formctl version --json`. Focused GREEN passed with `npm test -- --run tests/release-readiness.test.ts -t "growth log"`. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first GREEN attempt failed because the log had the lower-level `gh api` command but not the easier `gh repo view codeyoma/formctl` command expected by the readiness test. The source commands now include both.
+
+**Decision:** Keep growth logging in `docs/GROWTH_LOG.md` and keep detailed implementation lessons in `REVIEW.md`. This keeps distribution metrics separate from engineering experiments.
+
+**Next Step:** Post one example-led outreach message, then update `docs/GROWTH_LOG.md` with the posted URL and 24-hour metrics.
+
 ### Template
 
 **Date:** YYYY-MM-DD
