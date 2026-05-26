@@ -135,6 +135,7 @@ Audit logs record selector checks, redacted field values, approval source, scree
 Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.
 Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.
 Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.
+Validation rejects unredacted `recording.events` metadata when present.
 
 ## Create A New Workflow
 

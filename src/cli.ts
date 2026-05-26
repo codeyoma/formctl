@@ -173,6 +173,18 @@ function hasCurrentSafetyMetadata(value: unknown): boolean {
     && value.fileInputs === DEFAULT_WORKFLOW_SAFETY.fileInputs;
 }
 
+function hasValidRecordingMetadata(value: unknown): boolean {
+  if (!isObject(value) || value.mode !== "manual" || !Array.isArray(value.events)) {
+    return false;
+  }
+
+  return value.events.every((event) => isObject(event)
+    && (event.event === "input" || event.event === "change")
+    && isNonEmptyString(event.field)
+    && isNonEmptyString(event.selector)
+    && (event.value === "[redacted]" || event.value === "[file]"));
+}
+
 function validateWorkflow(workflowName: string, workflow: unknown): ValidationCheck[] {
   const workflowObject = isObject(workflow) ? workflow : {};
   const fields = workflowObject.fields;
@@ -215,6 +227,14 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
       "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
     ),
+    ...(workflowObject.recording === undefined ? [] : [
+      buildValidationCheck(
+        "recording-metadata",
+        hasValidRecordingMetadata(workflowObject.recording),
+        "Recording metadata must use manual mode and redacted input/change events.",
+        "Use recording.mode: manual and events with event input/change, field, selector, and value [redacted] or [file].",
+      ),
+    ]),
   ];
 }
 

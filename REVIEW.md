@@ -1179,6 +1179,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish still needs auth; `npm whoami` returns `ENEEDAUTH`, while `npm view formctl` still returns `E404`.
 
+### 2026-05-27: Validate Recording Metadata Redaction
+
+**Date:** 2026-05-27
+
+**Experiment:** Fail workflow validation when optional manual recording metadata contains unredacted event values.
+
+**Hypothesis:** Since recording metadata is reviewable YAML, `validate --json` should catch accidental sensitive values before agents inspect, share, or submit from a workflow file.
+
+**Result:** Passed. `validate --json` now adds a `recording-metadata` check when `recording` exists. It accepts `mode: manual`, `input`/`change` events, non-empty field and selector strings, and only `[redacted]` or `[file]` values.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "recording metadata"` because a workflow with `recording.events[].value: 120000` still exited `0`. GREEN passed after adding optional recording validation. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the validation contract. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- workflows --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The focused test name also matched the existing `inspect --json returns manual recording metadata` test, so the RED/GREEN command ran two tests. That was harmless but less narrow than intended.
+
+**Decision:** Keep the check optional so older workflows without recording metadata do not change shape. Treat unredacted recording metadata as a validation error rather than silently dropping it.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish remains blocked by npm auth.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
