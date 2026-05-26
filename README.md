@@ -127,6 +127,7 @@ formctl record expense-report https://example.internal/expense
 ```
 
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
+`record` also saves a baseline screenshot next to the workflow file.
 
 ## Commands
 

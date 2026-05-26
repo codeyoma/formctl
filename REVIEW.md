@@ -1012,6 +1012,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** npm publish still needs an authenticated registry session; `npm whoami` returns `ENEEDAUTH`.
 
+### 2026-05-27: Save Baseline Screenshot During Record
+
+**Date:** 2026-05-27
+
+**Experiment:** Add a baseline screenshot artifact to newly recorded workflows.
+
+**Hypothesis:** A workflow file is easier to review in git when it points to the page state that was recorded, not only selectors and field names. A baseline screenshot also gives agents a stable artifact path from `inspect --json`.
+
+**Result:** Passed. `record` now writes `.formctl/workflows/<workflow>.baseline.png`, stores that path under `screenshots.baseline` in the workflow YAML, prints the baseline path, and `inspect --json` returns `screenshots` when the workflow has them.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "record creates"` because the baseline path was missing from stdout and no PNG was written. A second RED was observed with `npm test -- --run tests/cli.test.ts -t "inspect --json"` because screenshot metadata was not returned. Focused GREEN passed for both, and README readiness passed after documenting the artifact.
+
+**Decision:** Keep the baseline screenshot as a local workflow-adjacent artifact for now. Broader safety settings and full event-history recording remain separate tasks.
+
+**Next Step:** Add explicit workflow `safety` metadata only when it gates real runtime behavior instead of being decorative YAML.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

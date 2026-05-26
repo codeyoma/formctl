@@ -44,6 +44,9 @@ type WorkflowField = {
 type Workflow = {
   name: string;
   url: string;
+  screenshots?: {
+    baseline: string;
+  };
   fields: WorkflowField[];
   submit: {
     selector: string;
@@ -472,6 +475,7 @@ export async function run(
         status: "ok",
         workflow: workflow.name,
         url: workflow.url,
+        ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
         fields: workflow.fields,
         submit: workflow.submit,
       })}\n`);
@@ -906,19 +910,24 @@ export async function run(
         const type = element.getAttribute("type") ?? "submit";
         return `${tagName}[type="${type}"]`;
       });
+      const workflowDirectory = path.join(process.cwd(), ".formctl", "workflows");
+      const baselineScreenshot = `.formctl/workflows/${workflowName}.baseline.png`;
       const workflow: Workflow = {
         name: workflowName,
         url,
+        screenshots: {
+          baseline: baselineScreenshot,
+        },
         fields,
         submit: {
           selector: submitSelector,
         },
       };
 
-      const workflowDirectory = path.join(process.cwd(), ".formctl", "workflows");
       mkdirSync(workflowDirectory, { recursive: true });
+      await page.screenshot({ path: path.join(workflowDirectory, `${workflowName}.baseline.png`), fullPage: true });
       writeFileSync(path.join(workflowDirectory, `${workflowName}.yml`), stringify(workflow));
-      stdout.write(`Recorded workflow: ${workflowName}\nPath: .formctl/workflows/${workflowName}.yml\n`);
+      stdout.write(`Recorded workflow: ${workflowName}\nPath: .formctl/workflows/${workflowName}.yml\nBaseline: ${baselineScreenshot}\n`);
       return 0;
     } finally {
       await browser.close();

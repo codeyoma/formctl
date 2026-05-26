@@ -193,6 +193,8 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         "url: http://localhost:3000/expense",
+        "screenshots:",
+        "  baseline: .formctl/workflows/expense-report.baseline.png",
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -214,6 +216,9 @@ describe("formctl CLI", () => {
       status: "ok",
       workflow: "expense-report",
       url: "http://localhost:3000/expense",
+      screenshots: {
+        baseline: ".formctl/workflows/expense-report.baseline.png",
+      },
       fields: [
         { name: "amount", selector: 'input[name="amount"]', type: "number" },
         { name: "receipt", selector: 'input[name="receipt"]', type: "file" },
@@ -247,15 +252,21 @@ describe("formctl CLI", () => {
     try {
       const result = await runFormctlAsync(["record", "expense-report", fixture.url, "--headless"], workspace);
       const workflowPath = path.join(workspace, ".formctl", "workflows", "expense-report.yml");
+      const baselineScreenshotPath = path.join(workspace, ".formctl", "workflows", "expense-report.baseline.png");
 
       expect(result.status).toBe(0);
       expect(result.stderr).toBe("");
       expect(result.stdout).toContain("Recorded workflow: expense-report");
       expect(result.stdout).toContain(".formctl/workflows/expense-report.yml");
+      expect(result.stdout).toContain(".formctl/workflows/expense-report.baseline.png");
       expect(existsSync(workflowPath)).toBe(true);
+      expect(existsSync(baselineScreenshotPath)).toBe(true);
       expect(parse(readFileSync(workflowPath, "utf8"))).toEqual({
         name: "expense-report",
         url: fixture.url,
+        screenshots: {
+          baseline: ".formctl/workflows/expense-report.baseline.png",
+        },
         fields: [
           {
             name: "amount",
