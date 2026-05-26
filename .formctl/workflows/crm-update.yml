@@ -1,5 +1,10 @@
 name: crm-update
 url: http://127.0.0.1:4173/crm-update
+safety:
+  dryRunFirst: true
+  approvalRequired: true
+  selectorDrift: fail
+  fileInputs: redacted
 fields:
   - name: accountName
     selector: input[name="accountName"]

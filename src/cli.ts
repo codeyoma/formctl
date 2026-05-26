@@ -10,6 +10,13 @@ const PACKAGE_VERSION = (JSON.parse(readFileSync(new URL("../package.json", impo
   version: string;
 }).version;
 
+const DEFAULT_WORKFLOW_SAFETY = {
+  dryRunFirst: true,
+  approvalRequired: true,
+  selectorDrift: "fail",
+  fileInputs: "redacted",
+} as const;
+
 const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
 
 Usage:
@@ -48,6 +55,7 @@ type Workflow = {
   screenshots?: {
     baseline: string;
   };
+  safety?: typeof DEFAULT_WORKFLOW_SAFETY;
   fields: WorkflowField[];
   submit: {
     selector: string;
@@ -507,6 +515,7 @@ export async function run(
         workflow: workflow.name,
         url: workflow.url,
         ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
+        ...(workflow.safety === undefined ? {} : { safety: workflow.safety }),
         fields: workflow.fields,
         submit: workflow.submit,
       })}\n`);
@@ -972,6 +981,7 @@ export async function run(
         screenshots: {
           baseline: baselineScreenshot,
         },
+        safety: DEFAULT_WORKFLOW_SAFETY,
         fields,
         submit: {
           selector: submitSelector,

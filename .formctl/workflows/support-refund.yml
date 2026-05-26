@@ -1,5 +1,10 @@
 name: support-refund
 url: http://127.0.0.1:4173/support-refund
+safety:
+  dryRunFirst: true
+  approvalRequired: true
+  selectorDrift: fail
+  fileInputs: redacted
 fields:
   - name: orderId
     selector: input[name="orderId"]

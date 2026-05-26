@@ -1,5 +1,10 @@
 name: vendor-onboarding
 url: http://127.0.0.1:4173/vendor-onboarding
+safety:
+  dryRunFirst: true
+  approvalRequired: true
+  selectorDrift: fail
+  fileInputs: redacted
 fields:
   - name: legalName
     selector: input[name="legalName"]

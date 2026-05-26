@@ -45,6 +45,11 @@ describe("npm package readiness", () => {
 
       expect(workflow).toContain(`name: ${workflowName}`);
       expect(workflow).toContain("url: http://127.0.0.1:4173/");
+      expect(workflow).toContain("safety:");
+      expect(workflow).toContain("dryRunFirst: true");
+      expect(workflow).toContain("approvalRequired: true");
+      expect(workflow).toContain("selectorDrift: fail");
+      expect(workflow).toContain("fileInputs: redacted");
       expect(workflow).toContain("fields:");
       expect(workflow).toContain("submit:");
       expect(workflow).toContain('selector: button[type="submit"]');

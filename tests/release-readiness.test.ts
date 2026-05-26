@@ -117,6 +117,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("failure.json");
     expect(readme).toContain("failure.png");
     expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.");
+    expect(readme).toContain("Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.");
     expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
     expect(readme).toContain("[Agent safety guide](docs/agents.md)");
     expect(readme).toContain("Exit codes");
@@ -342,7 +343,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Capture final submit target and a baseline screenshot.");
     expect(task).toContain("- [ ] Capture field interactions and file uploads during manual completion.");
     expect(task).toContain("- [x] Include workflow name, target URL, fields, selectors, submit action, and screenshots.");
-    expect(task).toContain("- [ ] Add workflow safety settings when backed by runtime behavior.");
+    expect(task).toContain("- [x] Add workflow safety settings when backed by runtime behavior.");
     expect(task).toContain("- [x] Load the workflow file.");
     expect(task).toContain("- [x] Accept field values from CLI flags.");
     expect(task).toContain("- [x] Stop before the final submit action.");

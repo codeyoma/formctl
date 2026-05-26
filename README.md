@@ -124,6 +124,8 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.
 
+Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.
+
 ## Create A New Workflow
 
 Use `record` only when you need to create a workflow that does not exist yet.

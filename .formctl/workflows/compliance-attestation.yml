@@ -1,5 +1,10 @@
 name: compliance-attestation
 url: http://127.0.0.1:4173/compliance-attestation
+safety:
+  dryRunFirst: true
+  approvalRequired: true
+  selectorDrift: fail
+  fileInputs: redacted
 fields:
   - name: employeeEmail
     selector: input[name="employeeEmail"]

@@ -1044,6 +1044,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If users ask for workflow editing, add validation or repair commands before adding any write-oriented workflow manager.
 
+### 2026-05-27: Add Workflow Safety Metadata
+
+**Date:** 2026-05-27
+
+**Experiment:** Add explicit `safety` metadata to recorded and checked-in workflow YAML.
+
+**Hypothesis:** Safety metadata is worth adding only when it reflects behavior already enforced at runtime: dry-run first, explicit approval, selector drift failure, and file-input redaction.
+
+**Result:** Passed. `record` now writes a `safety` block, `inspect --json` returns it when present, README/TASK describe the contract, and every checked-in demo workflow carries the same metadata for package users.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "inspect --json|record creates"` because `inspect` and `record` omitted `safety`. A second RED was observed with `npm test -- --run tests/package-readiness.test.ts -t "ready-to-run demo workflows"` because checked-in workflows lacked the block. Focused GREEN passed after adding the runtime and fixture changes. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- workflows --json`, `npm run formctl -- inspect expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep the metadata descriptive and conservative. It should mirror enforced gates, not imply selector healing or policy controls that do not exist yet.
+
+**Next Step:** Finish the remaining workflow-format checklist by either marking readable YAML storage as shipped with a release-readiness test or adding a small workflow validator if users need stricter review guarantees.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

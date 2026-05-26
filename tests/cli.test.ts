@@ -196,6 +196,11 @@ describe("formctl CLI", () => {
         "url: http://localhost:3000/expense",
         "screenshots:",
         "  baseline: .formctl/workflows/expense-report.baseline.png",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -260,6 +265,11 @@ describe("formctl CLI", () => {
         "url: http://localhost:3000/expense",
         "screenshots:",
         "  baseline: .formctl/workflows/expense-report.baseline.png",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -283,6 +293,12 @@ describe("formctl CLI", () => {
       url: "http://localhost:3000/expense",
       screenshots: {
         baseline: ".formctl/workflows/expense-report.baseline.png",
+      },
+      safety: {
+        dryRunFirst: true,
+        approvalRequired: true,
+        selectorDrift: "fail",
+        fileInputs: "redacted",
       },
       fields: [
         { name: "amount", selector: 'input[name="amount"]', type: "number" },
@@ -331,6 +347,12 @@ describe("formctl CLI", () => {
         url: fixture.url,
         screenshots: {
           baseline: ".formctl/workflows/expense-report.baseline.png",
+        },
+        safety: {
+          dryRunFirst: true,
+          approvalRequired: true,
+          selectorDrift: "fail",
+          fileInputs: "redacted",
         },
         fields: [
           {
