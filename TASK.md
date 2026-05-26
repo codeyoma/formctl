@@ -69,12 +69,12 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.png --approve
 
 **Output:** A stable workflow file users can commit to git.
 
-- [ ] Store recorded workflows as readable YAML under `.formctl/workflows/<name>.yml`.
+- [x] Store recorded workflows as readable YAML under `.formctl/workflows/<name>.yml`.
 - [x] Include workflow name, target URL, fields, selectors, submit action, and screenshots.
 - [x] Add workflow safety settings when backed by runtime behavior.
-- [ ] Avoid clever selector healing in v0; first detect selector breakage clearly.
-- [ ] Verify: A human can review the workflow file in a pull request.
-- [ ] Record format tradeoffs in `REVIEW.md`.
+- [x] Avoid clever selector healing in v0; first detect selector breakage clearly.
+- [x] Verify: A human can review the workflow file in a pull request.
+- [x] Record format tradeoffs in `REVIEW.md`.
 
 ---
 
@@ -92,6 +92,7 @@ formctl record <workflow-name> <url>
 formctl submit <workflow-name> [flags]
 formctl inspect <workflow-name>
 formctl workflows [--json]
+formctl validate <workflow-name> [--json]
 formctl doctor
 ```
 

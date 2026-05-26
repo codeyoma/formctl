@@ -112,6 +112,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("formctl record expense-report https://example.internal/expense");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
+    expect(readme).toContain("formctl validate <workflow-name> [--json]");
+    expect(readme).toContain("Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -338,12 +340,17 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Create a Node.js TypeScript project.");
     expect(task).toContain("- [x] Add commands:");
     expect(task).toContain("formctl workflows [--json]");
+    expect(task).toContain("formctl validate <workflow-name> [--json]");
     expect(task).toContain("- [x] Use clear exit codes:");
     expect(task).toContain("- [x] Verify: `formctl --help` explains the product without reading docs.");
     expect(task).toContain("- [x] Capture final submit target and a baseline screenshot.");
     expect(task).toContain("- [ ] Capture field interactions and file uploads during manual completion.");
     expect(task).toContain("- [x] Include workflow name, target URL, fields, selectors, submit action, and screenshots.");
     expect(task).toContain("- [x] Add workflow safety settings when backed by runtime behavior.");
+    expect(task).toContain("- [x] Store recorded workflows as readable YAML under `.formctl/workflows/<name>.yml`.");
+    expect(task).toContain("- [x] Avoid clever selector healing in v0; first detect selector breakage clearly.");
+    expect(task).toContain("- [x] Verify: A human can review the workflow file in a pull request.");
+    expect(task).toContain("- [x] Record format tradeoffs in `REVIEW.md`.");
     expect(task).toContain("- [x] Load the workflow file.");
     expect(task).toContain("- [x] Accept field values from CLI flags.");
     expect(task).toContain("- [x] Stop before the final submit action.");
@@ -542,6 +549,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `artifacts`.");
     expect(agents).toContain("Run `formctl doctor --json` before browser-backed work.");
     expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
+    expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
     expect(agents).toContain("## Doctor JSON");
     expect(agents).toContain('"exitCode": 0');
     expect(agents).toContain('"playwright-chromium"');

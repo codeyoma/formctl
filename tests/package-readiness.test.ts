@@ -26,6 +26,7 @@ describe("npm package readiness", () => {
     expect(packageJson.scripts.prepack).toBe("npm run build");
     expect(packageJson.scripts["test:package"]).toBe("node scripts/package-smoke.mjs");
     expect(existsSync(path.join(projectRoot, "scripts", "package-smoke.mjs"))).toBe(true);
+    expect(readFileSync(path.join(projectRoot, "scripts", "package-smoke.mjs"), "utf8")).toContain("validate");
   });
 
   test("package includes ready-to-run demo workflows", () => {

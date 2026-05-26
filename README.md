@@ -64,6 +64,12 @@ List available workflows:
 npm run formctl -- workflows --json
 ```
 
+Validate workflow YAML before review or sharing:
+
+```bash
+npm run formctl -- validate expense-report --json
+```
+
 Preview a submission without sending the form:
 
 ```bash
@@ -125,6 +131,7 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.
 
 Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.
+Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.
 
 ## Create A New Workflow
 
@@ -145,6 +152,7 @@ formctl submit <workflow-name> --approve [flags]
 formctl submit <workflow-name> [flags]
 formctl inspect <workflow-name> [--json]
 formctl workflows [--json]
+formctl validate <workflow-name> [--json]
 formctl record <workflow-name> <url>
 formctl doctor [--json]
 ```

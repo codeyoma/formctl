@@ -85,6 +85,12 @@ try {
     throw new Error(`Installed formctl doctor failed: ${doctor.stdout}`);
   }
 
+  const validation = run(formctl, ["validate", "expense-report", "--json"]);
+  const validationPayload = JSON.parse(validation.stdout);
+  if (validationPayload.status !== "ok" || validationPayload.exitCode !== 0) {
+    throw new Error(`Installed formctl validate failed: ${validation.stdout}`);
+  }
+
   await smokeMcpServer(formctlMcp);
 
   process.stdout.write("Package smoke passed\n");

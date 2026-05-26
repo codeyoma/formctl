@@ -12,21 +12,27 @@ Use this guide when calling `formctl` from Codex, Claude Code, Cursor, Copilot C
 formctl workflows --json
 ```
 
-3. Inspect the existing workflow before submitting:
+3. Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.
+
+```bash
+formctl validate expense-report --json
+```
+
+4. Inspect the existing workflow before submitting:
 
 ```bash
 formctl inspect expense-report --json
 ```
 
-4. Always run `submit --dry-run --json` before any approved submit.
+5. Always run `submit --dry-run --json` before any approved submit.
 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run --json --headless
 ```
 
-5. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
+6. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
 
-6. Never pass `--approve` unless the user or policy explicitly authorizes submission.
+7. Never pass `--approve` unless the user or policy explicitly authorizes submission.
 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve --json --headless

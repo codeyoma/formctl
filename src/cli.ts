@@ -24,6 +24,7 @@ Usage:
   formctl submit <workflow-name> --approve [flags]
   formctl inspect <workflow-name>
   formctl workflows [--json]
+  formctl validate <workflow-name> [--json]
   formctl record <workflow-name> <url>
   formctl doctor
 
@@ -109,6 +110,12 @@ type DoctorCheck = {
   message?: string;
 };
 
+type ValidationCheck = {
+  name: string;
+  status: "ok" | "error";
+  message?: string;
+};
+
 function buildDoctorChecks(): DoctorCheck[] {
   const chromiumExecutablePath = chromium.executablePath();
   const chromiumInstalled = existsSync(chromiumExecutablePath);
@@ -123,6 +130,69 @@ function buildDoctorChecks(): DoctorCheck[] {
       installCommand: "npx playwright install chromium",
       ...(chromiumInstalled ? {} : { message: "Playwright Chromium is not installed." }),
     },
+  ];
+}
+
+function buildValidationCheck(name: string, valid: boolean, message: string): ValidationCheck {
+  return valid ? { name, status: "ok" } : { name, status: "error", message };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
+function hasCurrentSafetyMetadata(value: unknown): boolean {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return value.dryRunFirst === DEFAULT_WORKFLOW_SAFETY.dryRunFirst
+    && value.approvalRequired === DEFAULT_WORKFLOW_SAFETY.approvalRequired
+    && value.selectorDrift === DEFAULT_WORKFLOW_SAFETY.selectorDrift
+    && value.fileInputs === DEFAULT_WORKFLOW_SAFETY.fileInputs;
+}
+
+function validateWorkflow(workflowName: string, workflow: unknown): ValidationCheck[] {
+  const workflowObject = isObject(workflow) ? workflow : {};
+  const fields = workflowObject.fields;
+  const submit = workflowObject.submit;
+  const fieldListValid = Array.isArray(fields)
+    && fields.length > 0
+    && fields.every((field) => isObject(field)
+      && isNonEmptyString(field.name)
+      && isNonEmptyString(field.selector)
+      && isNonEmptyString(field.type));
+
+  return [
+    buildValidationCheck(
+      "workflow-name",
+      workflowObject.name === workflowName,
+      `Workflow name must match ${workflowName}.`,
+    ),
+    buildValidationCheck(
+      "target-url",
+      isNonEmptyString(workflowObject.url),
+      "Workflow must include a target URL.",
+    ),
+    buildValidationCheck(
+      "fields",
+      fieldListValid,
+      "Workflow must include at least one field with name, selector, and type.",
+    ),
+    buildValidationCheck(
+      "submit-selector",
+      isObject(submit) && isNonEmptyString(submit.selector),
+      "Workflow must include submit.selector.",
+    ),
+    buildValidationCheck(
+      "safety-metadata",
+      hasCurrentSafetyMetadata(workflowObject.safety),
+      "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
+    ),
   ];
 }
 
@@ -547,6 +617,60 @@ export async function run(
       stdout.write(`- ${workflow.name}: ${workflow.path}\n`);
     }
     return 0;
+  }
+
+  if (command === "validate") {
+    const workflowName = args[3];
+
+    if (workflowName === undefined) {
+      stderr.write("Usage: formctl validate <workflow-name> [--json]\n");
+      return 1;
+    }
+
+    const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
+    const displayPath = `.formctl/workflows/${workflowName}.yml`;
+    if (!existsSync(workflowPath)) {
+      stderr.write(`Workflow not found: ${workflowName}\nExpected: ${displayPath}\n`);
+      return 2;
+    }
+
+    let workflow: unknown;
+    const checks: ValidationCheck[] = [];
+    try {
+      workflow = parse(readFileSync(workflowPath, "utf8"));
+      checks.push({ name: "readable-yaml", status: "ok" });
+      checks.push(...validateWorkflow(workflowName, workflow));
+    } catch (error) {
+      checks.push({
+        name: "readable-yaml",
+        status: "error",
+        message: error instanceof Error ? error.message : "Workflow YAML could not be parsed.",
+      });
+    }
+
+    const status = checks.every((check) => check.status === "ok") ? "ok" : "error";
+    const exitCode = status === "ok" ? 0 : 1;
+
+    if (flags.has("--json")) {
+      stdout.write(`${JSON.stringify({
+        status,
+        command: "validate",
+        workflow: workflowName,
+        path: displayPath,
+        exitCode,
+        checks,
+      })}\n`);
+      return exitCode;
+    }
+
+    stdout.write(`Workflow validation: ${status}\nPath: ${displayPath}\n`);
+    for (const check of checks) {
+      stdout.write(`- ${check.name}: ${check.status}\n`);
+      if (check.message !== undefined) {
+        stdout.write(`  message: ${check.message}\n`);
+      }
+    }
+    return exitCode;
   }
 
   if (command === "submit") {

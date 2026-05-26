@@ -108,6 +108,7 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("Interactive submit shows a dry-run screenshot path before asking for approval.");
     expect(result.stdout).toContain("formctl inspect <workflow-name>");
     expect(result.stdout).toContain("formctl workflows [--json]");
+    expect(result.stdout).toContain("formctl validate <workflow-name> [--json]");
     expect(result.stdout).toContain("formctl record <workflow-name> <url>");
     expect(result.stdout).toContain("formctl doctor");
     expect(result.stdout).toContain("Start with an existing .formctl/workflows/<name>.yml file.");
@@ -250,6 +251,93 @@ describe("formctl CLI", () => {
           screenshots: {
             baseline: ".formctl/workflows/expense-report.baseline.png",
           },
+        },
+      ],
+    });
+  });
+
+  test("validate --json confirms a reviewable workflow file", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-valid-workflow-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "ok",
+      command: "validate",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 0,
+      checks: [
+        { name: "readable-yaml", status: "ok" },
+        { name: "workflow-name", status: "ok" },
+        { name: "target-url", status: "ok" },
+        { name: "fields", status: "ok" },
+        { name: "submit-selector", status: "ok" },
+        { name: "safety-metadata", status: "ok" },
+      ],
+    });
+  });
+
+  test("validate --json exits 1 when safety metadata is missing", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "validate",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      checks: [
+        { name: "readable-yaml", status: "ok" },
+        { name: "workflow-name", status: "ok" },
+        { name: "target-url", status: "ok" },
+        { name: "fields", status: "ok" },
+        { name: "submit-selector", status: "ok" },
+        {
+          name: "safety-metadata",
+          status: "error",
+          message: "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
         },
       ],
     });

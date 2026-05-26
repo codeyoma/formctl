@@ -1060,6 +1060,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Finish the remaining workflow-format checklist by either marking readable YAML storage as shipped with a release-readiness test or adding a small workflow validator if users need stricter review guarantees.
 
+### 2026-05-27: Add Workflow Validation
+
+**Date:** 2026-05-27
+
+**Experiment:** Add `formctl validate <workflow-name> [--json]` as a static review gate for workflow YAML.
+
+**Hypothesis:** A lightweight validator makes workflow files safer to review in pull requests without introducing selector healing or browser-side mutation.
+
+**Result:** Passed. `validate --json` now checks readable YAML, workflow name, target URL, field shape, submit selector, and safety metadata. The command exits `0` for reviewable workflows and `1` for invalid workflow content. Help, README, TASK, and the agent guide now teach the command.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "help explains|validate --json"` because `validate` was unknown and help omitted it. Release-readiness RED also failed until README, TASK, and `docs/agents.md` documented the review gate. Focused GREEN passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts -t "help explains|validate --json|README explains|TASK plan|agent safety"`. Package-readiness RED then required the installed-package smoke to exercise `validate`; `npm run test:package` passed after adding that installed-binary check. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep `validate` static for now. Runtime selector drift remains the job of `submit --dry-run`; `validate` should only answer whether the committed YAML follows the current reviewable contract.
+
+**Next Step:** If validation errors become common, add human-readable repair guidance before adding any command that rewrites workflow files.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
