@@ -36,6 +36,7 @@
 - Add a package smoke test that installs the local tarball and verifies installed CLI and MCP binaries.
 - Add replay and package smoke commands to the launch checklist.
 - Detect recorded field type drift before filling or submitting a workflow.
+- Record field labels and detect label drift before filling or submitting a workflow.
 
 ## 0.1.0 - 2026-05-26
 

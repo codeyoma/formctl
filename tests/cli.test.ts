@@ -235,8 +235,8 @@ describe("formctl CLI", () => {
         name: "expense-report",
         url: fixture.url,
         fields: [
-          { name: "amount", selector: 'input[name="amount"]', type: "number" },
-          { name: "receipt", selector: 'input[name="receipt"]', type: "file" },
+          { name: "amount", selector: 'input[name="amount"]', type: "number", label: "Amount" },
+          { name: "receipt", selector: 'input[name="receipt"]', type: "file", label: "Receipt" },
         ],
         submit: { selector: 'button[type="submit"]' },
       });
@@ -1164,6 +1164,77 @@ describe("formctl CLI", () => {
         },
       });
       expect(parsed.error.message).toContain("expected type number, found text");
+      expect(parsed.runId).toMatch(/^\d+-failed$/);
+      expect(existsSync(path.join(workspace, parsed.artifacts.failure))).toBe(true);
+      expect(existsSync(path.join(workspace, parsed.artifacts.screenshot))).toBe(true);
+      expect(existsSync(path.join(workspace, parsed.artifacts.audit))).toBe(true);
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  test("submit --dry-run exits 3 when a recorded field label changed", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <label>
+              Total
+              <input name="amount" type="number" />
+            </label>
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-label-mismatch-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "    label: Amount",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const parsed = JSON.parse(result.stdout);
+
+      expect(result.status).toBe(3);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "error",
+        workflow: "expense-report",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          selector: 'input[name="amount"]',
+          expectedLabel: "Amount",
+          actualLabel: "Total",
+        },
+      });
+      expect(parsed.error.message).toContain("expected label Amount, found Total");
       expect(parsed.runId).toMatch(/^\d+-failed$/);
       expect(existsSync(path.join(workspace, parsed.artifacts.failure))).toBe(true);
       expect(existsSync(path.join(workspace, parsed.artifacts.screenshot))).toBe(true);

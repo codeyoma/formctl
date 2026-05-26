@@ -830,6 +830,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add label or nearby visible-text comparison for fields so Task 1.5 covers semantic drift, not just selector count and field type.
 
+### 2026-05-26: Record And Check Field Labels
+
+**Date:** 2026-05-26
+
+**Experiment:** Capture field labels during `record` and treat label changes as selector drift during `submit`.
+
+**Hypothesis:** A selector can still point to exactly one input while the page meaning changed. Storing a human-visible label gives `formctl` a cheap semantic guardrail before replay.
+
+**Result:** Passed. Recorded workflows now include labels when native labels or `aria-label` are available. Submit preflight compares recorded labels against the current DOM label and exits `3` with `expectedLabel` and `actualLabel` when they differ.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "record creates a workflow file"` because record omitted `label`. A second RED was observed with `npm test -- --run tests/cli.test.ts -t "recorded field label changed"` because submit returned exit `0` instead of `3`. Focused GREEN passed with `npm test -- --run tests/cli.test.ts -t "recorded field label changed|record creates a workflow file"`. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep label drift under `selector_mismatch` rather than inventing a separate exit code; the workflow no longer matches the live page.
+
+**Next Step:** Add nearby visible-text comparison only if it can be made deterministic enough to avoid noisy false positives.
+
 ### Template
 
 **Date:** YYYY-MM-DD
@@ -863,6 +879,20 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 **Fix:** Use async `spawn` for tests that need the fixture HTTP server to respond.
 
 **Verification:** The same record test passed after switching only that path to async process execution.
+
+### 2026-05-26: DOM Label Type Narrowing Failed Typecheck
+
+**Date:** 2026-05-26
+
+**Failure:** The label implementation passed runtime tests but `npx tsc --noEmit` failed on `element.labels` because TypeScript did not narrow the DOM type from `"labels" in element`.
+
+**Impact:** The package would not build even though Playwright could execute the browser code.
+
+**Root Cause:** The DOM callback receives a broad `Element` type, and `Array.from(element.labels ?? [])` was inferred from `{}`/`unknown`.
+
+**Fix:** Use an explicit erased type assertion inside the browser callback: `Element & { labels?: NodeListOf<HTMLLabelElement> | null }`.
+
+**Verification:** `npx tsc --noEmit` passed after the type assertion, and the focused label tests still passed.
 
 ### Template
 

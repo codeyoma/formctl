@@ -35,6 +35,7 @@ type WorkflowField = {
   name: string;
   selector: string;
   type: string;
+  label?: string;
 };
 
 type Workflow = {
@@ -67,6 +68,7 @@ type SelectorFailurePayload = {
   } & (
     | { expectedMatches: 1; actualMatches: number }
     | { expectedType: string; actualType: string }
+    | { expectedLabel: string; actualLabel: string }
   );
 };
 
@@ -180,6 +182,30 @@ function buildFieldTypeMismatchPayload(
   };
 }
 
+function buildFieldLabelMismatchPayload(
+  workflowName: string,
+  selector: string,
+  expectedLabel: string,
+  actualLabel: string,
+): SelectorFailurePayload {
+  const message = `Selector mismatch: ${selector} expected label ${expectedLabel}, found ${actualLabel}`;
+
+  return {
+    status: "error",
+    workflow: workflowName,
+    exitCode: 3,
+    submitted: false,
+    requiresApproval: false,
+    error: {
+      code: "selector_mismatch",
+      selector,
+      expectedLabel,
+      actualLabel,
+      message,
+    },
+  };
+}
+
 function writeSelectorFailure(
   output: NodeJS.WritableStream,
   failurePayload: SelectorFailurePayload,
@@ -216,6 +242,10 @@ function normalizeFieldType(type: string): string {
   return type.toLowerCase();
 }
 
+function normalizeLabel(label: string): string {
+  return label.replace(/\s+/g, " ").trim();
+}
+
 async function readElementType(page: Page, selector: string): Promise<string> {
   return page.locator(selector).evaluate((element) => {
     const tagName = element.tagName.toLowerCase();
@@ -224,6 +254,20 @@ async function readElementType(page: Page, selector: string): Promise<string> {
     }
 
     return tagName;
+  });
+}
+
+async function readElementLabel(page: Page, selector: string): Promise<string> {
+  return page.locator(selector).evaluate((element) => {
+    const labelableElement = element as Element & { labels?: NodeListOf<HTMLLabelElement> | null };
+    const labels = Array.from(labelableElement.labels ?? []);
+    const label = labels
+      .map((labelElement) => labelElement.textContent?.replace(/\s+/g, " ").trim() ?? "")
+      .find((labelText) => labelText.length > 0)
+      ?? element.getAttribute("aria-label")
+      ?? "";
+
+    return label.replace(/\s+/g, " ").trim();
   });
 }
 
@@ -482,6 +526,42 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
           );
           return 3;
         }
+
+        if (field.label !== undefined) {
+          const expectedLabel = normalizeLabel(field.label);
+          const actualLabel = await readElementLabel(page, field.selector);
+          if (actualLabel !== expectedLabel) {
+            const failurePayload = buildFieldLabelMismatchPayload(
+              workflow.name,
+              field.selector,
+              expectedLabel,
+              actualLabel,
+            );
+            auditEvents.push({
+              event: "field_label_check",
+              role: "field",
+              field: field.name,
+              selector: field.selector,
+              expectedLabel,
+              actualLabel,
+              result: "mismatch",
+            });
+            const failure = await writeSelectorMismatchFailureArtifacts(
+              page,
+              process.cwd(),
+              failurePayload,
+              auditEvents,
+            );
+            writeSelectorFailure(
+              wantsJson ? stdout : stderr,
+              failurePayload,
+              wantsJson,
+              failure.runId,
+              failure.artifacts,
+            );
+            return 3;
+          }
+        }
       }
 
       const submitMatchCount = await page.locator(workflow.submit.selector).count();
@@ -631,11 +711,19 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         const type = tagName === "input"
           ? element.getAttribute("type") ?? "text"
           : tagName;
+        const labelableElement = element as Element & { labels?: NodeListOf<HTMLLabelElement> | null };
+        const labels = Array.from(labelableElement.labels ?? []);
+        const label = labels
+          .map((labelElement) => labelElement.textContent?.replace(/\s+/g, " ").trim() ?? "")
+          .find((labelText) => labelText.length > 0)
+          ?? element.getAttribute("aria-label")
+          ?? "";
 
         return [{
           name,
           selector: `${tagName}[name="${name}"]`,
           type,
+          ...(label.length === 0 ? {} : { label }),
         }];
       }));
       const submitSelector = await page.locator('button[type="submit"], input[type="submit"]').first().evaluate((element) => {

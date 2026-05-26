@@ -148,13 +148,14 @@ formctl doctor
 
 **Goal:** Fail loudly when the page no longer matches the recorded workflow.
 
-- [ ] Check that every required selector resolves to exactly one expected element.
+- [x] Check that every required selector resolves to exactly one expected element.
 - [x] Compare recorded field input types with the current DOM before filling.
-- [ ] Compare element labels and visible text near the field.
-- [ ] Emit a clear selector mismatch report.
-- [ ] Save a failure screenshot.
-- [ ] Verify: Changing a form label or removing a field causes exit code `3`.
-- [ ] Record brittle selector cases in `REVIEW.md`.
+- [x] Compare recorded field labels with the current DOM before filling.
+- [ ] Compare visible text near the field.
+- [x] Emit a clear selector mismatch report.
+- [x] Save a failure screenshot.
+- [x] Verify: Changing a form label or removing a field causes exit code `3`.
+- [x] Record brittle selector cases in `REVIEW.md`.
 
 ---
 
