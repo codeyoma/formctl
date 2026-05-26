@@ -23,6 +23,8 @@ describe("npm package readiness", () => {
     ]);
     expect(packageJson.scripts.build).toBe("tsc -p tsconfig.build.json");
     expect(packageJson.scripts.prepack).toBe("npm run build");
+    expect(packageJson.scripts["test:package"]).toBe("node scripts/package-smoke.mjs");
+    expect(existsSync(path.join(projectRoot, "scripts", "package-smoke.mjs"))).toBe(true);
   });
 
   test("build config emits only runtime source into dist", () => {

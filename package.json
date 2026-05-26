@@ -36,6 +36,7 @@
   "scripts": {
     "test": "vitest run",
     "test:replay": "vitest run tests/demo-replay.test.ts",
+    "test:package": "node scripts/package-smoke.mjs",
     "build": "tsc -p tsconfig.build.json",
     "prepack": "npm run build",
     "demo": "node demo/server.mjs",

@@ -321,6 +321,7 @@ describe("release readiness docs", () => {
     expect(ci).toContain("npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts");
     expect(ci).toContain("tests/mcp.test.ts");
     expect(ci).toContain("npm run test:replay");
+    expect(ci).toContain("npm run test:package");
     expect(ci).toContain("npm run build");
     expect(ci).toContain("npx tsc --noEmit");
   });

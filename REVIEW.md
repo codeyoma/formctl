@@ -780,6 +780,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Include `formctl --version` in any future tarball install smoke scripts or release checklist.
 
+### 2026-05-26: Add Tarball Package Smoke
+
+**Date:** 2026-05-26
+
+**Experiment:** Turn the manual npm tarball install smoke into a repeatable `npm run test:package` check.
+
+**Hypothesis:** A local tarball smoke catches npm-bin and packaged-runtime breakages that source-level tests miss, especially after adding `formctl --version` and `formctl-mcp`.
+
+**Result:** Passed. `scripts/package-smoke.mjs` now packs the project, installs the tarball into a temporary global prefix, verifies installed `formctl --version`, `formctl --help`, `formctl doctor --json`, and connects to installed `formctl-mcp` with an MCP client. CI now runs `npm run test:package`.
+
+**Evidence:** RED failures were observed first: `npm test -- --run tests/package-readiness.test.ts -t "package metadata"` failed because `test:package` and `scripts/package-smoke.mjs` did not exist, and `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` failed because CI did not run `npm run test:package`. Focused GREEN passed after adding the script and CI step. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- --version`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**What Failed:** The first package smoke exposed a real packaged-bin bug: installed `formctl-mcp` exited immediately because the entrypoint guard compared the npm bin symlink path to `dist/mcp.js`. Resolving both sides with `realpathSync` fixed the installed binary while preserving direct `node dist/mcp.js` execution.
+
+**Decision:** Keep package smoke as a separate npm script and CI step because it is slower and covers a different failure class than Vitest.
+
+**Next Step:** Add `npm run test:package` to release checklist docs if the release process gets formalized further.
+
 ### Template
 
 **Date:** YYYY-MM-DD
