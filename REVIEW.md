@@ -1143,6 +1143,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If recording remains the highest-risk area, add event capture for field changes or file uploads as a separate TDD slice. npm publish still needs auth; `npm whoami` returns `ENEEDAUTH` and `npm view formctl` returns `E404`.
 
+### 2026-05-27: Capture Manual Recording Events
+
+**Date:** 2026-05-27
+
+**Experiment:** Store manual recording interaction metadata without leaking entered values or file names.
+
+**Hypothesis:** A workflow is easier to review if `record --manual` leaves a small `recording.events` trail showing which fields changed, while values and file uploads remain redacted.
+
+**Result:** Passed. Manual workflows now store `recording.mode: manual` and redacted `recording.events` entries for input/change events. File inputs are recorded as `[file]`, other values as `[redacted]`, and `inspect --json` returns the recording metadata when present.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "record --manual captures"` because `workflow.recording` was missing. A second RED was observed with `npm test -- --run tests/cli.test.ts -t "inspect --json returns manual"` because `inspect --json` omitted the metadata. Release-readiness RED failed until README, `docs/agents.md`, and `TASK.md` documented redacted `recording.events`. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- --help`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first event-capture test was flaky because the synthetic Enter could arrive before the page listener had captured the delayed browser events. The fixture now waits for a `__formctlManualReady` signal and delays Enter to match the real manual flow.
+
+**Decision:** Keep interaction recording as metadata only for now. It should help review what changed without becoming a replay engine or storing sensitive values.
+
+**Next Step:** Return to growth/outreach, or add a future event-history replay feature only after user demand proves it is needed.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

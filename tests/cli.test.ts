@@ -63,6 +63,18 @@ function createInteractiveInput(text: string) {
   return input;
 }
 
+function createDelayedInteractiveInput(text: string, delayMs: number) {
+  const input = new Readable({
+    read() {},
+  }) as Readable & { isTTY?: boolean };
+  input.isTTY = true;
+  setTimeout(() => {
+    input.push(text);
+    input.push(null);
+  }, delayMs);
+  return input;
+}
+
 async function serveFixture(html: string) {
   let postCount = 0;
   const server = http.createServer((_, response) => {
@@ -425,6 +437,48 @@ describe("formctl CLI", () => {
     });
   });
 
+  test("inspect --json returns manual recording metadata when present", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-inspect-recording-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: input",
+        "      field: amount",
+        "      selector: input[name=\"amount\"]",
+        "      value: \"[redacted]\"",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["inspect", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout).recording).toEqual({
+      mode: "manual",
+      events: [
+        {
+          event: "input",
+          field: "amount",
+          selector: 'input[name="amount"]',
+          value: "[redacted]",
+        },
+      ],
+    });
+  });
+
   test("record creates a workflow file from a live form", async () => {
     const fixture = await serveFixture(`
       <!doctype html>
@@ -533,6 +587,89 @@ describe("formctl CLI", () => {
       expect(stdout.text()).toContain("Manual record: complete the form in the browser, then press Enter here to save.");
       expect(stdout.text()).toContain("Recorded workflow: expense-report");
       expect(existsSync(workflowPath)).toBe(true);
+    } finally {
+      process.chdir(previousCwd);
+      await fixture.close();
+    }
+  });
+
+  test("record --manual captures redacted field interaction events", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form aria-label="Expense report">
+            <label>
+              Amount
+              <input name="amount" type="number" />
+            </label>
+            <label>
+              Receipt
+              <input name="receipt" type="file" />
+            </label>
+            <button type="submit">Submit expense</button>
+          </form>
+          <script>
+            const recordWhenReady = setInterval(() => {
+              if (!window.__formctlManualReady) {
+                return;
+              }
+              clearInterval(recordWhenReady);
+              const amount = document.querySelector('input[name="amount"]');
+              amount.value = "120000";
+              amount.dispatchEvent(new Event("input", { bubbles: true }));
+              const receipt = document.querySelector('input[name="receipt"]');
+              receipt.dispatchEvent(new Event("change", { bubbles: true }));
+            }, 20);
+          </script>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-manual-record-events-"));
+    const stdout = createWritableCapture();
+    const stderr = createWritableCapture();
+    const previousCwd = process.cwd();
+
+    try {
+      const { run } = await import("../src/cli.js");
+
+      process.chdir(workspace);
+      const status = await run(
+        [
+          process.execPath,
+          cliPath,
+          "record",
+          "expense-report",
+          fixture.url,
+          "--manual",
+          "--headless",
+        ],
+        stdout.stream,
+        stderr.stream,
+        createDelayedInteractiveInput("\n", 1500),
+      );
+      const workflowPath = path.join(workspace, ".formctl", "workflows", "expense-report.yml");
+      const workflow = parse(readFileSync(workflowPath, "utf8"));
+
+      expect(status).toBe(0);
+      expect(stderr.text()).toBe("");
+      expect(workflow.recording).toEqual({
+        mode: "manual",
+        events: [
+          {
+            event: "input",
+            field: "amount",
+            selector: 'input[name="amount"]',
+            value: "[redacted]",
+          },
+          {
+            event: "change",
+            field: "receipt",
+            selector: 'input[name="receipt"]',
+            value: "[file]",
+          },
+        ],
+      });
     } finally {
       process.chdir(previousCwd);
       await fixture.close();

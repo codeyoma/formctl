@@ -51,11 +51,22 @@ type WorkflowField = {
   description?: string;
 };
 
+type WorkflowRecordingEvent = {
+  event: "input" | "change";
+  field: string;
+  selector: string;
+  value: "[redacted]" | "[file]";
+};
+
 type Workflow = {
   name: string;
   url: string;
   screenshots?: {
     baseline: string;
+  };
+  recording?: {
+    mode: "manual";
+    events: WorkflowRecordingEvent[];
   };
   safety?: typeof DEFAULT_WORKFLOW_SAFETY;
   fields: WorkflowField[];
@@ -592,6 +603,7 @@ export async function run(
         workflow: workflow.name,
         url: workflow.url,
         ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
+        ...(workflow.recording === undefined ? {} : { recording: workflow.recording }),
         ...(workflow.safety === undefined ? {} : { safety: workflow.safety }),
         fields: workflow.fields,
         submit: workflow.submit,
@@ -1067,9 +1079,49 @@ export async function run(
     try {
       const page = await browser.newPage();
       await page.goto(url, { waitUntil: "domcontentloaded" });
+      let recordingEvents: WorkflowRecordingEvent[] | undefined;
       if (flags.has("--manual")) {
+        await page.evaluate(() => {
+          type RecordingWindow = Window & {
+            __formctlRecordingEvents?: Array<{
+              event: "input" | "change";
+              field: string;
+              selector: string;
+              value: "[redacted]" | "[file]";
+            }>;
+            __formctlManualReady?: boolean;
+          };
+
+          const recordingWindow = window as RecordingWindow;
+          recordingWindow.__formctlRecordingEvents = [];
+          for (const element of Array.from(document.querySelectorAll("input, textarea, select"))) {
+            const tagName = element.tagName.toLowerCase();
+            const field = element.getAttribute("name");
+            if (field === null || field.length === 0) {
+              continue;
+            }
+
+            const inputType = tagName === "input" ? element.getAttribute("type") ?? "text" : tagName;
+            const selector = `${tagName}[name="${field}"]`;
+            const record = (event: Event) => {
+              recordingWindow.__formctlRecordingEvents?.push({
+                event: event.type === "change" ? "change" : "input",
+                field,
+                selector,
+                value: inputType === "file" ? "[file]" : "[redacted]",
+              });
+            };
+
+            element.addEventListener("input", record);
+            element.addEventListener("change", record);
+          }
+          recordingWindow.__formctlManualReady = true;
+        });
         stdout.write("Manual record: complete the form in the browser, then press Enter here to save.\n");
         await readApprovalLine(stdin);
+        recordingEvents = await page.evaluate(() => {
+          return (window as Window & { __formctlRecordingEvents?: WorkflowRecordingEvent[] }).__formctlRecordingEvents ?? [];
+        });
       }
 
       const fields = await page.locator("input, textarea, select").evaluateAll((elements) => elements.flatMap((element) => {
@@ -1119,6 +1171,12 @@ export async function run(
         screenshots: {
           baseline: baselineScreenshot,
         },
+        ...(recordingEvents === undefined ? {} : {
+          recording: {
+            mode: "manual",
+            events: recordingEvents,
+          },
+        }),
         safety: DEFAULT_WORKFLOW_SAFETY,
         fields,
         submit: {

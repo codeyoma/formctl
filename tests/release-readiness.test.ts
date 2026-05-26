@@ -112,6 +112,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("formctl record expense-report https://example.internal/expense");
     expect(readme).toContain("formctl record expense-report https://example.internal/expense --manual");
     expect(readme).toContain("Use `--manual` when login, navigation, or form setup needs a human-visible browser before saving selectors.");
+    expect(readme).toContain("Manual recording stores redacted `recording.events` entries for changed fields and file inputs.");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
@@ -349,7 +350,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Launch a headed Playwright browser.");
     expect(task).toContain("- [x] Let the user complete the form manually with `record --manual` before saving selectors.");
     expect(task).toContain("- [x] Capture final submit target and a baseline screenshot.");
-    expect(task).toContain("- [ ] Capture field interactions and file uploads during manual completion.");
+    expect(task).toContain("- [x] Capture redacted field interaction and file-input events during manual completion.");
     expect(task).toContain("- [x] Include workflow name, target URL, fields, selectors, submit action, and screenshots.");
     expect(task).toContain("- [x] Add workflow safety settings when backed by runtime behavior.");
     expect(task).toContain("- [x] Store recorded workflows as readable YAML under `.formctl/workflows/<name>.yml`.");
@@ -560,6 +561,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
     expect(agents).toContain("When `validate --json` returns `status: \"error\"`, report the failed check names plus their `message` and `fix` fields.");
     expect(agents).toContain("Use `record --manual` only when a workflow is missing and the page needs human login, navigation, or setup before saving selectors.");
+    expect(agents).toContain("Treat `recording.events` as interaction metadata only; values and file names are redacted.");
     expect(agents).toContain("## Doctor JSON");
     expect(agents).toContain('"exitCode": 0');
     expect(agents).toContain('"playwright-chromium"');
