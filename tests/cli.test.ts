@@ -89,6 +89,16 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("formctl doctor");
     expect(result.stdout).toContain("--headed");
     expect(result.stdout).toContain("--headless");
+    expect(result.stdout).toContain("--version");
+  });
+
+  test("version flag prints the package version", () => {
+    const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
+    const result = runFormctl(["--version"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(`formctl ${packageJson.version}\n`);
   });
 
   test("doctor --json reports a machine-readable ok status", () => {

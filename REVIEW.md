@@ -762,6 +762,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If named MCP clients ask for direct doctor branching examples, add client-specific snippets to `docs/MCP.md`.
 
+### 2026-05-26: Add CLI Version Flag
+
+**Date:** 2026-05-26
+
+**Experiment:** Add a standard `formctl --version` path for npm-installed smoke checks.
+
+**Hypothesis:** New users and package installers expect a CLI to expose its installed version before they run browser-backed commands.
+
+**Result:** Passed. `formctl --version` now prints `formctl <package-version>`, `--help` lists the flag, and README install smoke commands include `npx formctl --version`.
+
+**Evidence:** RED failures were observed first: `npm test -- --run tests/cli.test.ts -t "version flag"` failed because `--version` exited `1`, and `npm test -- --run tests/package-readiness.test.ts -t "README documents"` failed because README did not include `npx formctl --version`. Focused GREEN passed after reading the package version from `package.json` and updating README. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- --version`, `npm run formctl -- --help`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**What Failed:** The first RED command used `-t "--version"`, which Vitest treated as an option-like missing pattern. The test name was changed to `version flag prints the package version` before rerunning RED.
+
+**Decision:** Read `package.json` relative to the CLI module so the same code works from `src/cli.ts` under `tsx` and from `dist/cli.js` after packaging.
+
+**Next Step:** Include `formctl --version` in any future tarball install smoke scripts or release checklist.
+
 ### Template
 
 **Date:** YYYY-MM-DD

@@ -5,6 +5,10 @@ import { chromium, type Page } from "playwright";
 import { parse, stringify } from "yaml";
 import { resolveBrowserHeadless } from "./browser-mode.js";
 
+const PACKAGE_VERSION = (JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  version: string;
+}).version;
+
 const HELP_TEXT = `formctl turns browser-recorded web forms into safe CLI commands
 
 Usage:
@@ -15,6 +19,7 @@ Usage:
 
 Flags:
   --help        Show this help message
+  --version     Show the installed formctl version
   --headed      Run with a visible browser
   --headless    Run without a visible browser
 `;
@@ -228,6 +233,11 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
 
   if (command === undefined || command === "--help" || command === "-h") {
     stdout.write(HELP_TEXT);
+    return 0;
+  }
+
+  if (command === "--version") {
+    stdout.write(`formctl ${PACKAGE_VERSION}\n`);
     return 0;
   }
 

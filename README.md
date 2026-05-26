@@ -32,6 +32,7 @@ See [Trust and security notes](docs/TRUST.md) for dry-run, approval, audit log, 
 
 ```bash
 npm install -g formctl
+npx formctl --version
 npx formctl --help
 npx formctl doctor
 ```

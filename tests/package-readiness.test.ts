@@ -44,6 +44,7 @@ describe("npm package readiness", () => {
 
     expect(readme).toContain("## Install");
     expect(readme).toContain("npm install -g formctl");
+    expect(readme).toContain("npx formctl --version");
     expect(readme).toContain("npx formctl doctor");
     expect(readme).toContain("npx formctl --help");
     expect(readme).toContain(

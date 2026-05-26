@@ -32,6 +32,7 @@
 - List individual checks in plain `formctl doctor` output for human first-run debugging.
 - Add `exitCode` to `doctor --json` so agents can branch on doctor results without shell-specific handling.
 - Document the `doctor --json` contract in the agent safety guide.
+- Add `formctl --version` for installed-package smoke checks.
 
 ## 0.1.0 - 2026-05-26
 
