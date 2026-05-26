@@ -1109,6 +1109,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to growth work or add workflow validation details only if users need more actionable invalid-YAML messages.
 
+### 2026-05-27: Add Validate Repair Guidance
+
+**Date:** 2026-05-27
+
+**Experiment:** Make invalid workflow validation output actionable instead of diagnostic-only.
+
+**Hypothesis:** Agents and reviewers can fix workflow YAML faster if every failed `validate` check includes a concrete `fix` string in JSON and human-readable output.
+
+**Result:** Passed. Validation errors now carry `fix` guidance, and the human output prints a `fix:` line below each failing check.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "validate"` because the missing safety metadata check had no `fix` field and human output had no `fix:` line. Release-readiness RED also failed until README and `docs/agents.md` documented how agents should report failed check names, `message`, and `fix`. Final verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**Decision:** Keep `validate` read-only. It should guide repair without rewriting workflow files or guessing selector changes.
+
+**Next Step:** Return to growth work or external posting once a human can publish the prepared outreach copy. npm publish still requires an authenticated npm session.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

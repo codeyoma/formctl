@@ -114,6 +114,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
     expect(readme).toContain("Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.");
+    expect(readme).toContain("Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -553,6 +554,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Run `formctl doctor --json` before browser-backed work.");
     expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
     expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
+    expect(agents).toContain("When `validate --json` returns `status: \"error\"`, report the failed check names plus their `message` and `fix` fields.");
     expect(agents).toContain("## Doctor JSON");
     expect(agents).toContain('"exitCode": 0');
     expect(agents).toContain('"playwright-chromium"');

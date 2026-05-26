@@ -49,6 +49,7 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 - `exitCode: 5` means approval is required.
 
 Treat exit code `5` as an approval gate, not a retryable failure.
+When `validate --json` returns `status: "error"`, report the failed check names plus their `message` and `fix` fields.
 
 ## Doctor JSON
 

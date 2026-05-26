@@ -338,9 +338,37 @@ describe("formctl CLI", () => {
           name: "safety-metadata",
           status: "error",
           message: "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
+          fix: "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
         },
       ],
     });
+  });
+
+  test("validate prints repair guidance for invalid workflow files", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-human-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "expense-report"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("- safety-metadata: error");
+    expect(result.stdout).toContain("message: Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.");
+    expect(result.stdout).toContain("fix: Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.");
   });
 
   test("inspect --json reads a recorded workflow file", () => {

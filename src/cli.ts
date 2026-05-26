@@ -114,6 +114,7 @@ type ValidationCheck = {
   name: string;
   status: "ok" | "error";
   message?: string;
+  fix?: string;
 };
 
 function buildDoctorChecks(): DoctorCheck[] {
@@ -133,8 +134,8 @@ function buildDoctorChecks(): DoctorCheck[] {
   ];
 }
 
-function buildValidationCheck(name: string, valid: boolean, message: string): ValidationCheck {
-  return valid ? { name, status: "ok" } : { name, status: "error", message };
+function buildValidationCheck(name: string, valid: boolean, message: string, fix: string): ValidationCheck {
+  return valid ? { name, status: "ok" } : { name, status: "error", message, fix };
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -172,26 +173,31 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       "workflow-name",
       workflowObject.name === workflowName,
       `Workflow name must match ${workflowName}.`,
+      `Set name: ${workflowName}.`,
     ),
     buildValidationCheck(
       "target-url",
       isNonEmptyString(workflowObject.url),
       "Workflow must include a target URL.",
+      "Add a non-empty url field with the form page URL.",
     ),
     buildValidationCheck(
       "fields",
       fieldListValid,
       "Workflow must include at least one field with name, selector, and type.",
+      "Add fields entries with name, selector, and type for every required form field.",
     ),
     buildValidationCheck(
       "submit-selector",
       isObject(submit) && isNonEmptyString(submit.selector),
       "Workflow must include submit.selector.",
+      "Add submit.selector with the recorded submit button selector.",
     ),
     buildValidationCheck(
       "safety-metadata",
       hasCurrentSafetyMetadata(workflowObject.safety),
       "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
+      "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
     ),
   ];
 }
@@ -668,6 +674,9 @@ export async function run(
       stdout.write(`- ${check.name}: ${check.status}\n`);
       if (check.message !== undefined) {
         stdout.write(`  message: ${check.message}\n`);
+      }
+      if (check.fix !== undefined) {
+        stdout.write(`  fix: ${check.fix}\n`);
       }
     }
     return exitCode;
