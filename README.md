@@ -140,8 +140,10 @@ Use `record` only when you need to create a workflow that does not exist yet.
 
 ```bash
 formctl record expense-report https://example.internal/expense
+formctl record expense-report https://example.internal/expense --manual
 ```
 
+Use `--manual` when login, navigation, or form setup needs a human-visible browser before saving selectors.
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
 `record` also saves a baseline screenshot next to the workflow file.
 

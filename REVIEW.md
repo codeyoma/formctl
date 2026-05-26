@@ -1125,6 +1125,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to growth work or external posting once a human can publish the prepared outreach copy. npm publish still requires an authenticated npm session.
 
+### 2026-05-27: Add Manual Record Pause
+
+**Date:** 2026-05-27
+
+**Experiment:** Add a small `record --manual` mode so a human can complete login, navigation, or page setup before `formctl` saves selectors and the baseline screenshot.
+
+**Hypothesis:** Recording should feel like a browser-reviewed workflow authoring step, not only a static form scan. Waiting for an explicit Enter before saving is the smallest useful slice toward that behavior.
+
+**Result:** Passed. `record --manual` now prints a manual-record instruction, waits for input, then saves the workflow YAML and baseline screenshot using the existing record path.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "record --manual"` because the flag was ignored and no manual-record instruction was printed. Release-readiness RED also failed until README, `docs/agents.md`, and `TASK.md` documented the manual authoring path. Focused GREEN passed with `npm test -- --run tests/cli.test.ts -t "help explains|record --manual"` and `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety|TASK plan"`. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- --help`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first focused CLI test command used a pattern beginning with `--help`, which Vitest parsed as an unknown option. Re-running with `help explains|record --manual` verified the intended tests.
+
+**Decision:** Keep this as an explicit `--manual` pause, not full event-history recording. Capturing individual interactions and file-upload history remains incomplete.
+
+**Next Step:** If recording remains the highest-risk area, add event capture for field changes or file uploads as a separate TDD slice. npm publish still needs auth; `npm whoami` returns `ENEEDAUTH` and `npm view formctl` returns `E404`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

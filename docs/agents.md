@@ -39,6 +39,7 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve 
 ```
 
 Use `record` only when the workflow file does not exist yet. Once `.formctl/workflows/<name>.yml` is available, agents should start from `inspect` or `submit --dry-run`.
+Use `record --manual` only when a workflow is missing and the page needs human login, navigation, or setup before saving selectors.
 
 ## JSON Branching
 

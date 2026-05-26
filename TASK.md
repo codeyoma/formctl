@@ -115,8 +115,8 @@ formctl doctor
 
 **Goal:** Turn a browser interaction into a workflow file.
 
-- [ ] Launch a headed Playwright browser.
-- [ ] Let the user complete the form manually.
+- [x] Launch a headed Playwright browser.
+- [x] Let the user complete the form manually with `record --manual` before saving selectors.
 - [ ] Capture field interactions and file uploads during manual completion.
 - [x] Capture final submit target and a baseline screenshot.
 - [x] Save `.formctl/workflows/<workflow-name>.yml`.

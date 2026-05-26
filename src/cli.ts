@@ -40,6 +40,7 @@ Flags:
   --version     Show the installed formctl version
   --headed      Run with a visible browser
   --headless    Run without a visible browser
+  --manual      For record: wait for Enter after you complete the form in the browser
 `;
 
 type WorkflowField = {
@@ -1066,6 +1067,10 @@ export async function run(
     try {
       const page = await browser.newPage();
       await page.goto(url, { waitUntil: "domcontentloaded" });
+      if (flags.has("--manual")) {
+        stdout.write("Manual record: complete the form in the browser, then press Enter here to save.\n");
+        await readApprovalLine(stdin);
+      }
 
       const fields = await page.locator("input, textarea, select").evaluateAll((elements) => elements.flatMap((element) => {
         const tagName = element.tagName.toLowerCase();
