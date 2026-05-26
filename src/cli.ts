@@ -245,6 +245,18 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
     }
 
     stdout.write(`formctl doctor: ${status}\n`);
+    for (const check of checks) {
+      stdout.write(`- ${check.name}: ${check.status}\n`);
+      if (check.executablePath !== undefined) {
+        stdout.write(`  executable: ${check.executablePath}\n`);
+      }
+      if (check.message !== undefined) {
+        stdout.write(`  message: ${check.message}\n`);
+      }
+      if (check.status === "error" && check.installCommand !== undefined) {
+        stdout.write(`  install: ${check.installCommand}\n`);
+      }
+    }
     return status === "ok" ? 0 : 1;
   }
 

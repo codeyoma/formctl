@@ -29,6 +29,7 @@
 - Add the MCP wrapper test to CI so the agent-safe tool surface cannot regress unnoticed.
 - Upgrade GitHub Actions checkout/setup-node steps to Node.js 24-target action versions.
 - Extend `doctor --json` with Playwright Chromium availability and install guidance.
+- List individual checks in plain `formctl doctor` output for human first-run debugging.
 
 ## 0.1.0 - 2026-05-26
 

@@ -113,6 +113,18 @@ describe("formctl CLI", () => {
     ]));
   });
 
+  test("doctor prints human-readable check details", () => {
+    const result = runFormctl(["doctor"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("formctl doctor: ok");
+    expect(result.stdout).toContain("- node: ok");
+    expect(result.stdout).toContain("- workspace: ok");
+    expect(result.stdout).toContain("- playwright-chromium: ok");
+    expect(result.stdout).toContain("executable:");
+  });
+
   test("inspect returns exit code 2 when the workflow does not exist", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-missing-workflow-"));
     const result = runFormctl(["inspect", "expense-report"], workspace);

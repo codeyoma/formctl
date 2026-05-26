@@ -714,6 +714,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Use the richer doctor output in support replies and npm install troubleshooting once publishing credentials are available.
 
+### 2026-05-26: Add Human-Readable Doctor Details
+
+**Date:** 2026-05-26
+
+**Experiment:** Make plain `formctl doctor` useful without requiring users to know about `--json`.
+
+**Hypothesis:** First-run debugging should show every check name and relevant browser path in the default output, because a new user is more likely to paste plain doctor output into an issue or support thread.
+
+**Result:** Passed. Plain `formctl doctor` now prints the overall status plus individual `node`, `workspace`, and `playwright-chromium` check lines, including the Chromium executable path when available.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/cli.test.ts -t "doctor prints"` failed because stdout was only `formctl doctor: ok`. Focused GREEN passed after listing the checks in plain output. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep JSON output unchanged for agents and make only the human output more descriptive.
+
+**Next Step:** If support requests show missing-browser confusion, add a fixture or environment override test for the error output path.
+
 ### Template
 
 **Date:** YYYY-MM-DD
