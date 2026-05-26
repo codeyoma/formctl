@@ -75,7 +75,7 @@ function toolResult(result: CliResult) {
 }
 
 function registerFormctlTools(server: McpServer): void {
-  const [doctor, inspect, submitDryRun] = createMcpToolDefinitions();
+  const [doctor, inspect, validate, submitDryRun] = createMcpToolDefinitions();
 
   server.registerTool(
     doctor.name,
@@ -104,6 +104,22 @@ function registerFormctlTools(server: McpServer): void {
     },
     async (input: ToolInput & { workflow: string }) => toolResult(await runFormctl(
       buildFormctlArgsForTool(inspect.name, input),
+      input.workspace,
+    )),
+  );
+
+  server.registerTool(
+    validate.name,
+    {
+      title: "formctl validate",
+      description: validate.description,
+      inputSchema: {
+        workflow: z.string().min(1),
+        workspace: z.string().optional(),
+      },
+    },
+    async (input: ToolInput & { workflow: string }) => toolResult(await runFormctl(
+      buildFormctlArgsForTool(validate.name, input),
       input.workspace,
     )),
   );

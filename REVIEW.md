@@ -1076,6 +1076,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If validation errors become common, add human-readable repair guidance before adding any command that rewrites workflow files.
 
+### 2026-05-27: Expose Workflow Validation In MCP
+
+**Date:** 2026-05-27
+
+**Experiment:** Add `formctl_validate` to the safe MCP server surface.
+
+**Hypothesis:** Agent clients should be able to run the same static workflow review gate as the CLI before inspecting or dry-running a checked-in workflow.
+
+**Result:** Passed. MCP tool definitions now include `formctl_validate`, the wrapper maps it to `formctl validate <workflow> --json`, README/agent/MCP docs list it, and package smoke confirms the installed MCP binary exposes the tool.
+
+**Evidence:** RED was observed with `npm test -- --run tests/mcp.test.ts` because docs and tool definitions omitted `formctl_validate`, and `buildFormctlArgsForTool` rejected it. A release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "MCP setup"` until `docs/MCP.md` taught the safe flow. Package-readiness RED then required `scripts/package-smoke.mjs` to assert the installed MCP server exposes `formctl_validate`; `npm run test:package` passed after adding that check. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep MCP write surface dry-run-only. `formctl_validate` is safe because it reads a workflow file and returns JSON validation results; approved submit remains CLI-only.
+
+**Next Step:** Add `formctl_workflows` to MCP only if agent clients need discovery without shelling out to the CLI.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

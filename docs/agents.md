@@ -82,7 +82,7 @@ Run `formctl-mcp` when an MCP client should discover the safe command surface di
 npx formctl-mcp
 ```
 
-The MCP server exposes `formctl_doctor`, `formctl_inspect`, and `formctl_submit_dry_run`. It does not expose approved submit; agents must switch back to the CLI and get explicit authorization before running `formctl submit ... --approve`.
+The MCP server exposes `formctl_doctor`, `formctl_inspect`, `formctl_validate`, and `formctl_submit_dry_run`. It does not expose approved submit; agents must switch back to the CLI and get explicit authorization before running `formctl submit ... --approve`.
 
 MCP setup guide: docs/MCP.md
 

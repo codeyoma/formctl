@@ -212,6 +212,7 @@ Tools:
 
 - `formctl_doctor`
 - `formctl_inspect`
+- `formctl_validate`
 - `formctl_submit_dry_run`
 
 The MCP server does not expose approved submit. Agents still need a human or policy-approved CLI call to run `formctl submit ... --approve`.

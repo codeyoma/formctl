@@ -31,6 +31,19 @@ export function createMcpToolDefinitions(): McpToolDefinition[] {
       },
     },
     {
+      name: "formctl_validate",
+      description: "Validate a recorded formctl workflow file with JSON output before trusting it.",
+      inputSchema: {
+        type: "object",
+        required: ["workflow"],
+        properties: {
+          workflow: { type: "string" },
+          workspace: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+    {
       name: "formctl_submit_dry_run",
       description: "Preview a recorded form workflow as a dry-run with screenshots, JSON artifacts, and no final submit click.",
       inputSchema: {
@@ -107,6 +120,10 @@ export function buildFormctlArgsForTool(toolName: string, input: unknown): strin
 
   if (toolName === "formctl_inspect") {
     return ["inspect", readWorkflowName(parsedInput), "--json"];
+  }
+
+  if (toolName === "formctl_validate") {
+    return ["validate", readWorkflowName(parsedInput), "--json"];
   }
 
   if (toolName === "formctl_submit_dry_run") {

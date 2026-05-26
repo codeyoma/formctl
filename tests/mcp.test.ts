@@ -21,9 +21,11 @@ describe("formctl MCP wrapper", () => {
     expect(readme).toContain("npx formctl-mcp");
     expect(readme).toContain("formctl_doctor");
     expect(readme).toContain("formctl_inspect");
+    expect(readme).toContain("formctl_validate");
     expect(readme).toContain("formctl_submit_dry_run");
     expect(readme).toContain("The MCP server does not expose approved submit.");
     expect(agents).toContain("MCP server");
+    expect(agents).toContain("formctl_validate");
     expect(agents).toContain("does not expose approved submit");
   });
 
@@ -33,6 +35,7 @@ describe("formctl MCP wrapper", () => {
     expect(tools.map((tool) => tool.name)).toEqual([
       "formctl_doctor",
       "formctl_inspect",
+      "formctl_validate",
       "formctl_submit_dry_run",
     ]);
     expect(JSON.stringify(tools)).toContain("dry-run");
@@ -43,6 +46,11 @@ describe("formctl MCP wrapper", () => {
     expect(buildFormctlArgsForTool("formctl_doctor", {})).toEqual(["doctor", "--json"]);
     expect(buildFormctlArgsForTool("formctl_inspect", { workflow: "expense-report" })).toEqual([
       "inspect",
+      "expense-report",
+      "--json",
+    ]);
+    expect(buildFormctlArgsForTool("formctl_validate", { workflow: "expense-report" })).toEqual([
+      "validate",
       "expense-report",
       "--json",
     ]);
