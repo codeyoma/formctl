@@ -1092,6 +1092,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add `formctl_workflows` to MCP only if agent clients need discovery without shelling out to the CLI.
 
+### 2026-05-27: Expose Workflow Discovery In MCP
+
+**Date:** 2026-05-27
+
+**Experiment:** Add `formctl_workflows` to the safe MCP server surface.
+
+**Hypothesis:** MCP clients should be able to discover available workflow names before choosing `formctl_validate`, `formctl_inspect`, or `formctl_submit_dry_run`.
+
+**Result:** Passed. MCP tool definitions now include `formctl_workflows`, the wrapper maps it to `formctl workflows --json`, README/agent/MCP docs list it, and package smoke confirms the installed MCP binary exposes the tool.
+
+**Evidence:** RED was observed with `npm test -- --run tests/mcp.test.ts` because docs and tool definitions omitted `formctl_workflows`, and `buildFormctlArgsForTool` rejected it. A release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "MCP setup"` until `docs/MCP.md` taught discovery before validation. Package-readiness RED required `scripts/package-smoke.mjs` to assert the installed MCP server exposes `formctl_workflows`; `npm run test:package` passed after adding that check. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- workflows --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep MCP discovery read-only and side-effect free. The MCP server can list, validate, inspect, and dry-run; approved submit remains outside MCP.
+
+**Next Step:** Return to growth work or add workflow validation details only if users need more actionable invalid-YAML messages.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -18,6 +18,17 @@ export function createMcpToolDefinitions(): McpToolDefinition[] {
       },
     },
     {
+      name: "formctl_workflows",
+      description: "List available formctl workflow files with JSON output.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+    {
       name: "formctl_inspect",
       description: "Inspect a recorded formctl workflow with JSON output.",
       inputSchema: {
@@ -116,6 +127,10 @@ export function buildFormctlArgsForTool(toolName: string, input: unknown): strin
 
   if (toolName === "formctl_doctor") {
     return ["doctor", "--json"];
+  }
+
+  if (toolName === "formctl_workflows") {
+    return ["workflows", "--json"];
   }
 
   if (toolName === "formctl_inspect") {

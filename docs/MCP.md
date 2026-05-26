@@ -5,6 +5,7 @@ Use `formctl-mcp` when an MCP client should call the safe parts of `formctl` dir
 The server exposes:
 
 - `formctl_doctor`
+- `formctl_workflows`
 - `formctl_inspect`
 - `formctl_validate`
 - `formctl_submit_dry_run`
@@ -55,11 +56,12 @@ Use the workspace that contains `.formctl/workflows/<name>.yml`.
 ## Safe tool flow
 
 1. Call `formctl_doctor` to verify the workspace.
-2. Call `formctl_validate` before `formctl_inspect` or `formctl_submit_dry_run` when using a checked-in workflow.
-3. Call `formctl_inspect` with a workflow name.
-4. Call `formctl_submit_dry_run` with the workflow and field values.
-5. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl`.
-6. Ask for explicit approval before running `formctl submit ... --approve` outside MCP.
+2. Call `formctl_workflows` to discover available workflow names.
+3. Call `formctl_validate` before `formctl_inspect` or `formctl_submit_dry_run` when using a checked-in workflow.
+4. Call `formctl_inspect` with a workflow name.
+5. Call `formctl_submit_dry_run` with the workflow and field values.
+6. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl`.
+7. Ask for explicit approval before running `formctl submit ... --approve` outside MCP.
 
 ## MCP SDK smoke test
 
@@ -88,6 +90,7 @@ Expected tools:
 
 ```text
 formctl_doctor
+formctl_workflows
 formctl_inspect
 formctl_validate
 formctl_submit_dry_run

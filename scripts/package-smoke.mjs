@@ -42,6 +42,9 @@ async function smokeMcpServer(command) {
   if (!toolNames.includes("formctl_doctor")) {
     throw new Error(`Installed formctl-mcp did not expose formctl_doctor: ${JSON.stringify(toolNames)}`);
   }
+  if (!toolNames.includes("formctl_workflows")) {
+    throw new Error(`Installed formctl-mcp did not expose formctl_workflows: ${JSON.stringify(toolNames)}`);
+  }
   if (!toolNames.includes("formctl_validate")) {
     throw new Error(`Installed formctl-mcp did not expose formctl_validate: ${JSON.stringify(toolNames)}`);
   }

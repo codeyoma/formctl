@@ -211,6 +211,7 @@ npx formctl-mcp
 Tools:
 
 - `formctl_doctor`
+- `formctl_workflows`
 - `formctl_inspect`
 - `formctl_validate`
 - `formctl_submit_dry_run`
