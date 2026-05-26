@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type Page } from "playwright";
@@ -16,6 +16,7 @@ Usage:
   formctl submit <workflow-name> --dry-run [flags]
   formctl submit <workflow-name> --approve [flags]
   formctl inspect <workflow-name>
+  formctl workflows [--json]
   formctl record <workflow-name> <url>
   formctl doctor
 
@@ -51,6 +52,14 @@ type Workflow = {
   submit: {
     selector: string;
   };
+};
+
+type WorkflowListItem = {
+  name: string;
+  path: string;
+  url: string;
+  fieldCount: number;
+  screenshots?: Workflow["screenshots"];
 };
 
 type AuditEvent = Record<string, unknown>;
@@ -122,6 +131,28 @@ function readWorkflow(workflowName: string): { workflow?: Workflow; error?: stri
     path: workflowPath,
     workflow: parse(readFileSync(workflowPath, "utf8")),
   };
+}
+
+function listWorkflowFiles(): WorkflowListItem[] {
+  const workflowDirectory = path.join(process.cwd(), ".formctl", "workflows");
+  if (!existsSync(workflowDirectory)) {
+    return [];
+  }
+
+  return readdirSync(workflowDirectory)
+    .filter((entry) => entry.endsWith(".yml") || entry.endsWith(".yaml"))
+    .sort()
+    .map((entry) => {
+      const workflow = parse(readFileSync(path.join(workflowDirectory, entry), "utf8")) as Workflow;
+
+      return {
+        name: workflow.name,
+        path: `.formctl/workflows/${entry}`,
+        url: workflow.url,
+        fieldCount: workflow.fields.length,
+        ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
+      };
+    });
 }
 
 function parseOptions(args: string[]): Map<string, string | true> {
@@ -483,6 +514,29 @@ export async function run(
     }
 
     stdout.write(`Workflow: ${workflowName}\nPath: .formctl/workflows/${workflowName}.yml\n`);
+    return 0;
+  }
+
+  if (command === "workflows") {
+    const workflows = listWorkflowFiles();
+
+    if (flags.has("--json")) {
+      stdout.write(`${JSON.stringify({
+        status: "ok",
+        workflows,
+      })}\n`);
+      return 0;
+    }
+
+    if (workflows.length === 0) {
+      stdout.write("No workflows found in .formctl/workflows\n");
+      return 0;
+    }
+
+    stdout.write("Workflows:\n");
+    for (const workflow of workflows) {
+      stdout.write(`- ${workflow.name}: ${workflow.path}\n`);
+    }
     return 0;
   }
 

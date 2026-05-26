@@ -91,6 +91,7 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.png --approve
 formctl record <workflow-name> <url>
 formctl submit <workflow-name> [flags]
 formctl inspect <workflow-name>
+formctl workflows [--json]
 formctl doctor
 ```
 

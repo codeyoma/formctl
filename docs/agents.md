@@ -6,21 +6,27 @@ Use this guide when calling `formctl` from Codex, Claude Code, Cursor, Copilot C
 
 1. Run `formctl doctor --json` before browser-backed work.
 
-2. Inspect the existing workflow before submitting:
+2. Run `formctl workflows --json` to discover available workflow names.
+
+```bash
+formctl workflows --json
+```
+
+3. Inspect the existing workflow before submitting:
 
 ```bash
 formctl inspect expense-report --json
 ```
 
-3. Always run `submit --dry-run --json` before any approved submit.
+4. Always run `submit --dry-run --json` before any approved submit.
 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run --json --headless
 ```
 
-4. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
+5. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
 
-5. Never pass `--approve` unless the user or policy explicitly authorizes submission.
+6. Never pass `--approve` unless the user or policy explicitly authorizes submission.
 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve --json --headless

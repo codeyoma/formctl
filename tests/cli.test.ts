@@ -107,6 +107,7 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("formctl submit <workflow-name> --approve [flags]");
     expect(result.stdout).toContain("Interactive submit shows a dry-run screenshot path before asking for approval.");
     expect(result.stdout).toContain("formctl inspect <workflow-name>");
+    expect(result.stdout).toContain("formctl workflows [--json]");
     expect(result.stdout).toContain("formctl record <workflow-name> <url>");
     expect(result.stdout).toContain("formctl doctor");
     expect(result.stdout).toContain("Start with an existing .formctl/workflows/<name>.yml file.");
@@ -183,6 +184,70 @@ describe("formctl CLI", () => {
     expect(result.stdout).toBe("");
     expect(result.stderr).toContain("Workflow not found: expense-report");
     expect(result.stderr).toContain(".formctl/workflows/expense-report.yml");
+  });
+
+  test("workflows --json lists available workflow files", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-list-workflows-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "screenshots:",
+        "  baseline: .formctl/workflows/expense-report.baseline.png",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "admin-invite.yml"),
+      [
+        "name: admin-invite",
+        "url: http://localhost:3000/admin-invite",
+        "fields:",
+        "  - name: email",
+        "    selector: input[name=\"email\"]",
+        "    type: email",
+        "  - name: role",
+        "    selector: select[name=\"role\"]",
+        "    type: select",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(path.join(workspace, ".formctl", "workflows", "expense-report.baseline.png"), "not yaml\n");
+
+    const result = runFormctl(["workflows", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "ok",
+      workflows: [
+        {
+          name: "admin-invite",
+          path: ".formctl/workflows/admin-invite.yml",
+          url: "http://localhost:3000/admin-invite",
+          fieldCount: 2,
+        },
+        {
+          name: "expense-report",
+          path: ".formctl/workflows/expense-report.yml",
+          url: "http://localhost:3000/expense",
+          fieldCount: 1,
+          screenshots: {
+            baseline: ".formctl/workflows/expense-report.baseline.png",
+          },
+        },
+      ],
+    });
   });
 
   test("inspect --json reads a recorded workflow file", () => {

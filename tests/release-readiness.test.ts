@@ -97,6 +97,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm install");
     expect(readme).toContain("npm run demo");
     expect(readme).toContain("The demo workflows are already checked in under `.formctl/workflows/`.");
+    expect(readme).toContain("npm run formctl -- workflows --json");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless");
     expect(readme).toContain("Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.");
@@ -110,6 +111,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Use `record` only when you need to create a workflow that does not exist yet.");
     expect(readme).toContain("formctl record expense-report https://example.internal/expense");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
+    expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -334,6 +336,7 @@ describe("release readiness docs", () => {
 
     expect(task).toContain("- [x] Create a Node.js TypeScript project.");
     expect(task).toContain("- [x] Add commands:");
+    expect(task).toContain("formctl workflows [--json]");
     expect(task).toContain("- [x] Use clear exit codes:");
     expect(task).toContain("- [x] Verify: `formctl --help` explains the product without reading docs.");
     expect(task).toContain("- [x] Capture final submit target and a baseline screenshot.");
@@ -537,6 +540,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.");
     expect(agents).toContain("Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `artifacts`.");
     expect(agents).toContain("Run `formctl doctor --json` before browser-backed work.");
+    expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
     expect(agents).toContain("## Doctor JSON");
     expect(agents).toContain('"exitCode": 0');
     expect(agents).toContain('"playwright-chromium"');

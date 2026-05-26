@@ -1028,6 +1028,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add explicit workflow `safety` metadata only when it gates real runtime behavior instead of being decorative YAML.
 
+### 2026-05-27: Add Workflow Discovery Command
+
+**Date:** 2026-05-27
+
+**Experiment:** Add a `formctl workflows --json` command for the submit-first path.
+
+**Hypothesis:** If users start from checked-in workflows, they need a first command that discovers available names without reading the filesystem. Agents also need the same list in stable JSON before choosing `inspect` or `submit --dry-run`.
+
+**Result:** Passed. `workflows --json` now lists `.formctl/workflows/*.yml` and `.yaml` files in sorted order with workflow name, path, URL, field count, and optional screenshot metadata. Human output prints a compact workflow list or an empty-state message.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "workflows --json|help explains"` because the command was unknown and help did not mention it. A second RED was observed in release-readiness until README, TASK, and agent guidance taught the discovery command. Focused GREEN passed for both command behavior and docs.
+
+**Decision:** Keep this as a read-only local discovery command. It does not mutate workflows, run browsers, or expose approval paths.
+
+**Next Step:** If users ask for workflow editing, add validation or repair commands before adding any write-oriented workflow manager.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -58,6 +58,12 @@ npm run demo
 
 The demo workflows are already checked in under `.formctl/workflows/`.
 
+List available workflows:
+
+```bash
+npm run formctl -- workflows --json
+```
+
 Preview a submission without sending the form:
 
 ```bash
@@ -136,6 +142,7 @@ formctl submit <workflow-name> --dry-run [flags]
 formctl submit <workflow-name> --approve [flags]
 formctl submit <workflow-name> [flags]
 formctl inspect <workflow-name> [--json]
+formctl workflows [--json]
 formctl record <workflow-name> <url>
 formctl doctor [--json]
 ```
