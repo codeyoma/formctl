@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import { Readable, Writable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, test } from "vitest";
@@ -41,6 +42,25 @@ function runFormctlAsync(args: string[], cwd = projectRoot) {
       resolve({ status, stdout, stderr });
     });
   });
+}
+
+function createWritableCapture() {
+  let output = "";
+  return {
+    stream: new Writable({
+      write(chunk, _encoding, callback) {
+        output += chunk.toString();
+        callback();
+      },
+    }),
+    text: () => output,
+  };
+}
+
+function createInteractiveInput(text: string) {
+  const input = Readable.from([text]) as Readable & { isTTY?: boolean };
+  input.isTTY = true;
+  return input;
 }
 
 async function serveFixture(html: string) {
@@ -85,6 +105,7 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("formctl runs recorded browser forms as safe CLI commands");
     expect(result.stdout).toContain("formctl submit <workflow-name> --dry-run [flags]");
     expect(result.stdout).toContain("formctl submit <workflow-name> --approve [flags]");
+    expect(result.stdout).toContain("Interactive submit shows a dry-run screenshot path before asking for approval.");
     expect(result.stdout).toContain("formctl inspect <workflow-name>");
     expect(result.stdout).toContain("formctl record <workflow-name> <url>");
     expect(result.stdout).toContain("formctl doctor");
@@ -838,6 +859,91 @@ describe("formctl CLI", () => {
       await fixture.close();
     }
   });
+
+  test("submit asks for interactive approval after showing the dry-run screenshot path", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-interactive-approval-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+    const stdout = createWritableCapture();
+    const stderr = createWritableCapture();
+    const previousCwd = process.cwd();
+
+    try {
+      const { run } = await import("../src/cli.js");
+
+      process.chdir(workspace);
+      const status = await run(
+        [
+          process.execPath,
+          cliPath,
+          "submit",
+          "expense-report",
+          "--amount",
+          "120000",
+          "--headless",
+        ],
+        stdout.stream,
+        stderr.stream,
+        createInteractiveInput("approve\n"),
+      );
+      const runDirectories = readdirSync(path.join(workspace, ".formctl", "runs"));
+      const runId = runDirectories[0] ?? "";
+      const runDirectory = path.join(workspace, ".formctl", "runs", runId);
+      const summaryPath = path.join(runDirectory, "summary.json");
+
+      expect(status).toBe(0);
+      expect(stderr.text()).toBe("");
+      expect(stdout.text()).toContain(`Dry-run screenshot: .formctl/runs/${runId}/dry-run.png`);
+      expect(stdout.text()).toContain('Type "approve" to submit');
+      expect(stdout.text()).toContain("Submitted workflow: expense-report");
+      expect(fixture.postCount()).toBe(1);
+      expect(runDirectories).toHaveLength(1);
+      expect(existsSync(path.join(runDirectory, "dry-run.png"))).toBe(true);
+      expect(existsSync(path.join(runDirectory, "post-submit.png"))).toBe(true);
+      expect(JSON.parse(readFileSync(summaryPath, "utf8"))).toEqual({
+        status: "submitted",
+        workflow: "expense-report",
+        submitted: true,
+        approval: "interactive",
+        fields: {
+          amount: "120000",
+        },
+        artifacts: {
+          screenshot: `.formctl/runs/${runId}/post-submit.png`,
+          dryRunScreenshot: `.formctl/runs/${runId}/dry-run.png`,
+          summary: `.formctl/runs/${runId}/summary.json`,
+          audit: `.formctl/runs/${runId}/audit.jsonl`,
+        },
+      });
+    } finally {
+      process.chdir(previousCwd);
+      await fixture.close();
+    }
+  }, 35_000);
 
   test("submit --approve performs the submit and stores post-submit artifacts", async () => {
     const fixture = await serveFixture(`

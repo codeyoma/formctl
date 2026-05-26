@@ -99,6 +99,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("The demo workflows are already checked in under `.formctl/workflows/`.");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless");
+    expect(readme).toContain("Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.");
     expect(readme).toContain("npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason \"Duplicate charge\" --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit vendor-onboarding --legalName \"Acme Supplies\" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes \"Approved vendor\" --dry-run --json --headless");
@@ -121,6 +122,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("`record` defaults to `--headed` so humans can watch login and form discovery.");
     expect(readme).toContain("`submit --dry-run` defaults to `--headless` for repeatable agent and CI previews.");
     expect(readme).toContain("Use `--headed` or `--headless` to override the default for any browser-backed command.");
+    expect(readme).toContain("Real submission requires `--approve` or an interactive terminal confirmation.");
   });
 
   test("demo media shows the core record dry-run approve flow", () => {
@@ -337,7 +339,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Accept field values from CLI flags.");
     expect(task).toContain("- [x] Stop before the final submit action.");
     expect(task).toContain("- [x] Make submission fail with exit code `5` unless `--approve` or interactive confirmation is present.");
-    expect(task).toContain("- [ ] Show the dry-run screenshot path before asking for approval.");
+    expect(task).toContain("- [x] Show the dry-run screenshot path before asking for approval.");
     expect(task).toContain("- [x] Perform the final submit action only after approval.");
     expect(task).toContain("- [x] Add `--json` to `submit`, `inspect`, and `doctor`.");
     expect(task).toContain("- [x] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.");

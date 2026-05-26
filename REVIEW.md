@@ -994,6 +994,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If users still miss the checked-in workflow path, add a small `formctl workflows` listing command or a clearer workflow-not-found recovery message.
 
+### 2026-05-27: Add Interactive Approval Preview
+
+**Date:** 2026-05-27
+
+**Experiment:** Finish the remaining approval UX gap by letting a real TTY submit path show the dry-run screenshot before asking for explicit approval.
+
+**Hypothesis:** Human interactive submit can be safer than a blind prompt if it first fills the form, saves `dry-run.png`, prints that path, and only clicks submit after the user types `approve`. Non-interactive and `--json` callers should keep the existing exit-code-5 approval gate.
+
+**Result:** Passed. `submit` now accepts injected stdin for testability, prompts only when stdin is TTY-like, writes `dry-run.png` before the prompt, records `approval: "interactive"` after approval, and preserves the existing `--approve` and non-interactive JSON contracts.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "interactive approval"`: the test failed because no `.formctl/runs` directory was created. Help/readiness RED checks also failed until the interactive behavior was documented. Final checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- --help`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`.
+
+**What Failed:** Importing `run` for the first RED exposed that `src/cli.ts` still executed at module import time. The CLI now uses a realpath-based direct-run guard so tests and installed symlinked binaries both work.
+
+**Decision:** Keep interactive approval human-only. `--json` and non-TTY callers should continue to fail closed with exit code `5`; MCP remains dry-run-only.
+
+**Next Step:** npm publish still needs an authenticated registry session; `npm whoami` returns `ENEEDAUTH`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

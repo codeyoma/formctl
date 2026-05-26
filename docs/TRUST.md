@@ -26,7 +26,9 @@ Approved submit is the only non-interactive path that clicks the recorded submit
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve --json
 ```
 
-Running `submit` without `--dry-run` or `--approve` exits with code `5`. Treat that as an approval gate, not a retryable failure.
+In an interactive terminal, `formctl submit` without `--dry-run` or `--approve` first writes a `dry-run.png` screenshot and prints its path. It only clicks the recorded submit selector after the user types `approve`.
+
+In non-interactive or JSON mode, running `submit` without `--dry-run` or `--approve` exits with code `5`. Treat that as an approval gate, not a retryable failure.
 
 ## Audit logs
 

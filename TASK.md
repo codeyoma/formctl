@@ -138,7 +138,7 @@ formctl doctor
 **Goal:** Require explicit user intent before a real submission.
 
 - [x] Make submission fail with exit code `5` unless `--approve` or interactive confirmation is present.
-- [ ] Show the dry-run screenshot path before asking for approval.
+- [x] Show the dry-run screenshot path before asking for approval.
 - [x] Perform the final submit action only after approval.
 - [x] Save post-submit screenshot and audit log.
 - [x] Verify: The local demo app changes to "submitted" only after approval.

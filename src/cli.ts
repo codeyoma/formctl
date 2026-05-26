@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { chromium, type Page } from "playwright";
 import { parse, stringify } from "yaml";
 import { resolveBrowserHeadless } from "./browser-mode.js";
@@ -22,6 +23,7 @@ Start:
   Start with an existing .formctl/workflows/<name>.yml file.
   Run submit --dry-run to preview.
   Run submit --approve only after review.
+  Interactive submit shows a dry-run screenshot path before asking for approval.
   Use record only when you need to create a new workflow.
 
 Flags:
@@ -49,6 +51,11 @@ type Workflow = {
 };
 
 type AuditEvent = Record<string, unknown>;
+
+type ApprovalInput = NodeJS.ReadableStream & {
+  isTTY?: boolean;
+  setEncoding?: (encoding: BufferEncoding) => unknown;
+};
 
 type FailureArtifacts = {
   screenshot: string;
@@ -260,6 +267,42 @@ function appendAuditEvent(auditPath: string, event: AuditEvent): void {
   appendFileSync(auditPath, `${JSON.stringify(event)}\n`);
 }
 
+async function readApprovalLine(stdin: ApprovalInput): Promise<string> {
+  stdin.setEncoding?.("utf8");
+
+  return new Promise((resolve) => {
+    let input = "";
+    let settled = false;
+    const finish = (value: string) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      stdin.removeListener("data", onData);
+      stdin.removeListener("end", onEnd);
+      stdin.removeListener("error", onError);
+      resolve(value);
+    };
+    const onData = (chunk: string | Buffer) => {
+      input += chunk.toString();
+      if (input.includes("\n")) {
+        finish(input.split(/\r?\n/, 1)[0]?.trim() ?? "");
+      }
+    };
+    const onEnd = () => {
+      finish(input.trim());
+    };
+    const onError = () => {
+      finish(input.trim());
+    };
+
+    stdin.on("data", onData);
+    stdin.on("end", onEnd);
+    stdin.on("error", onError);
+  });
+}
+
 function parseCheckboxValue(value: string): boolean {
   return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
@@ -359,7 +402,12 @@ async function writeSelectorMismatchFailureArtifacts(
   return { runId, artifacts };
 }
 
-export async function run(args: string[], stdout: NodeJS.WritableStream, stderr: NodeJS.WritableStream): Promise<number> {
+export async function run(
+  args: string[],
+  stdout: NodeJS.WritableStream,
+  stderr: NodeJS.WritableStream,
+  stdin: ApprovalInput = process.stdin,
+): Promise<number> {
   const command = args[2];
   const flags = new Set(args.slice(3));
 
@@ -445,8 +493,9 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
     const isDryRun = flags.has("--dry-run");
     const isApproved = flags.has("--approve");
     const wantsJson = flags.has("--json");
+    const isInteractiveApproval = !isDryRun && !isApproved && !wantsJson && stdin.isTTY === true;
 
-    if (!isDryRun && !isApproved) {
+    if (!isDryRun && !isApproved && !isInteractiveApproval) {
       const message = "Approval required: run with --dry-run to preview or --approve to submit.";
       if (wantsJson) {
         stdout.write(`${JSON.stringify({
@@ -475,7 +524,7 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
 
     const options = parseOptions(args.slice(4));
     const workflow = result.workflow;
-    const browserHeadless = resolveBrowserHeadless({ command: "submit", flags, isDryRun });
+    const browserHeadless = resolveBrowserHeadless({ command: "submit", flags, isDryRun: isDryRun || isInteractiveApproval });
     const browser = await chromium.launch({ headless: browserHeadless });
     const runStatus = isDryRun ? "dry-run" : "submitted";
     const screenshotFileName = isDryRun ? "dry-run.png" : "post-submit.png";
@@ -494,10 +543,11 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         url: workflow.url,
         mode: runStatus,
         submitted: !isDryRun,
-        approval: isDryRun ? null : "flag",
+        approval: isDryRun ? null : isInteractiveApproval ? "interactive" : "flag",
         command: {
           dryRun: isDryRun,
           approve: isApproved,
+          ...(isInteractiveApproval ? { interactive: true } : {}),
           headless: browserHeadless,
           json: wantsJson,
         },
@@ -705,19 +755,56 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
       }
 
       mkdirSync(runDirectory, { recursive: true });
+      const auditPath = path.join(runDirectory, "audit.jsonl");
+      let dryRunScreenshotArtifact: string | undefined;
       auditEvents.push({
         event: "fields_resolved",
         fields: filledFields,
       });
+      if (isInteractiveApproval) {
+        dryRunScreenshotArtifact = `${relativeRunDirectory}/dry-run.png`;
+        await page.screenshot({ path: path.join(runDirectory, "dry-run.png"), fullPage: true });
+        auditEvents.push({
+          event: "screenshot_saved",
+          path: dryRunScreenshotArtifact,
+        });
+        stdout.write(`Dry-run screenshot: ${dryRunScreenshotArtifact}\n`);
+        stdout.write('Type "approve" to submit: ');
+        const approvalText = await readApprovalLine(stdin);
+        stdout.write("\n");
+        const approved = approvalText === "approve";
+        auditEvents.push({
+          event: "approval_prompt_answered",
+          approved,
+        });
+        if (!approved) {
+          const artifacts = {
+            screenshot: dryRunScreenshotArtifact,
+            audit: `${relativeRunDirectory}/audit.jsonl`,
+          };
+          auditEvents.push({
+            event: "run_finished",
+            status: "approval-required",
+            submitted: false,
+            artifacts,
+          });
+          for (const event of auditEvents) {
+            appendAuditEvent(auditPath, event);
+          }
+
+          stderr.write("Approval declined; not submitted.\n");
+          return 5;
+        }
+      }
       if (!isDryRun) {
         await page.locator(workflow.submit.selector).click();
       }
 
       const screenshotPath = path.join(runDirectory, screenshotFileName);
       const summaryPath = path.join(runDirectory, "summary.json");
-      const auditPath = path.join(runDirectory, "audit.jsonl");
       const artifacts = {
         screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
+        ...(dryRunScreenshotArtifact === undefined ? {} : { dryRunScreenshot: dryRunScreenshotArtifact }),
         summary: `${relativeRunDirectory}/summary.json`,
         audit: `${relativeRunDirectory}/audit.jsonl`,
       };
@@ -726,7 +813,7 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         status: runStatus,
         workflow: workflow.name,
         submitted: !isDryRun,
-        ...(isDryRun ? {} : { approval: "flag" }),
+        ...(isDryRun ? {} : { approval: isInteractiveApproval ? "interactive" : "flag" }),
         fields: filledFields,
         artifacts,
       };
@@ -842,5 +929,19 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
   return 1;
 }
 
-const exitCode = await run(process.argv, process.stdout, process.stderr);
-process.exitCode = exitCode;
+function resolveEntrypointPath(entrypointPath: string): string {
+  try {
+    return realpathSync(entrypointPath);
+  } catch {
+    return path.resolve(entrypointPath);
+  }
+}
+
+const entrypoint = process.argv[1];
+const isDirectRun = entrypoint !== undefined
+  && resolveEntrypointPath(entrypoint) === resolveEntrypointPath(fileURLToPath(import.meta.url));
+
+if (isDirectRun) {
+  const exitCode = await run(process.argv, process.stdout, process.stderr, process.stdin);
+  process.exitCode = exitCode;
+}

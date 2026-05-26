@@ -70,6 +70,8 @@ Submit only after explicit approval:
 npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless
 ```
 
+Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.
+
 Try a second fixture with a select field and checkbox:
 
 ```bash
@@ -131,6 +133,7 @@ Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so o
 ```bash
 formctl submit <workflow-name> --dry-run [flags]
 formctl submit <workflow-name> --approve [flags]
+formctl submit <workflow-name> [flags]
 formctl inspect <workflow-name> [--json]
 formctl record <workflow-name> <url>
 formctl doctor [--json]
@@ -151,7 +154,7 @@ Workflow files are stored at:
 ## Safety Contract
 
 - Dry-run never clicks the recorded submit selector.
-- Real submission requires `--approve`.
+- Real submission requires `--approve` or an interactive terminal confirmation.
 - Recorded selectors must match exactly one element.
 - Missing or ambiguous selectors fail before filling fields or submitting.
   Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.
