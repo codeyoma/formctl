@@ -746,6 +746,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Consider documenting the doctor JSON schema in `docs/agents.md` if agent users start consuming the doctor result directly.
 
+### 2026-05-26: Document Doctor JSON For Agents
+
+**Date:** 2026-05-26
+
+**Experiment:** Turn the new `doctor --json` contract into copy-pasteable agent guidance.
+
+**Hypothesis:** Agents should run doctor before browser-backed work and branch on `exitCode` and the `playwright-chromium` check before attempting `record` or `submit`.
+
+**Result:** Passed. `docs/agents.md` now starts the default flow with `formctl doctor --json`, includes a Doctor JSON example with `exitCode`, `playwright-chromium`, `executablePath`, and `installCommand`, and tells agents to stop and run the returned install command if Chromium is missing.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "agent safety"` failed because the guide did not mention `formctl doctor --json` or the Doctor JSON schema. Focused GREEN passed after adding the guide section. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep the schema in `docs/agents.md` instead of duplicating it across README and MCP docs until a generated schema exists.
+
+**Next Step:** If named MCP clients ask for direct doctor branching examples, add client-specific snippets to `docs/MCP.md`.
+
 ### Template
 
 **Date:** YYYY-MM-DD

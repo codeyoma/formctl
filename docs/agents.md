@@ -4,21 +4,23 @@ Use this guide when calling `formctl` from Codex, Claude Code, Cursor, Copilot C
 
 ## Default Flow
 
-1. Record or inspect the workflow before submitting:
+1. Run `formctl doctor --json` before browser-backed work.
+
+2. Record or inspect the workflow before submitting:
 
 ```bash
 formctl inspect expense-report --json
 ```
 
-2. Always run `submit --dry-run --json` before any approved submit.
+3. Always run `submit --dry-run --json` before any approved submit.
 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run --json --headless
 ```
 
-3. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
+4. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
 
-4. Never pass `--approve` unless the user or policy explicitly authorizes submission.
+5. Never pass `--approve` unless the user or policy explicitly authorizes submission.
 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve --json --headless
@@ -33,6 +35,30 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 - `exitCode: 5` means approval is required.
 
 Treat exit code `5` as an approval gate, not a retryable failure.
+
+## Doctor JSON
+
+Use `doctor --json` to verify local prerequisites before starting a browser-backed workflow.
+
+```json
+{
+  "status": "ok",
+  "command": "doctor",
+  "exitCode": 0,
+  "checks": [
+    { "name": "node", "status": "ok" },
+    { "name": "workspace", "status": "ok" },
+    {
+      "name": "playwright-chromium",
+      "status": "ok",
+      "executablePath": "/path/to/chromium",
+      "installCommand": "npx playwright install chromium"
+    }
+  ]
+}
+```
+
+If the `playwright-chromium` check is not `ok`, stop and run the returned `installCommand` instead of attempting `record` or `submit`.
 
 ## MCP Server
 

@@ -510,6 +510,11 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Never pass `--approve` unless the user or policy explicitly authorizes submission.");
     expect(agents).toContain("Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.");
     expect(agents).toContain("Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `artifacts`.");
+    expect(agents).toContain("Run `formctl doctor --json` before browser-backed work.");
+    expect(agents).toContain("## Doctor JSON");
+    expect(agents).toContain('"exitCode": 0');
+    expect(agents).toContain('"playwright-chromium"');
+    expect(agents).toContain('"installCommand": "npx playwright install chromium"');
     expect(agents).toContain("Treat exit code `5` as an approval gate, not a retryable failure.");
     expect(agents).toContain("Do not print secrets, file contents, cookies, or private page data.");
     expect(agents).toContain("Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
