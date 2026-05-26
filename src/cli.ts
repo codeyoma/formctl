@@ -54,6 +54,22 @@ type FailureArtifacts = {
   audit: string;
 };
 
+type SelectorFailurePayload = {
+  status: "error";
+  workflow: string;
+  exitCode: 3;
+  submitted: false;
+  requiresApproval: false;
+  error: {
+    code: "selector_mismatch";
+    selector: string;
+    message: string;
+  } & (
+    | { expectedMatches: 1; actualMatches: number }
+    | { expectedType: string; actualType: string }
+  );
+};
+
 type DoctorCheck = {
   name: string;
   status: "ok" | "error";
@@ -121,20 +137,7 @@ function buildSelectorMismatchPayload(
   workflowName: string,
   selector: string,
   actualMatches: number,
-): {
-  status: "error";
-  workflow: string;
-  exitCode: 3;
-  submitted: false;
-  requiresApproval: false;
-  error: {
-    code: "selector_mismatch";
-    selector: string;
-    expectedMatches: 1;
-    actualMatches: number;
-    message: string;
-  };
-} {
+): SelectorFailurePayload {
   const message = `Selector mismatch: ${selector} expected exactly 1 match, found ${actualMatches}`;
 
   return {
@@ -153,17 +156,39 @@ function buildSelectorMismatchPayload(
   };
 }
 
-function writeSelectorMismatch(
-  output: NodeJS.WritableStream,
+function buildFieldTypeMismatchPayload(
   workflowName: string,
   selector: string,
-  actualMatches: number,
+  expectedType: string,
+  actualType: string,
+): SelectorFailurePayload {
+  const message = `Selector mismatch: ${selector} expected type ${expectedType}, found ${actualType}`;
+
+  return {
+    status: "error",
+    workflow: workflowName,
+    exitCode: 3,
+    submitted: false,
+    requiresApproval: false,
+    error: {
+      code: "selector_mismatch",
+      selector,
+      expectedType,
+      actualType,
+      message,
+    },
+  };
+}
+
+function writeSelectorFailure(
+  output: NodeJS.WritableStream,
+  failurePayload: SelectorFailurePayload,
   wantsJson: boolean,
   runId?: string,
   artifacts?: FailureArtifacts,
 ): void {
   const payload = {
-    ...buildSelectorMismatchPayload(workflowName, selector, actualMatches),
+    ...failurePayload,
     ...(runId === undefined ? {} : { runId }),
     ...(artifacts === undefined ? {} : { artifacts }),
   };
@@ -187,12 +212,25 @@ function parseCheckboxValue(value: string): boolean {
   return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
 
+function normalizeFieldType(type: string): string {
+  return type.toLowerCase();
+}
+
+async function readElementType(page: Page, selector: string): Promise<string> {
+  return page.locator(selector).evaluate((element) => {
+    const tagName = element.tagName.toLowerCase();
+    if (tagName === "input") {
+      return (element.getAttribute("type") ?? "text").toLowerCase();
+    }
+
+    return tagName;
+  });
+}
+
 async function writeSelectorMismatchFailureArtifacts(
   page: Page,
   workingDirectory: string,
-  workflow: Workflow,
-  selector: string,
-  actualMatches: number,
+  failurePayload: SelectorFailurePayload,
   auditEvents: AuditEvent[],
 ): Promise<{ runId: string; artifacts: FailureArtifacts }> {
   const runId = `${Date.now()}-failed`;
@@ -207,7 +245,7 @@ async function writeSelectorMismatchFailureArtifacts(
   const failurePath = path.join(runDirectory, "failure.json");
   const auditPath = path.join(runDirectory, "audit.jsonl");
   const failure = {
-    ...buildSelectorMismatchPayload(workflow.name, selector, actualMatches),
+    ...failurePayload,
     runId,
     artifacts,
   };
@@ -390,19 +428,54 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
           result: matchCount === 1 ? "ok" : "mismatch",
         });
         if (matchCount !== 1) {
-          const failure = await writeSelectorMismatchFailureArtifacts(
-            page,
-            process.cwd(),
-            workflow,
-            field.selector,
-            matchCount,
-            auditEvents,
-          );
-          writeSelectorMismatch(
-            wantsJson ? stdout : stderr,
+          const failurePayload = buildSelectorMismatchPayload(
             workflow.name,
             field.selector,
             matchCount,
+          );
+          const failure = await writeSelectorMismatchFailureArtifacts(
+            page,
+            process.cwd(),
+            failurePayload,
+            auditEvents,
+          );
+          writeSelectorFailure(
+            wantsJson ? stdout : stderr,
+            failurePayload,
+            wantsJson,
+            failure.runId,
+            failure.artifacts,
+          );
+          return 3;
+        }
+
+        const expectedType = normalizeFieldType(field.type);
+        const actualType = await readElementType(page, field.selector);
+        if (actualType !== expectedType) {
+          const failurePayload = buildFieldTypeMismatchPayload(
+            workflow.name,
+            field.selector,
+            expectedType,
+            actualType,
+          );
+          auditEvents.push({
+            event: "field_type_check",
+            role: "field",
+            field: field.name,
+            selector: field.selector,
+            expectedType,
+            actualType,
+            result: "mismatch",
+          });
+          const failure = await writeSelectorMismatchFailureArtifacts(
+            page,
+            process.cwd(),
+            failurePayload,
+            auditEvents,
+          );
+          writeSelectorFailure(
+            wantsJson ? stdout : stderr,
+            failurePayload,
             wantsJson,
             failure.runId,
             failure.artifacts,
@@ -421,19 +494,20 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         result: submitMatchCount === 1 ? "ok" : "mismatch",
       });
       if (submitMatchCount !== 1) {
-        const failure = await writeSelectorMismatchFailureArtifacts(
-          page,
-          process.cwd(),
-          workflow,
-          workflow.submit.selector,
-          submitMatchCount,
-          auditEvents,
-        );
-        writeSelectorMismatch(
-          wantsJson ? stdout : stderr,
+        const failurePayload = buildSelectorMismatchPayload(
           workflow.name,
           workflow.submit.selector,
           submitMatchCount,
+        );
+        const failure = await writeSelectorMismatchFailureArtifacts(
+          page,
+          process.cwd(),
+          failurePayload,
+          auditEvents,
+        );
+        writeSelectorFailure(
+          wantsJson ? stdout : stderr,
+          failurePayload,
           wantsJson,
           failure.runId,
           failure.artifacts,

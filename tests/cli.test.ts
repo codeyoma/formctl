@@ -1107,6 +1107,73 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit --dry-run exits 3 when a recorded field type changed", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="text" />
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-type-mismatch-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const parsed = JSON.parse(result.stdout);
+
+      expect(result.status).toBe(3);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "error",
+        workflow: "expense-report",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          selector: 'input[name="amount"]',
+          expectedType: "number",
+          actualType: "text",
+        },
+      });
+      expect(parsed.error.message).toContain("expected type number, found text");
+      expect(parsed.runId).toMatch(/^\d+-failed$/);
+      expect(existsSync(path.join(workspace, parsed.artifacts.failure))).toBe(true);
+      expect(existsSync(path.join(workspace, parsed.artifacts.screenshot))).toBe(true);
+      expect(existsSync(path.join(workspace, parsed.artifacts.audit))).toBe(true);
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
   test("submit --dry-run exits 3 when a recorded field selector is ambiguous", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

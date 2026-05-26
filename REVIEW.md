@@ -814,6 +814,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Once npm auth is available, run the checklist end-to-end before publishing.
 
+### 2026-05-26: Detect Recorded Field Type Drift
+
+**Date:** 2026-05-26
+
+**Experiment:** Treat a recorded field type change as selector drift before replay fills the page.
+
+**Hypothesis:** If a workflow recorded `type: number` but the live page now exposes the same selector as `type="text"`, `formctl submit --dry-run --json` should exit `3`, avoid POSTs, and save failure artifacts.
+
+**Result:** Passed. Field preflight now compares recorded field types against the current DOM type after the selector resolves to exactly one element. Type drift returns the existing `selector_mismatch` exit contract with `expectedType` and `actualType`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "recorded field type changed"`: the command returned exit `0` instead of `3`. GREEN passed with the same focused command. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep type drift under `selector_mismatch` because it is the same safety boundary: the recorded workflow no longer matches the live page strongly enough to replay.
+
+**Next Step:** Add label or nearby visible-text comparison for fields so Task 1.5 covers semantic drift, not just selector count and field type.
+
 ### Template
 
 **Date:** YYYY-MM-DD
