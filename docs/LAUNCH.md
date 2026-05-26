@@ -34,7 +34,7 @@ formctl turns any browser form into a safe, repeatable CLI command.
 Short post:
 
 ```text
-I built formctl: record a browser form once, then run it as a CLI command with dry-run screenshots, selector mismatch checks, approval gates, and JSON output for agents.
+I built formctl: start from a saved workflow, then run a browser form as a CLI command with dry-run screenshots, selector mismatch checks, approval gates, and JSON output for agents.
 
 It is for API-less internal tools, expense forms, admin panels, and workflows where raw browser automation is too fragile to trust.
 

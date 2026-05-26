@@ -1,0 +1,14 @@
+name: admin-invite
+url: http://127.0.0.1:4173/admin-invite
+fields:
+  - name: email
+    selector: input[name="email"]
+    type: email
+  - name: role
+    selector: select[name="role"]
+    type: select
+  - name: notify
+    selector: input[name="notify"]
+    type: checkbox
+submit:
+  selector: button[type="submit"]

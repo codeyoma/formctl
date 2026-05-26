@@ -15,6 +15,7 @@ describe("npm package readiness", () => {
     });
     expect(packageJson.files).toEqual([
       "dist",
+      ".formctl/workflows",
       "demo",
       "docs",
       "README.md",
@@ -25,6 +26,29 @@ describe("npm package readiness", () => {
     expect(packageJson.scripts.prepack).toBe("npm run build");
     expect(packageJson.scripts["test:package"]).toBe("node scripts/package-smoke.mjs");
     expect(existsSync(path.join(projectRoot, "scripts", "package-smoke.mjs"))).toBe(true);
+  });
+
+  test("package includes ready-to-run demo workflows", () => {
+    const workflowDirectory = path.join(projectRoot, ".formctl", "workflows");
+    const workflowNames = [
+      "expense-report",
+      "admin-invite",
+      "support-refund",
+      "vendor-onboarding",
+      "procurement-approval",
+      "crm-update",
+      "compliance-attestation",
+    ];
+
+    for (const workflowName of workflowNames) {
+      const workflow = readFileSync(path.join(workflowDirectory, `${workflowName}.yml`), "utf8");
+
+      expect(workflow).toContain(`name: ${workflowName}`);
+      expect(workflow).toContain("url: http://127.0.0.1:4173/");
+      expect(workflow).toContain("fields:");
+      expect(workflow).toContain("submit:");
+      expect(workflow).toContain('selector: button[type="submit"]');
+    }
   });
 
   test("build config emits only runtime source into dist", () => {

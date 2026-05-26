@@ -2,14 +2,13 @@
 
 formctl turns any browser form into a safe, repeatable CLI command.
 
-Record once. Submit safely forever.
+Run a saved workflow. Preview first. Approve only when ready.
 
-`formctl` is for developers, operators, and AI agents that need reliable automation for web forms with no useful API. It records a form workflow, stores it as reviewable YAML, previews changes with dry-run artifacts, and requires explicit approval before real submission.
+`formctl` is for developers, operators, and AI agents that need reliable automation for web forms with no useful API. One person records a form workflow into reviewable YAML, then everyone else can run it as a CLI command with dry-run artifacts and explicit approval before real submission.
 
 [Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Example before/after posts](docs/EXAMPLE_POSTS.md) · [Growth log](docs/GROWTH_LOG.md) · [Trust and security notes](docs/TRUST.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
 
 ```bash
-formctl record expense-report https://example.internal/expense
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
 ```
@@ -57,11 +56,7 @@ Start the local demo form in one terminal:
 npm run demo
 ```
 
-In another terminal, record the form:
-
-```bash
-npm run formctl -- record expense-report http://127.0.0.1:4173/expense --headless
-```
+The demo workflows are already checked in under `.formctl/workflows/`.
 
 Preview a submission without sending the form:
 
@@ -72,48 +67,42 @@ npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.
 Submit only after explicit approval:
 
 ```bash
-npm run formctl -- submit expense-report --amount 120000 --approve --json --headless
+npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless
 ```
 
 Try a second fixture with a select field and checkbox:
 
 ```bash
-npm run formctl -- record admin-invite http://127.0.0.1:4173/admin-invite --headless
 npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless
 ```
 
 Try a support refund fixture with a date input and textarea:
 
 ```bash
-npm run formctl -- record support-refund http://127.0.0.1:4173/support-refund --headless
 npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason "Duplicate charge" --dry-run --json --headless
 ```
 
 Try a vendor onboarding fixture with file upload, select, checkbox, date, and notes:
 
 ```bash
-npm run formctl -- record vendor-onboarding http://127.0.0.1:4173/vendor-onboarding --headless
 npm run formctl -- submit vendor-onboarding --legalName "Acme Supplies" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes "Approved vendor" --dry-run --json --headless
 ```
 
 Try a procurement approval fixture with an open modal, two visible steps, and a confirmation page:
 
 ```bash
-npm run formctl -- record procurement-approval http://127.0.0.1:4173/procurement-approval --headless
 npm run formctl -- submit procurement-approval --requestorEmail buyer@example.com --department finance --amount 98000 --neededBy 2026-06-01 --justification "Quarterly laptop refresh" --urgent true --dry-run --json --headless
 ```
 
 Try a CRM update fixture with a pipeline stage, owner, next contact date, priority flag, and notes:
 
 ```bash
-npm run formctl -- record crm-update http://127.0.0.1:4173/crm-update --headless
 npm run formctl -- submit crm-update --accountName "Northwind Traders" --stage renewal --ownerEmail ae@example.com --nextContactDate 2026-06-03 --priority true --notes "Renewal risk flagged" --dry-run --json --headless
 ```
 
 Try a compliance attestation fixture with a control area, attestation date, checkbox, and notes:
 
 ```bash
-npm run formctl -- record compliance-attestation http://127.0.0.1:4173/compliance-attestation --headless
 npm run formctl -- submit compliance-attestation --employeeEmail auditor@example.com --controlArea security --attestationDate 2026-06-15 --compliant true --notes "Quarterly access review complete" --dry-run --json --headless
 ```
 
@@ -127,13 +116,23 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.
 
+## Create A New Workflow
+
+Use `record` only when you need to create a workflow that does not exist yet.
+
+```bash
+formctl record expense-report https://example.internal/expense
+```
+
+Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
+
 ## Commands
 
 ```bash
-formctl record <workflow-name> <url>
-formctl inspect <workflow-name> [--json]
 formctl submit <workflow-name> --dry-run [flags]
 formctl submit <workflow-name> --approve [flags]
+formctl inspect <workflow-name> [--json]
+formctl record <workflow-name> <url>
 formctl doctor [--json]
 ```
 

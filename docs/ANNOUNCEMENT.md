@@ -4,7 +4,7 @@ GitHub: https://github.com/codeyoma/formctl
 
 ## Primary Post
 
-I built formctl: record a browser form once, then run it as a CLI command with dry-run screenshots, selector mismatch checks, approval gates, and JSON output for agents.
+I built formctl: start from a saved workflow, then run a browser form as a CLI command with dry-run screenshots, selector mismatch checks, approval gates, and JSON output for agents.
 
 It is for API-less workflows: internal tools, expense forms, admin panels, refund requests, vendor onboarding, and any browser form that is still manual because there is no useful API.
 
@@ -40,7 +40,7 @@ Repo: https://github.com/codeyoma/formctl
 
 formctl turns any browser form into a safe, repeatable CLI command.
 
-Record once, then run with dry-run screenshots, selector mismatch checks, approval gates, audit-friendly artifacts, and JSON output for agents.
+Save a workflow once, then run with dry-run screenshots, selector mismatch checks, approval gates, audit-friendly artifacts, and JSON output for agents.
 
 Looking for painful API-less workflows to turn into examples.
 

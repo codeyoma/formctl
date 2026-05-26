@@ -75,7 +75,7 @@ try {
   }
 
   const help = run(formctl, ["--help"]);
-  if (!help.stdout.includes("formctl turns browser-recorded web forms into safe CLI commands")) {
+  if (!help.stdout.includes("formctl runs recorded browser forms as safe CLI commands")) {
     throw new Error("Installed formctl --help output did not include the product line");
   }
 

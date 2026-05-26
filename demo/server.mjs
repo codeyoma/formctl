@@ -111,6 +111,8 @@ const server = createServer((request, response) => {
 
 server.listen(4173, "127.0.0.1", () => {
   console.log("formctl demo running at http://127.0.0.1:4173/expense");
+  console.log("ready workflow: .formctl/workflows/expense-report.yml");
+  console.log("try: npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
   console.log("admin invite demo running at http://127.0.0.1:4173/admin-invite");
   console.log("support refund demo running at http://127.0.0.1:4173/support-refund");
   console.log("vendor onboarding demo running at http://127.0.0.1:4173/vendor-onboarding");

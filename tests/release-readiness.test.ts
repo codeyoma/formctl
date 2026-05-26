@@ -92,25 +92,22 @@ describe("release readiness docs", () => {
     const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
 
     expect(readme).toContain("formctl turns any browser form into a safe, repeatable CLI command");
-    expect(readme).toContain("Record once. Submit safely forever.");
+    expect(readme).toContain("Run a saved workflow. Preview first. Approve only when ready.");
     expect(readme).toContain("## Two-Minute Local Demo");
     expect(readme).toContain("npm install");
     expect(readme).toContain("npm run demo");
-    expect(readme).toContain("npm run formctl -- record expense-report http://127.0.0.1:4173/expense --headless");
+    expect(readme).toContain("The demo workflows are already checked in under `.formctl/workflows/`.");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
-    expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --approve --json --headless");
-    expect(readme).toContain("npm run formctl -- record admin-invite http://127.0.0.1:4173/admin-invite --headless");
+    expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless");
     expect(readme).toContain("npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless");
-    expect(readme).toContain("npm run formctl -- record support-refund http://127.0.0.1:4173/support-refund --headless");
     expect(readme).toContain("npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason \"Duplicate charge\" --dry-run --json --headless");
-    expect(readme).toContain("npm run formctl -- record vendor-onboarding http://127.0.0.1:4173/vendor-onboarding --headless");
     expect(readme).toContain("npm run formctl -- submit vendor-onboarding --legalName \"Acme Supplies\" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes \"Approved vendor\" --dry-run --json --headless");
-    expect(readme).toContain("npm run formctl -- record procurement-approval http://127.0.0.1:4173/procurement-approval --headless");
     expect(readme).toContain("npm run formctl -- submit procurement-approval --requestorEmail buyer@example.com --department finance --amount 98000 --neededBy 2026-06-01 --justification \"Quarterly laptop refresh\" --urgent true --dry-run --json --headless");
-    expect(readme).toContain("npm run formctl -- record crm-update http://127.0.0.1:4173/crm-update --headless");
     expect(readme).toContain("npm run formctl -- submit crm-update --accountName \"Northwind Traders\" --stage renewal --ownerEmail ae@example.com --nextContactDate 2026-06-03 --priority true --notes \"Renewal risk flagged\" --dry-run --json --headless");
-    expect(readme).toContain("npm run formctl -- record compliance-attestation http://127.0.0.1:4173/compliance-attestation --headless");
     expect(readme).toContain("npm run formctl -- submit compliance-attestation --employeeEmail auditor@example.com --controlArea security --attestationDate 2026-06-15 --compliant true --notes \"Quarterly access review complete\" --dry-run --json --headless");
+    expect(readme).toContain("## Create A New Workflow");
+    expect(readme).toContain("Use `record` only when you need to create a workflow that does not exist yet.");
+    expect(readme).toContain("formctl record expense-report https://example.internal/expense");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -130,7 +127,7 @@ describe("release readiness docs", () => {
     const demo = readFileSync(path.join(projectRoot, "docs", "assets", "demo.svg"), "utf8");
 
     expect(demo).toContain("<svg");
-    expect(demo).toContain("formctl record expense-report");
+    expect(demo).toContain("existing workflow: .formctl/workflows/expense-report.yml");
     expect(demo).toContain("submit expense-report --amount 120000");
     expect(demo).toContain("--dry-run --json");
     expect(demo).toContain("\"status\":\"dry-run\"");
@@ -333,7 +330,7 @@ describe("release readiness docs", () => {
 
     expect(announcement).toContain("# formctl Announcement Draft");
     expect(announcement).toContain("https://github.com/codeyoma/formctl");
-    expect(announcement).toContain("record a browser form once");
+    expect(announcement).toContain("start from a saved workflow");
     expect(announcement).toContain("dry-run screenshots");
     expect(announcement).toContain("docs/assets/demo.mp4");
     expect(announcement).toContain("selector mismatch checks");

@@ -1,0 +1,20 @@
+name: compliance-attestation
+url: http://127.0.0.1:4173/compliance-attestation
+fields:
+  - name: employeeEmail
+    selector: input[name="employeeEmail"]
+    type: email
+  - name: controlArea
+    selector: select[name="controlArea"]
+    type: select
+  - name: attestationDate
+    selector: input[name="attestationDate"]
+    type: date
+  - name: compliant
+    selector: input[name="compliant"]
+    type: checkbox
+  - name: notes
+    selector: textarea[name="notes"]
+    type: textarea
+submit:
+  selector: button[type="submit"]

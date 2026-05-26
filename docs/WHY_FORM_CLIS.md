@@ -21,7 +21,7 @@ For known forms, those questions should be answered by a CLI contract, not by a 
 
 ## The formctl contract for agents
 
-1. Record or inspect the workflow.
+1. Start from an existing workflow file, or record one only if it does not exist.
 2. Run `submit --dry-run --json`.
 3. Inspect `summary.json`, screenshots, and `audit.jsonl`.
 4. Treat exit code `5` as an approval gate.

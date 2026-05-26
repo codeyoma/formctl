@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
   <title id="title">formctl demo</title>
-  <desc id="desc">Terminal-style demo showing formctl record expense-report, dry-run JSON, approval-required JSON, and approved submit.</desc>
+  <desc id="desc">Terminal-style demo showing an existing formctl workflow, dry-run JSON, approval-required JSON, and approved submit.</desc>
   <rect width="960" height="560" fill="#111827"/>
   <rect x="32" y="32" width="896" height="496" rx="8" fill="#0f172a" stroke="#334155"/>
   <circle cx="62" cy="60" r="7" fill="#ef4444"/>
@@ -8,9 +8,9 @@
   <circle cx="110" cy="60" r="7" fill="#22c55e"/>
   <text x="136" y="65" fill="#94a3b8" font-family="SFMono-Regular, Consolas, monospace" font-size="15">formctl local demo</text>
 
-  <text x="56" y="112" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">$ npm run formctl -- record expense-report http://127.0.0.1:4173/expense --headless</text>
-  <text x="56" y="142" fill="#d1d5db" font-family="SFMono-Regular, Consolas, monospace" font-size="16">Recorded workflow: expense-report</text>
-  <text x="56" y="170" fill="#d1d5db" font-family="SFMono-Regular, Consolas, monospace" font-size="16">Path: .formctl/workflows/expense-report.yml</text>
+  <text x="56" y="112" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">$ ls .formctl/workflows/expense-report.yml</text>
+  <text x="56" y="142" fill="#d1d5db" font-family="SFMono-Regular, Consolas, monospace" font-size="16">existing workflow: .formctl/workflows/expense-report.yml</text>
+  <text x="56" y="170" fill="#d1d5db" font-family="SFMono-Regular, Consolas, monospace" font-size="16">Start by running submit --dry-run. Record only when creating a new workflow.</text>
 
   <text x="56" y="222" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">$ npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless</text>
   <text x="56" y="252" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"status":"dry-run","workflow":"expense-report","exitCode":0,"submitted":false}</text>
@@ -19,7 +19,7 @@
   <text x="56" y="332" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">$ npm run formctl -- submit expense-report --amount 120000 --json --headless</text>
   <text x="56" y="362" fill="#fde68a" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"status":"error","exitCode":5,"requiresApproval":true,"submitted":false}</text>
 
-  <text x="56" y="414" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">$ npm run formctl -- submit expense-report --amount 120000 --approve --json --headless</text>
+  <text x="56" y="414" fill="#38bdf8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">$ npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json</text>
   <text x="56" y="444" fill="#bbf7d0" font-family="SFMono-Regular, Consolas, monospace" font-size="16">{"status":"submitted","workflow":"expense-report","exitCode":0,"submitted":true}</text>
   <text x="56" y="472" fill="#94a3b8" font-family="SFMono-Regular, Consolas, monospace" font-size="16">Safe default: preview first, fail on selector drift, submit only with explicit approval.</text>
 </svg>

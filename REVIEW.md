@@ -884,6 +884,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 ---
 
+### 2026-05-26: Make The Demo Submit-First
+
+**Date:** 2026-05-26
+
+**Experiment:** Remove the first-run requirement to record demo workflows before using the CLI.
+
+**Hypothesis:** New users should be able to start from `submit --dry-run` when a workflow file already exists, and `record` should read as a workflow-authoring step rather than the default user path.
+
+**Result:** Passed. The repository now includes ready-to-run demo workflow files under `.formctl/workflows/`, package metadata includes those workflows, help text starts with dry-run and approve commands, and README/demo copy explains that `record` is only needed to create a missing workflow.
+
+**Evidence:** RED failures were observed first: help text still led with the old phrasing, package metadata did not include `.formctl/workflows`, demo replay still called `record`, and the README/demo asset still described recording as the first step. Focused GREEN passed with `npm test -- --run tests/cli.test.ts tests/package-readiness.test.ts tests/demo-replay.test.ts tests/release-readiness.test.ts`.
+
+**Decision:** Keep `record` in the product, but present it as workflow setup for one maintainer. The everyday path is: receive a workflow file, run `submit --dry-run`, inspect artifacts, then use `--approve` only after review.
+
+**Next Step:** If users still miss the checked-in workflow path, add a small `formctl workflows` listing command or a clearer workflow-not-found recovery message.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

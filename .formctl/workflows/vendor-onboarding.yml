@@ -1,0 +1,26 @@
+name: vendor-onboarding
+url: http://127.0.0.1:4173/vendor-onboarding
+fields:
+  - name: legalName
+    selector: input[name="legalName"]
+    type: text
+  - name: website
+    selector: input[name="website"]
+    type: url
+  - name: taxForm
+    selector: input[name="taxForm"]
+    type: file
+  - name: riskTier
+    selector: select[name="riskTier"]
+    type: select
+  - name: ndaSigned
+    selector: input[name="ndaSigned"]
+    type: checkbox
+  - name: onboardingDate
+    selector: input[name="onboardingDate"]
+    type: date
+  - name: notes
+    selector: textarea[name="notes"]
+    type: textarea
+submit:
+  selector: button[type="submit"]

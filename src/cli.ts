@@ -9,13 +9,20 @@ const PACKAGE_VERSION = (JSON.parse(readFileSync(new URL("../package.json", impo
   version: string;
 }).version;
 
-const HELP_TEXT = `formctl turns browser-recorded web forms into safe CLI commands
+const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
 
 Usage:
-  formctl record <workflow-name> <url>
-  formctl submit <workflow-name> [flags]
+  formctl submit <workflow-name> --dry-run [flags]
+  formctl submit <workflow-name> --approve [flags]
   formctl inspect <workflow-name>
+  formctl record <workflow-name> <url>
   formctl doctor
+
+Start:
+  Start with an existing .formctl/workflows/<name>.yml file.
+  Run submit --dry-run to preview.
+  Run submit --approve only after review.
+  Use record only when you need to create a new workflow.
 
 Flags:
   --help        Show this help message

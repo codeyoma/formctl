@@ -1,0 +1,14 @@
+name: support-refund
+url: http://127.0.0.1:4173/support-refund
+fields:
+  - name: orderId
+    selector: input[name="orderId"]
+    type: text
+  - name: refundDate
+    selector: input[name="refundDate"]
+    type: date
+  - name: reason
+    selector: textarea[name="reason"]
+    type: textarea
+submit:
+  selector: button[type="submit"]

@@ -26,6 +26,7 @@
   },
   "files": [
     "dist",
+    ".formctl/workflows",
     "demo",
     "docs",
     "README.md",

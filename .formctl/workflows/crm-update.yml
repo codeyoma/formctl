@@ -1,0 +1,23 @@
+name: crm-update
+url: http://127.0.0.1:4173/crm-update
+fields:
+  - name: accountName
+    selector: input[name="accountName"]
+    type: text
+  - name: stage
+    selector: select[name="stage"]
+    type: select
+  - name: ownerEmail
+    selector: input[name="ownerEmail"]
+    type: email
+  - name: nextContactDate
+    selector: input[name="nextContactDate"]
+    type: date
+  - name: priority
+    selector: input[name="priority"]
+    type: checkbox
+  - name: notes
+    selector: textarea[name="notes"]
+    type: textarea
+submit:
+  selector: button[type="submit"]

@@ -1,0 +1,23 @@
+name: procurement-approval
+url: http://127.0.0.1:4173/procurement-approval
+fields:
+  - name: requestorEmail
+    selector: input[name="requestorEmail"]
+    type: email
+  - name: department
+    selector: select[name="department"]
+    type: select
+  - name: amount
+    selector: input[name="amount"]
+    type: number
+  - name: neededBy
+    selector: input[name="neededBy"]
+    type: date
+  - name: justification
+    selector: textarea[name="justification"]
+    type: textarea
+  - name: urgent
+    selector: input[name="urgent"]
+    type: checkbox
+submit:
+  selector: button[type="submit"]

@@ -33,7 +33,7 @@ Show HN: formctl – turn browser forms into safe CLI commands
 
 I built formctl for forms that still have no useful API: expense reports, admin panels, refund requests, vendor onboarding, and internal tools.
 
-The idea: record a browser form once, then run it from the terminal with dry-run screenshots, selector mismatch checks, approval gates, and JSON output for agents.
+The idea: save a browser form workflow once, then run it from the terminal with dry-run screenshots, selector mismatch checks, approval gates, and JSON output for agents.
 
 GitHub release: https://github.com/codeyoma/formctl/releases/tag/v0.1.0
 

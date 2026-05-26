@@ -82,11 +82,14 @@ describe("formctl CLI", () => {
     const result = runFormctl(["--help"]);
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("formctl turns browser-recorded web forms into safe CLI commands");
-    expect(result.stdout).toContain("formctl record <workflow-name> <url>");
-    expect(result.stdout).toContain("formctl submit <workflow-name> [flags]");
+    expect(result.stdout).toContain("formctl runs recorded browser forms as safe CLI commands");
+    expect(result.stdout).toContain("formctl submit <workflow-name> --dry-run [flags]");
+    expect(result.stdout).toContain("formctl submit <workflow-name> --approve [flags]");
     expect(result.stdout).toContain("formctl inspect <workflow-name>");
+    expect(result.stdout).toContain("formctl record <workflow-name> <url>");
     expect(result.stdout).toContain("formctl doctor");
+    expect(result.stdout).toContain("Start with an existing .formctl/workflows/<name>.yml file.");
+    expect(result.stdout).toContain("Use record only when you need to create a new workflow.");
     expect(result.stdout).toContain("--headed");
     expect(result.stdout).toContain("--headless");
     expect(result.stdout).toContain("--version");

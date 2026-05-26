@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -245,22 +245,20 @@ async function serveDemoFixtures() {
 }
 
 describe("demo fixture replay", () => {
-  test("recorded demo fixtures dry-run without submit and approve exactly once", async () => {
+  test("checked-in demo workflows dry-run without recording and approve exactly once", async () => {
     const server = await serveDemoFixtures();
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-demo-replay-"));
+    const workflowDirectory = path.join(workspace, ".formctl", "workflows");
+    mkdirSync(workflowDirectory, { recursive: true });
 
     try {
       for (const fixture of replayCases) {
-        const record = await runFormctlAsync([
-          "record",
-          fixture.name,
-          `${server.baseUrl}${fixture.route}`,
-          "--headless",
-        ], workspace);
-
-        expect(record.status).toBe(0);
-        expect(record.stderr).toBe("");
-        expect(existsSync(path.join(workspace, ".formctl", "workflows", `${fixture.name}.yml`))).toBe(true);
+        const shippedWorkflowPath = path.join(projectRoot, ".formctl", "workflows", `${fixture.name}.yml`);
+        expect(existsSync(shippedWorkflowPath)).toBe(true);
+        writeFileSync(
+          path.join(workflowDirectory, `${fixture.name}.yml`),
+          readFileSync(shippedWorkflowPath, "utf8").replaceAll("http://127.0.0.1:4173", server.baseUrl),
+        );
 
         const dryRun = await runFormctlAsync([
           "submit",

@@ -1,0 +1,11 @@
+name: expense-report
+url: http://127.0.0.1:4173/expense
+fields:
+  - name: amount
+    selector: input[name="amount"]
+    type: number
+  - name: receipt
+    selector: input[name="receipt"]
+    type: file
+submit:
+  selector: button[type="submit"]

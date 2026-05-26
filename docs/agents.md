@@ -6,7 +6,7 @@ Use this guide when calling `formctl` from Codex, Claude Code, Cursor, Copilot C
 
 1. Run `formctl doctor --json` before browser-backed work.
 
-2. Record or inspect the workflow before submitting:
+2. Inspect the existing workflow before submitting:
 
 ```bash
 formctl inspect expense-report --json
@@ -25,6 +25,8 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run 
 ```bash
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve --json --headless
 ```
+
+Use `record` only when the workflow file does not exist yet. Once `.formctl/workflows/<name>.yml` is available, agents should start from `inspect` or `submit --dry-run`.
 
 ## JSON Branching
 
