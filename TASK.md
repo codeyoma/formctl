@@ -171,6 +171,7 @@ formctl doctor
 
 - [x] Add `--json` to `submit`, `inspect`, and `doctor`.
 - [x] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.
+- [x] Expose recording mode and event count in workflow discovery JSON.
 - [x] Ensure secrets and file contents are never printed.
 - [x] Verify: A shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.

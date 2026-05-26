@@ -81,6 +81,10 @@ type WorkflowListItem = {
   url: string;
   fieldCount: number;
   screenshots?: Workflow["screenshots"];
+  recording?: {
+    mode: "manual";
+    eventCount: number;
+  };
 };
 
 type AuditEvent = Record<string, unknown>;
@@ -247,6 +251,12 @@ function listWorkflowFiles(): WorkflowListItem[] {
         url: workflow.url,
         fieldCount: workflow.fields.length,
         ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
+        ...(workflow.recording === undefined ? {} : {
+          recording: {
+            mode: workflow.recording.mode,
+            eventCount: workflow.recording.events.length,
+          },
+        }),
       };
     });
 }

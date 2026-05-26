@@ -12,6 +12,8 @@ Use this guide when calling `formctl` from Codex, Claude Code, Cursor, Copilot C
 formctl workflows --json
 ```
 
+Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.
+
 3. Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.
 
 ```bash

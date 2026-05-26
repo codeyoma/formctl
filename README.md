@@ -64,6 +64,8 @@ List available workflows:
 npm run formctl -- workflows --json
 ```
 
+Workflow discovery reports recording mode and event count when metadata exists.
+
 Validate workflow YAML before review or sharing:
 
 ```bash

@@ -1161,6 +1161,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to growth/outreach, or add a future event-history replay feature only after user demand proves it is needed.
 
+### 2026-05-27: Surface Recording Summary In Workflow Discovery
+
+**Date:** 2026-05-27
+
+**Experiment:** Make manual recording metadata discoverable before agents call `inspect --json`.
+
+**Hypothesis:** `workflows --json` should show a compact recording summary so an agent can decide whether a workflow has manual interaction metadata without loading every workflow file.
+
+**Result:** Passed. Workflow discovery now includes `recording: { mode, eventCount }` when a workflow has `recording.events`, while leaving workflows without recording metadata unchanged.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "workflows --json"` because the expense-report list item omitted `recording`. GREEN passed after adding the summary in `listWorkflowFiles()`. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety"` and `npm test -- --run tests/release-readiness.test.ts -t "TASK plan"` until README, `docs/agents.md`, and `TASK.md` documented the discovery summary. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- workflows --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** Nothing unexpected. The slice stayed small because it summarizes existing metadata instead of changing the workflow schema or replay behavior.
+
+**Decision:** Keep `workflows --json` as a discovery surface with counts only. Full event details remain in `inspect --json`.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish still needs auth; `npm whoami` returns `ENEEDAUTH`, while `npm view formctl` still returns `E404`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

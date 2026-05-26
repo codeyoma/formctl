@@ -98,6 +98,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run demo");
     expect(readme).toContain("The demo workflows are already checked in under `.formctl/workflows/`.");
     expect(readme).toContain("npm run formctl -- workflows --json");
+    expect(readme).toContain("Workflow discovery reports recording mode and event count when metadata exists.");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless");
     expect(readme).toContain("Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.");
@@ -365,6 +366,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Perform the final submit action only after approval.");
     expect(task).toContain("- [x] Add `--json` to `submit`, `inspect`, and `doctor`.");
     expect(task).toContain("- [x] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.");
+    expect(task).toContain("- [x] Expose recording mode and event count in workflow discovery JSON.");
     expect(task).toContain("- [x] Ensure secrets and file contents are never printed.");
   });
 
@@ -558,6 +560,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `artifacts`.");
     expect(agents).toContain("Run `formctl doctor --json` before browser-backed work.");
     expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
+    expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
     expect(agents).toContain("When `validate --json` returns `status: \"error\"`, report the failed check names plus their `message` and `fix` fields.");
     expect(agents).toContain("Use `record --manual` only when a workflow is missing and the page needs human login, navigation, or setup before saving selectors.");
