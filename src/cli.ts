@@ -36,6 +36,7 @@ type WorkflowField = {
   selector: string;
   type: string;
   label?: string;
+  description?: string;
 };
 
 type Workflow = {
@@ -69,6 +70,7 @@ type SelectorFailurePayload = {
     | { expectedMatches: 1; actualMatches: number }
     | { expectedType: string; actualType: string }
     | { expectedLabel: string; actualLabel: string }
+    | { expectedDescription: string; actualDescription: string }
   );
 };
 
@@ -206,6 +208,30 @@ function buildFieldLabelMismatchPayload(
   };
 }
 
+function buildFieldDescriptionMismatchPayload(
+  workflowName: string,
+  selector: string,
+  expectedDescription: string,
+  actualDescription: string,
+): SelectorFailurePayload {
+  const message = `Selector mismatch: ${selector} expected description ${expectedDescription}, found ${actualDescription}`;
+
+  return {
+    status: "error",
+    workflow: workflowName,
+    exitCode: 3,
+    submitted: false,
+    requiresApproval: false,
+    error: {
+      code: "selector_mismatch",
+      selector,
+      expectedDescription,
+      actualDescription,
+      message,
+    },
+  };
+}
+
 function writeSelectorFailure(
   output: NodeJS.WritableStream,
   failurePayload: SelectorFailurePayload,
@@ -246,6 +272,10 @@ function normalizeLabel(label: string): string {
   return label.replace(/\s+/g, " ").trim();
 }
 
+function normalizeDescription(description: string): string {
+  return description.replace(/\s+/g, " ").trim();
+}
+
 async function readElementType(page: Page, selector: string): Promise<string> {
   return page.locator(selector).evaluate((element) => {
     const tagName = element.tagName.toLowerCase();
@@ -268,6 +298,19 @@ async function readElementLabel(page: Page, selector: string): Promise<string> {
       ?? "";
 
     return label.replace(/\s+/g, " ").trim();
+  });
+}
+
+async function readElementDescription(page: Page, selector: string): Promise<string> {
+  return page.locator(selector).evaluate((element) => {
+    const describedBy = element.getAttribute("aria-describedby") ?? "";
+    const description = describedBy
+      .split(/\s+/)
+      .filter((id) => id.length > 0)
+      .map((id) => element.ownerDocument.getElementById(id)?.textContent ?? "")
+      .join(" ");
+
+    return description.replace(/\s+/g, " ").trim();
   });
 }
 
@@ -562,6 +605,42 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
             return 3;
           }
         }
+
+        if (field.description !== undefined) {
+          const expectedDescription = normalizeDescription(field.description);
+          const actualDescription = await readElementDescription(page, field.selector);
+          if (actualDescription !== expectedDescription) {
+            const failurePayload = buildFieldDescriptionMismatchPayload(
+              workflow.name,
+              field.selector,
+              expectedDescription,
+              actualDescription,
+            );
+            auditEvents.push({
+              event: "field_description_check",
+              role: "field",
+              field: field.name,
+              selector: field.selector,
+              expectedDescription,
+              actualDescription,
+              result: "mismatch",
+            });
+            const failure = await writeSelectorMismatchFailureArtifacts(
+              page,
+              process.cwd(),
+              failurePayload,
+              auditEvents,
+            );
+            writeSelectorFailure(
+              wantsJson ? stdout : stderr,
+              failurePayload,
+              wantsJson,
+              failure.runId,
+              failure.artifacts,
+            );
+            return 3;
+          }
+        }
       }
 
       const submitMatchCount = await page.locator(workflow.submit.selector).count();
@@ -718,12 +797,21 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
           .find((labelText) => labelText.length > 0)
           ?? element.getAttribute("aria-label")
           ?? "";
+        const describedBy = element.getAttribute("aria-describedby") ?? "";
+        const description = describedBy
+          .split(/\s+/)
+          .filter((id) => id.length > 0)
+          .map((id) => element.ownerDocument.getElementById(id)?.textContent ?? "")
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim();
 
         return [{
           name,
           selector: `${tagName}[name="${name}"]`,
           type,
           ...(label.length === 0 ? {} : { label }),
+          ...(description.length === 0 ? {} : { description }),
         }];
       }));
       const submitSelector = await page.locator('button[type="submit"], input[type="submit"]').first().evaluate((element) => {

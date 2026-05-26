@@ -37,6 +37,7 @@
 - Add replay and package smoke commands to the launch checklist.
 - Detect recorded field type drift before filling or submitting a workflow.
 - Record field labels and detect label drift before filling or submitting a workflow.
+- Record `aria-describedby` field descriptions and detect description drift before replay.
 
 ## 0.1.0 - 2026-05-26
 

@@ -846,6 +846,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add nearby visible-text comparison only if it can be made deterministic enough to avoid noisy false positives.
 
+### 2026-05-26: Check Associated Field Descriptions
+
+**Date:** 2026-05-26
+
+**Experiment:** Capture `aria-describedby` text during `record` and treat description changes as selector drift during `submit`.
+
+**Hypothesis:** `aria-describedby` is the safest first version of nearby visible-text drift detection because it is explicitly associated with the field and avoids scraping arbitrary surrounding copy.
+
+**Result:** Passed. Recorded workflows now include `description` when a field points to visible text through `aria-describedby`. Submit preflight compares recorded descriptions against the current DOM description and exits `3` with `expectedDescription` and `actualDescription` when they differ.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "record creates a workflow file|recorded field description changed"`: record omitted `description`, and submit returned exit `0` for changed description text. Focused GREEN passed with the same command. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Do not scrape arbitrary nearby text in v0. It is too likely to create false positives from layout or copy changes. Prefer explicit field associations first.
+
+**Next Step:** Move Task 1.5 to done and return to growth/distribution work: npm auth/publish if available, otherwise one outreach channel from `docs/OUTREACH.md`.
+
 ### Template
 
 **Date:** YYYY-MM-DD

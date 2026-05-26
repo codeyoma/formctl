@@ -151,7 +151,7 @@ formctl doctor
 - [x] Check that every required selector resolves to exactly one expected element.
 - [x] Compare recorded field input types with the current DOM before filling.
 - [x] Compare recorded field labels with the current DOM before filling.
-- [ ] Compare visible text near the field.
+- [x] Compare associated visible description text via `aria-describedby`.
 - [x] Emit a clear selector mismatch report.
 - [x] Save a failure screenshot.
 - [x] Verify: Changing a form label or removing a field causes exit code `3`.
