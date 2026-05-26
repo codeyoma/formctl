@@ -34,6 +34,7 @@
 - Document the `doctor --json` contract in the agent safety guide.
 - Add `formctl --version` for installed-package smoke checks.
 - Add a package smoke test that installs the local tarball and verifies installed CLI and MCP binaries.
+- Add replay and package smoke commands to the launch checklist.
 
 ## 0.1.0 - 2026-05-26
 

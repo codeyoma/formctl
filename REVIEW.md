@@ -798,6 +798,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add `npm run test:package` to release checklist docs if the release process gets formalized further.
 
+### 2026-05-26: Add Package Smoke To Launch Checklist
+
+**Date:** 2026-05-26
+
+**Experiment:** Make the release checklist match the current CI and packaging verification path.
+
+**Hypothesis:** Launch docs should require both fixture replay and tarball package smoke so a human release run cannot skip the checks most likely to catch browser-flow or npm-bin breakage.
+
+**Result:** Passed. `docs/LAUNCH.md` now includes `npm run test:replay` and `npm run test:package` in pre-launch verification.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/release-readiness.test.ts -t "launch checklist"` failed because `docs/LAUNCH.md` did not include `npm run test:replay`. Focused GREEN passed after adding replay and package smoke commands. Verification passed with `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep launch verification aligned with CI. The checklist should be boring and operational, not a marketing checklist.
+
+**Next Step:** Once npm auth is available, run the checklist end-to-end before publishing.
+
 ### Template
 
 **Date:** YYYY-MM-DD

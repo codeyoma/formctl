@@ -5,6 +5,8 @@ Public repo: https://github.com/codeyoma/formctl
 ## Pre-Launch Verification
 
 - [ ] Run `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`.
+- [ ] Run `npm run test:replay`.
+- [ ] Run `npm run test:package`.
 - [ ] Run `npm run build`.
 - [ ] Run `npx tsc --noEmit`.
 - [ ] Run `npm run demo`.

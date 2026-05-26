@@ -299,6 +299,8 @@ describe("release readiness docs", () => {
     expect(launch).toContain("# formctl Launch Checklist");
     expect(launch).toContain("https://github.com/codeyoma/formctl");
     expect(launch).toContain("npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts");
+    expect(launch).toContain("npm run test:replay");
+    expect(launch).toContain("npm run test:package");
     expect(launch).toContain("npm run build");
     expect(launch).toContain("npx tsc --noEmit");
     expect(launch).toContain("npm run demo");
