@@ -312,6 +312,7 @@ describe("release readiness docs", () => {
 
     expect(packageJson.scripts["test:replay"]).toBe("vitest run tests/demo-replay.test.ts");
     expect(ci).toContain("pull_request");
+    expect(ci).toContain("workflow_dispatch:");
     expect(ci).toContain("actions/checkout@v5");
     expect(ci).toContain("actions/setup-node@v5");
     expect(ci).not.toContain("actions/checkout@v4");

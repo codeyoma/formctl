@@ -862,6 +862,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Move Task 1.5 to done and return to growth/distribution work: npm auth/publish if available, otherwise one outreach channel from `docs/OUTREACH.md`.
 
+### 2026-05-27: Add Manual CI Dispatch
+
+**Date:** 2026-05-27
+
+**Experiment:** Add `workflow_dispatch` to the CI workflow after a pushed commit did not produce a GitHub Actions run.
+
+**Hypothesis:** Push triggers are still the default path, but a manual dispatch trigger gives maintainers a recovery path for verifying `main` when GitHub does not create a push run.
+
+**Result:** Local change passed. CI can now be manually triggered from GitHub Actions or with `gh workflow run`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` because `.github/workflows/ci.yml` did not contain `workflow_dispatch:`. Focused GREEN passed after adding the trigger.
+
+**Decision:** Keep the existing push and pull request triggers, and add manual dispatch as an operational fallback rather than replacing automatic CI.
+
+**Next Step:** Push this workflow change, then use the new manual trigger to verify the latest `main` commit if the push trigger is still missing.
+
 ### Template
 
 **Date:** YYYY-MM-DD
