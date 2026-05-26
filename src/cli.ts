@@ -234,14 +234,16 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
   if (command === "doctor") {
     const checks = buildDoctorChecks();
     const status = checks.every((check) => check.status === "ok") ? "ok" : "error";
+    const exitCode = status === "ok" ? 0 : 1;
 
     if (flags.has("--json")) {
       stdout.write(`${JSON.stringify({
         status,
         command: "doctor",
+        exitCode,
         checks,
       })}\n`);
-      return status === "ok" ? 0 : 1;
+      return exitCode;
     }
 
     stdout.write(`formctl doctor: ${status}\n`);
@@ -257,7 +259,7 @@ export async function run(args: string[], stdout: NodeJS.WritableStream, stderr:
         stdout.write(`  install: ${check.installCommand}\n`);
       }
     }
-    return status === "ok" ? 0 : 1;
+    return exitCode;
   }
 
   if (command === "inspect") {

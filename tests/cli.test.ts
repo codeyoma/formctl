@@ -11,10 +11,11 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const cliPath = path.join(projectRoot, "src", "cli.ts");
 const tsxLoaderPath = path.join(projectRoot, "node_modules", "tsx", "dist", "loader.mjs");
 
-function runFormctl(args: string[], cwd = projectRoot) {
+function runFormctl(args: string[], cwd = projectRoot, env: NodeJS.ProcessEnv = {}) {
   return spawnSync(process.execPath, ["--import", tsxLoaderPath, cliPath, ...args], {
     cwd,
     encoding: "utf8",
+    env: { ...process.env, ...env },
   });
 }
 
@@ -100,6 +101,7 @@ describe("formctl CLI", () => {
     expect(payload).toMatchObject({
       status: "ok",
       command: "doctor",
+      exitCode: 0,
     });
     expect(payload.checks).toEqual(expect.arrayContaining([
       { name: "node", status: "ok" },
@@ -123,6 +125,20 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("- workspace: ok");
     expect(result.stdout).toContain("- playwright-chromium: ok");
     expect(result.stdout).toContain("executable:");
+  });
+
+  test("doctor exits 1 with install guidance when Playwright Chromium is missing", () => {
+    const missingBrowserPath = path.join(mkdtempSync(path.join(os.tmpdir(), "formctl-missing-browsers-")), "browsers");
+    const result = runFormctl(["doctor"], projectRoot, {
+      PLAYWRIGHT_BROWSERS_PATH: missingBrowserPath,
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("formctl doctor: error");
+    expect(result.stdout).toContain("- playwright-chromium: error");
+    expect(result.stdout).toContain("message: Playwright Chromium is not installed.");
+    expect(result.stdout).toContain("install: npx playwright install chromium");
   });
 
   test("inspect returns exit code 2 when the workflow does not exist", () => {

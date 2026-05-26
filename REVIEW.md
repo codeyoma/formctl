@@ -730,6 +730,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If support requests show missing-browser confusion, add a fixture or environment override test for the error output path.
 
+### 2026-05-26: Add Doctor JSON Exit Code
+
+**Date:** 2026-05-26
+
+**Experiment:** Make `doctor --json` easier for agents to branch on by including the same numeric exit code that the process returns.
+
+**Hypothesis:** Agent callers should not need shell-specific process-status plumbing to understand whether doctor passed or failed; the JSON payload should include `exitCode`.
+
+**Result:** Passed. `doctor --json` now returns `exitCode: 0` on success and uses the same computed exit code as the process return value. A missing-browser test also locks the existing `PLAYWRIGHT_BROWSERS_PATH` failure path and install guidance.
+
+**Evidence:** RED failure was observed first: `npm test -- --run tests/cli.test.ts -t "doctor --json reports"` failed because the payload did not include `exitCode`. Focused GREEN passed after adding the field. The missing-browser characterization test passed immediately because the previous doctor implementation already handled a missing Playwright browser path. Full checks passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run build`, `npx tsc --noEmit`, `npm run formctl -- doctor`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and `git diff --check`. `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login.
+
+**Decision:** Keep the process exit code and JSON `exitCode` derived from the same local variable to avoid drift.
+
+**Next Step:** Consider documenting the doctor JSON schema in `docs/agents.md` if agent users start consuming the doctor result directly.
+
 ### Template
 
 **Date:** YYYY-MM-DD
