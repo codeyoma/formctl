@@ -19,6 +19,7 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 | Date | GitHub Stars | npm Downloads | Issues | Discussions | Demo Views | Notes |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | 2026-05-25 | 0 | 0 | 0 | 0 | 0 | Project planning started. |
+| 2026-05-27 | 0 | 0 | 1 | 0 | 0 | GitHub repo public; npm package still unpublished because `npm whoami` returns `ENEEDAUTH`. |
 
 ## Decision Log
 
@@ -1161,6 +1162,18 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 ---
 
 ## Weekly Review
+
+### Week Ending: 2026-05-27
+
+**Metrics:** 0 GitHub stars, 0 forks, 1 open issue, npm not published (`npm view formctl` returns `E404`), demo views not measured, 0 workflow leads.
+
+**Most Useful Feedback:** No external feedback yet; the repo is still waiting on the first outreach post.
+
+**Biggest Risk:** The product keeps improving without being put in front of developers who have painful API-less workflows.
+
+**Shipped:** Workflow validation plus MCP workflow discovery and validation, including package smoke and CI coverage.
+
+**Next Week Focus:** A human should post the Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` and record the posted URL plus 24-hour metrics.
 
 ### Template
 

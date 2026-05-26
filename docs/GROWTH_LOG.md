@@ -8,6 +8,16 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 | --- | ---: | ---: | ---: | --- | --- | ---: | --- |
 | 2026-05-26 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message from `docs/POSTING_QUEUE.md` |
 
+## Snapshot: 2026-05-27
+
+| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |
+| --- | ---: | ---: | ---: | --- | --- | ---: | --- |
+| 2026-05-27 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |
+
+**Shipped:** Shipped MCP workflow discovery and validation tools for agent clients.
+
+**Notes:** Repository remains public at https://github.com/codeyoma/formctl. npm package name still returns `E404`; npm publish is still blocked until npm auth is configured. Open issue #1 tracks the first outreach channels and remains active.
+
 ## Source commands
 
 ```bash

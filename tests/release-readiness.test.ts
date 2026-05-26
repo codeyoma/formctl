@@ -468,7 +468,10 @@ describe("release readiness docs", () => {
     expect(outreach).toContain("Growth log: docs/GROWTH_LOG.md");
     expect(growthLog).toContain("# Growth Log");
     expect(growthLog).toContain("## Baseline: 2026-05-26");
+    expect(growthLog).toContain("## Snapshot: 2026-05-27");
     expect(growthLog).toContain("| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |");
+    expect(growthLog).toContain("| 2026-05-27 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |");
+    expect(growthLog).toContain("Shipped MCP workflow discovery and validation tools for agent clients.");
     expect(growthLog).toContain("gh repo view codeyoma/formctl");
     expect(growthLog).toContain("npm view formctl");
     expect(growthLog).toContain("npm publish blocked until npm auth is configured");
