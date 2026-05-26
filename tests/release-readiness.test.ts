@@ -326,6 +326,24 @@ describe("release readiness docs", () => {
     expect(ci).toContain("npx tsc --noEmit");
   });
 
+  test("TASK plan reflects shipped MVP behavior without overclaiming", () => {
+    const task = readFileSync(path.join(projectRoot, "TASK.md"), "utf8");
+
+    expect(task).toContain("- [x] Create a Node.js TypeScript project.");
+    expect(task).toContain("- [x] Add commands:");
+    expect(task).toContain("- [x] Use clear exit codes:");
+    expect(task).toContain("- [x] Verify: `formctl --help` explains the product without reading docs.");
+    expect(task).toContain("- [x] Load the workflow file.");
+    expect(task).toContain("- [x] Accept field values from CLI flags.");
+    expect(task).toContain("- [x] Stop before the final submit action.");
+    expect(task).toContain("- [x] Make submission fail with exit code `5` unless `--approve` or interactive confirmation is present.");
+    expect(task).toContain("- [ ] Show the dry-run screenshot path before asking for approval.");
+    expect(task).toContain("- [x] Perform the final submit action only after approval.");
+    expect(task).toContain("- [x] Add `--json` to `submit`, `inspect`, and `doctor`.");
+    expect(task).toContain("- [x] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.");
+    expect(task).toContain("- [x] Ensure secrets and file contents are never printed.");
+  });
+
   test("announcement draft is ready for first public launch post", () => {
     const announcement = readFileSync(path.join(projectRoot, "docs", "ANNOUNCEMENT.md"), "utf8");
 

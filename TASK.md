@@ -83,8 +83,8 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.png --approve
 
 **Goal:** Create a minimal CLI with stable commands and help text.
 
-- [ ] Create a Node.js TypeScript project.
-- [ ] Add commands:
+- [x] Create a Node.js TypeScript project.
+- [x] Add commands:
 
 ```bash
 formctl record <workflow-name> <url>
@@ -93,7 +93,7 @@ formctl inspect <workflow-name>
 formctl doctor
 ```
 
-- [ ] Use clear exit codes:
+- [x] Use clear exit codes:
 
 ```text
 0 success
@@ -105,8 +105,8 @@ formctl doctor
 10 unexpected runtime error
 ```
 
-- [ ] Verify: `formctl --help` explains the product without reading docs.
-- [ ] Record CLI naming friction in `REVIEW.md`.
+- [x] Verify: `formctl --help` explains the product without reading docs.
+- [x] Record CLI naming friction in `REVIEW.md`.
 
 ### Task 1.2: Implement Recording
 
@@ -115,34 +115,34 @@ formctl doctor
 - [ ] Launch a headed Playwright browser.
 - [ ] Let the user complete the form manually.
 - [ ] Capture field interactions, file uploads, final submit target, and a baseline screenshot.
-- [ ] Save `.formctl/workflows/<workflow-name>.yml`.
-- [ ] Verify: Re-running `formctl inspect <workflow-name>` shows captured fields and selectors.
-- [ ] Record missed interactions in `REVIEW.md`.
+- [x] Save `.formctl/workflows/<workflow-name>.yml`.
+- [x] Verify: Re-running `formctl inspect <workflow-name>` shows captured fields and selectors.
+- [x] Record missed interactions in `REVIEW.md`.
 
 ### Task 1.3: Implement Dry-Run
 
 **Goal:** Fill the form without submitting it.
 
-- [ ] Load the workflow file.
-- [ ] Accept field values from CLI flags.
-- [ ] Open the target page.
-- [ ] Fill fields.
-- [ ] Stop before the final submit action.
-- [ ] Save artifacts under `.formctl/runs/<timestamp>/`.
-- [ ] Include screenshot, JSON summary, and resolved field values with secrets redacted.
-- [ ] Verify: Dry-run never triggers the final submit action in the local demo app.
-- [ ] Record false positives or confusing output in `REVIEW.md`.
+- [x] Load the workflow file.
+- [x] Accept field values from CLI flags.
+- [x] Open the target page.
+- [x] Fill fields.
+- [x] Stop before the final submit action.
+- [x] Save artifacts under `.formctl/runs/<timestamp>/`.
+- [x] Include screenshot, JSON summary, and resolved field values with secrets redacted.
+- [x] Verify: Dry-run never triggers the final submit action in the local demo app.
+- [x] Record false positives or confusing output in `REVIEW.md`.
 
 ### Task 1.4: Implement Approval And Submit
 
 **Goal:** Require explicit user intent before a real submission.
 
-- [ ] Make submission fail with exit code `5` unless `--approve` or interactive confirmation is present.
+- [x] Make submission fail with exit code `5` unless `--approve` or interactive confirmation is present.
 - [ ] Show the dry-run screenshot path before asking for approval.
-- [ ] Perform the final submit action only after approval.
-- [ ] Save post-submit screenshot and audit log.
-- [ ] Verify: The local demo app changes to "submitted" only after approval.
-- [ ] Record approval UX issues in `REVIEW.md`.
+- [x] Perform the final submit action only after approval.
+- [x] Save post-submit screenshot and audit log.
+- [x] Verify: The local demo app changes to "submitted" only after approval.
+- [x] Record approval UX issues in `REVIEW.md`.
 
 ### Task 1.5: Implement Selector Breakage Detection
 
@@ -165,11 +165,11 @@ formctl doctor
 
 **Goal:** Make `formctl` easy for coding agents and automation systems to call.
 
-- [ ] Add `--json` to `submit`, `inspect`, and `doctor`.
-- [ ] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.
-- [ ] Ensure secrets and file contents are never printed.
-- [ ] Verify: A shell script can branch on output status and exit code.
-- [ ] Record schema changes in `REVIEW.md`.
+- [x] Add `--json` to `submit`, `inspect`, and `doctor`.
+- [x] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.
+- [x] Ensure secrets and file contents are never printed.
+- [x] Verify: A shell script can branch on output status and exit code.
+- [x] Record schema changes in `REVIEW.md`.
 
 ### Task 2.2: Add Audit Logs
 

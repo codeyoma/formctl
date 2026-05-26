@@ -878,6 +878,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Push this workflow change, then use the new manual trigger to verify the latest `main` commit if the push trigger is still missing.
 
+### 2026-05-27: Sync Task Plan With Shipped MVP
+
+**Date:** 2026-05-27
+
+**Experiment:** Update `TASK.md` so public checklist state matches behavior already covered by tests and docs.
+
+**Hypothesis:** A public repo loses credibility when shipped core behavior still appears unchecked, but the checklist must not overclaim unimplemented interactive approval or full event recording.
+
+**Result:** Passed. The task plan now marks scaffold, dry-run, approved submit, and JSON output work as complete while leaving the remaining interactive approval prompt and broader recording ambitions open.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "TASK plan"` because `TASK.md` still listed shipped MVP work as incomplete. Focused GREEN passed after updating only verified checklist items.
+
+**Decision:** Treat `TASK.md` as public product state, not only an internal scratchpad. Future shipped slices should update it in the same commit as code or docs.
+
+**Next Step:** Return to growth/distribution work: npm auth/publish if credentials are available, otherwise execute the first outreach channel from `docs/OUTREACH.md`.
+
 ### Template
 
 **Date:** YYYY-MM-DD
