@@ -191,6 +191,34 @@ function writeInvalidWorkflowNameError(
   return 1;
 }
 
+function writeWorkflowNotFoundError(
+  command: string,
+  workflowName: string,
+  wantsJson: boolean,
+  stdout: NodeJS.WritableStream,
+  stderr: NodeJS.WritableStream,
+): number {
+  const expectedPath = `.formctl/workflows/${workflowName}.yml`;
+  if (wantsJson) {
+    stdout.write(`${JSON.stringify({
+      status: "error",
+      command,
+      workflow: workflowName,
+      exitCode: 2,
+      ...(command === "submit" ? { submitted: false, requiresApproval: false } : {}),
+      error: {
+        code: "workflow_not_found",
+        message: `Workflow not found: ${workflowName}`,
+        expectedPath,
+      },
+    })}\n`);
+    return 2;
+  }
+
+  stderr.write(`Workflow not found: ${workflowName}\nExpected: ${expectedPath}\n`);
+  return 2;
+}
+
 function hasCurrentSafetyMetadata(value: unknown): boolean {
   if (!isObject(value)) {
     return false;
@@ -661,8 +689,7 @@ export async function run(
 
     const result = readWorkflow(workflowName);
     if (result.error !== undefined || result.workflow === undefined) {
-      stderr.write(result.error ?? "Workflow could not be read\n");
-      return 2;
+      return writeWorkflowNotFoundError(command, workflowName, flags.has("--json"), stdout, stderr);
     }
 
     if (flags.has("--json")) {
@@ -721,8 +748,7 @@ export async function run(
     const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
     const displayPath = `.formctl/workflows/${workflowName}.yml`;
     if (!existsSync(workflowPath)) {
-      stderr.write(`Workflow not found: ${workflowName}\nExpected: ${displayPath}\n`);
-      return 2;
+      return writeWorkflowNotFoundError(command, workflowName, flags.has("--json"), stdout, stderr);
     }
 
     let workflow: unknown;
@@ -806,8 +832,7 @@ export async function run(
 
     const result = readWorkflow(workflowName);
     if (result.error !== undefined || result.workflow === undefined) {
-      stderr.write(result.error ?? "Workflow could not be read\n");
-      return 2;
+      return writeWorkflowNotFoundError(command, workflowName, wantsJson, stdout, stderr);
     }
 
     const options = parseOptions(args.slice(4));

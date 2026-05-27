@@ -138,6 +138,7 @@ Run `formctl validate <workflow-name> --json` before reviewing or sharing workfl
 Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.
 Validation rejects unredacted `recording.events` metadata when present.
 Invalid workflow names return `invalid_workflow_name` in JSON mode.
+Missing workflows return `workflow_not_found` in JSON mode.
 
 ## Create A New Workflow
 

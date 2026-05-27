@@ -57,6 +57,7 @@ When `validate --json` returns `status: "error"`, report the failed check names 
 Treat a `recording-metadata` validation failure as a possible sensitive-data leak.
 Treat an invalid workflow name as a user-input error, not as a path to normalize.
 Branch on `invalid_workflow_name` JSON errors without retrying path variants.
+Branch on `workflow_not_found` JSON errors before attempting record or submit.
 
 ## Doctor JSON
 

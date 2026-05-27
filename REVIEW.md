@@ -1233,6 +1233,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish remains blocked by npm auth.
 
+### 2026-05-28: Return JSON For Missing Workflows
+
+**Date:** 2026-05-28
+
+**Experiment:** Make workflow-not-found failures machine-readable when callers pass `--json`.
+
+**Hypothesis:** Agents should branch on a structured `workflow_not_found` error before deciding whether to record a new workflow, ask the user, or stop.
+
+**Result:** Passed. `inspect --json`, `validate --json`, and `submit --dry-run --json` now return `{ status: "error", command, workflow, exitCode: 2, error: { code: "workflow_not_found", message, expectedPath } }` without writing stderr. Submit also includes `submitted: false` and `requiresApproval: false`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "workflow-not-found"` because missing workflows still wrote stderr in JSON mode. GREEN passed after adding a shared workflow-not-found JSON helper. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the JSON contract. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- inspect expense-report --json`, `npm run formctl -- doctor --json`, `npm run formctl -- inspect missing-workflow --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The old behavior respected exit code `2`, but `--json` callers still had to parse stderr and reconstruct `.formctl/workflows/<name>.yml` themselves.
+
+**Decision:** Keep human mode unchanged and route only JSON mode to stdout. Include the expected relative workflow path because it is safe, deterministic, and useful for repair messages.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

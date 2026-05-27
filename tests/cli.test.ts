@@ -200,6 +200,65 @@ describe("formctl CLI", () => {
     expect(result.stderr).toContain(".formctl/workflows/expense-report.yml");
   });
 
+  test("inspect --json returns a machine-readable workflow-not-found error", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-missing-inspect-json-"));
+    const result = runFormctl(["inspect", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "inspect",
+      workflow: "expense-report",
+      exitCode: 2,
+      error: {
+        code: "workflow_not_found",
+        message: "Workflow not found: expense-report",
+        expectedPath: ".formctl/workflows/expense-report.yml",
+      },
+    });
+  });
+
+  test("validate --json returns a machine-readable workflow-not-found error", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-missing-validate-json-"));
+    const result = runFormctl(["validate", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "validate",
+      workflow: "expense-report",
+      exitCode: 2,
+      error: {
+        code: "workflow_not_found",
+        message: "Workflow not found: expense-report",
+        expectedPath: ".formctl/workflows/expense-report.yml",
+      },
+    });
+  });
+
+  test("submit --dry-run --json returns a machine-readable workflow-not-found error", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-missing-submit-json-"));
+    const result = runFormctl(["submit", "expense-report", "--dry-run", "--json"], workspace);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      exitCode: 2,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_not_found",
+        message: "Workflow not found: expense-report",
+        expectedPath: ".formctl/workflows/expense-report.yml",
+      },
+    });
+  });
+
   test("inspect --json rejects unsafe workflow names with a machine-readable error", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-inspect-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
