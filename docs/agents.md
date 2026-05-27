@@ -54,6 +54,7 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 
 Treat exit code `5` as an approval gate, not a retryable failure.
 When `validate --json` returns `status: "error"`, report the failed check names plus their `message` and `fix` fields.
+For `readable-yaml` failures, report the YAML parse message and fix before retrying.
 Treat a `recording-metadata` validation failure as a possible sensitive-data leak.
 Treat an invalid workflow name as a user-input error, not as a path to normalize.
 Branch on `invalid_workflow_name` JSON errors without retrying path variants.

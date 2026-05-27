@@ -762,6 +762,7 @@ export async function run(
         name: "readable-yaml",
         status: "error",
         message: error instanceof Error ? error.message : "Workflow YAML could not be parsed.",
+        fix: `Repair ${displayPath} so it is valid YAML before retrying validation.`,
       });
     }
 

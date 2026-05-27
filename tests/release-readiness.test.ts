@@ -119,6 +119,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
     expect(readme).toContain("Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.");
     expect(readme).toContain("Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.");
+    expect(readme).toContain("Unreadable workflow YAML returns a `readable-yaml` check with `message` and `fix` fields.");
     expect(readme).toContain("Validation rejects unredacted `recording.events` metadata when present.");
     expect(readme).toContain("Invalid workflow names return `invalid_workflow_name` in JSON mode.");
     expect(readme).toContain("Missing workflows return `workflow_not_found` in JSON mode.");
@@ -376,6 +377,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Reject unsafe workflow names before reading or writing workflow files.");
     expect(task).toContain("- [x] Return machine-readable `invalid_workflow_name` errors in JSON mode.");
     expect(task).toContain("- [x] Return machine-readable `workflow_not_found` errors in JSON mode.");
+    expect(task).toContain("- [x] Return repair guidance for unreadable workflow YAML in validation JSON.");
   });
 
   test("announcement draft is ready for first public launch post", () => {
@@ -571,6 +573,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
     expect(agents).toContain("When `validate --json` returns `status: \"error\"`, report the failed check names plus their `message` and `fix` fields.");
+    expect(agents).toContain("For `readable-yaml` failures, report the YAML parse message and fix before retrying.");
     expect(agents).toContain("Treat a `recording-metadata` validation failure as a possible sensitive-data leak.");
     expect(agents).toContain("Treat an invalid workflow name as a user-input error, not as a path to normalize.");
     expect(agents).toContain("Branch on `invalid_workflow_name` JSON errors without retrying path variants.");

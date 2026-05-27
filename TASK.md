@@ -177,6 +177,7 @@ formctl doctor
 - [x] Reject unsafe workflow names before reading or writing workflow files.
 - [x] Return machine-readable `invalid_workflow_name` errors in JSON mode.
 - [x] Return machine-readable `workflow_not_found` errors in JSON mode.
+- [x] Return repair guidance for unreadable workflow YAML in validation JSON.
 - [x] Verify: A shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.
 
