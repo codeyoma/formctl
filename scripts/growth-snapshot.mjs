@@ -38,10 +38,12 @@ export function formatDateForTimeZone(date, timeZone) {
 
 function parseArgs(args) {
   const options = {
+    demoViews: "Not measured",
     format: "markdown",
     date: undefined,
     nextAction: defaultNextAction,
     timezone: defaultTimeZone(),
+    workflowLeads: 0,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -56,6 +58,12 @@ function parseArgs(args) {
       index += 1;
     } else if (arg === "--timezone") {
       options.timezone = args[index + 1] ?? options.timezone;
+      index += 1;
+    } else if (arg === "--demo-views") {
+      options.demoViews = args[index + 1] ?? options.demoViews;
+      index += 1;
+    } else if (arg === "--workflow-leads") {
+      options.workflowLeads = Number.parseInt(args[index + 1] ?? `${options.workflowLeads}`, 10);
       index += 1;
     } else if (arg === "--next-action") {
       options.nextAction = args[index + 1] ?? options.nextAction;
@@ -124,7 +132,7 @@ export function formatMarkdownRow(snapshot) {
   return `| ${snapshot.date} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
 }
 
-export function createSnapshot({ date, github, discussions, npmDownloads, nextAction }) {
+export function createSnapshot({ date, github, discussions, npmDownloads, demoViews, workflowLeads, nextAction }) {
   return {
     date,
     githubRepository: "codeyoma/formctl",
@@ -133,8 +141,8 @@ export function createSnapshot({ date, github, discussions, npmDownloads, nextAc
     openIssues: github.openIssues,
     discussions,
     npmDownloads,
-    demoViews: "Not measured",
-    workflowLeads: 0,
+    demoViews,
+    workflowLeads,
     nextAction,
   };
 }
@@ -151,6 +159,8 @@ function printSnapshot(options) {
     github: parseGithubRepo(githubResult.stdout),
     discussions: fetchGithubDiscussions(),
     npmDownloads: describeNpmStatus(npmResult),
+    demoViews: options.demoViews,
+    workflowLeads: options.workflowLeads,
     nextAction: options.nextAction,
   });
 

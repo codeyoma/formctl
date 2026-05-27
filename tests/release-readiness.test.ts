@@ -525,13 +525,32 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("npm run growth:snapshot -- --markdown");
     expect(growthLog).toContain("npm run growth:snapshot -- --json");
     expect(growthLog).toContain("--timezone Asia/Seoul");
+    expect(growthLog).toContain("--demo-views N --workflow-leads N");
     expect(snapshotScript).toContain("gh api repos/codeyoma/formctl");
     expect(snapshotScript).toContain("gh api graphql");
     expect(snapshotScript).toContain("discussions(first: 1)");
     expect(snapshotScript).toContain("npm view formctl version --json");
     expect(snapshotScript).toContain("--markdown");
     expect(snapshotScript).toContain("--timezone");
+    expect(snapshotScript).toContain("--demo-views");
+    expect(snapshotScript).toContain("--workflow-leads");
     expect(snapshot.formatDateForTimeZone(new Date("2026-05-27T20:02:54.310Z"), "Asia/Seoul")).toBe("2026-05-28");
+    expect(snapshot.createSnapshot({
+      date: "2026-05-28",
+      github: {
+        forks: 3,
+        openIssues: 1,
+        stars: 12,
+      },
+      discussions: 2,
+      npmDownloads: "Published: 0.1.0",
+      demoViews: "42",
+      workflowLeads: 7,
+      nextAction: "Follow up with workflow leads",
+    })).toMatchObject({
+      demoViews: "42",
+      workflowLeads: 7,
+    });
 
     expect(snapshot.formatMarkdownRow({
       date: "2026-05-28",

@@ -1431,6 +1431,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. Current metrics remain 0 stars, 0 forks, 1 open issue, 0 discussions, and unpublished npm.
 
+### 2026-05-28: Let Growth Snapshot Carry Manual Outreach Metrics
+
+**Date:** 2026-05-28
+
+**Experiment:** Add `--demo-views` and `--workflow-leads` to `npm run growth:snapshot` so the same snapshot row can include 24-hour outreach metrics after a post goes live.
+
+**Hypothesis:** The first outreach loop will be easier to execute if the operator can paste measured demo views and workflow leads into the snapshot command instead of editing only part of the table by hand.
+
+**Result:** Passed. `scripts/growth-snapshot.mjs` now accepts manual demo view and workflow lead values, carries them into JSON output, and includes them in the markdown row. `docs/GROWTH_LOG.md` shows a command example with both flags.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth snapshot"` because the growth log did not document `--demo-views N --workflow-leads N`. GREEN passed after adding the flags and carrying them through `createSnapshot`. Broader verification passed with `npm test -- --run tests/release-readiness.test.ts`, `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run growth:snapshot -- --json --timezone Asia/Seoul --demo-views 42 --workflow-leads 7 --next-action "Follow up with workflow leads"`, `npm run growth:snapshot -- --markdown --timezone Asia/Seoul --demo-views 42 --workflow-leads 7 --next-action "Follow up with workflow leads"`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The previous snapshot command could not represent post-specific manual metrics, so the markdown row still had to be partially edited after running the supposedly reproducible command.
+
+**Decision:** Keep demo views as a string because early channels may report views as exact counts, dashboard labels, or "not measured"; keep workflow leads numeric because it is a count.
+
+**Next Step:** Post the prepared launch outreach externally, then run `npm run growth:snapshot -- --markdown --timezone Asia/Seoul --demo-views N --workflow-leads N` for the 24-hour follow-up.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

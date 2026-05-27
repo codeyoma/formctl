@@ -33,6 +33,7 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 ```bash
 npm run growth:snapshot -- --markdown --timezone Asia/Seoul
 npm run growth:snapshot -- --json --timezone Asia/Seoul
+npm run growth:snapshot -- --markdown --timezone Asia/Seoul --demo-views N --workflow-leads N
 npm run growth:snapshot -- --markdown --date YYYY-MM-DD
 gh repo view codeyoma/formctl --json stargazerCount,forkCount
 gh api repos/codeyoma/formctl --jq '{stars: .stargazers_count, forks: .forks_count, open_issues_count: .open_issues_count, pushed_at: .pushed_at}'
