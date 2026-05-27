@@ -1288,6 +1288,73 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit --dry-run accepts field values from a JSON file", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/invite" aria-label="Admin invite">
+            <input name="email" type="email" />
+            <input name="notify" type="checkbox" />
+            <button type="submit">Invite user</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-values-json-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, "fields.json"),
+      `${JSON.stringify({ email: "ops@example.com", notify: true }, null, 2)}\n`,
+    );
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "admin-invite.yml"),
+      [
+        "name: admin-invite",
+        `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: email",
+        "    selector: input[name=\"email\"]",
+        "    type: email",
+        "  - name: notify",
+        "    selector: input[name=\"notify\"]",
+        "    type: checkbox",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "admin-invite",
+        "--values",
+        "fields.json",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toMatchObject({
+        status: "dry-run",
+        workflow: "admin-invite",
+        submitted: false,
+        fields: {
+          email: "ops@example.com",
+          notify: "true",
+        },
+      });
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
   test("submit --dry-run writes an audit log with redacted values and artifacts", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

@@ -42,6 +42,7 @@ Flags:
   --version     Show the installed formctl version
   --headed      Run with a visible browser
   --headless    Run without a visible browser
+  --values PATH Load submit field values from a JSON object file
   --manual      For record: wait for Enter after you complete the form in the browser
 `;
 
@@ -519,6 +520,49 @@ function parseOptions(args: string[]): Map<string, string | true> {
   }
 
   return options;
+}
+
+function readSubmitFieldValues(
+  options: Map<string, string | true>,
+  fields: WorkflowField[],
+): { values: Map<string, string> } | { error: string } {
+  const values = new Map<string, string>();
+  const valuesFile = options.get("values");
+
+  if (valuesFile !== undefined) {
+    if (typeof valuesFile !== "string") {
+      return { error: "--values requires a JSON file path." };
+    }
+
+    let parsedValues: unknown;
+    try {
+      const valuesPath = path.isAbsolute(valuesFile) ? valuesFile : path.join(process.cwd(), valuesFile);
+      parsedValues = JSON.parse(readFileSync(valuesPath, "utf8"));
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Could not read --values JSON file." };
+    }
+
+    if (!isObject(parsedValues) || Array.isArray(parsedValues)) {
+      return { error: "--values JSON must be an object." };
+    }
+
+    for (const [fieldName, value] of Object.entries(parsedValues)) {
+      if (!["string", "number", "boolean"].includes(typeof value)) {
+        return { error: `--values field ${fieldName} must be a string, number, or boolean.` };
+      }
+
+      values.set(fieldName, String(value));
+    }
+  }
+
+  for (const field of fields) {
+    const value = options.get(field.name);
+    if (typeof value === "string") {
+      values.set(field.name, value);
+    }
+  }
+
+  return { values };
 }
 
 function buildSelectorMismatchPayload(
@@ -1003,6 +1047,26 @@ export async function run(
 
     const options = parseOptions(args.slice(4));
     const workflow = result.workflow;
+    const fieldValuesResult = readSubmitFieldValues(options, workflow.fields);
+    if ("error" in fieldValuesResult) {
+      const payload = {
+        status: "error",
+        workflow: workflowName,
+        exitCode: 1,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "field_values_invalid",
+          message: fieldValuesResult.error,
+        },
+      };
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify(payload)}\n`);
+      } else {
+        stderr.write(`${fieldValuesResult.error}\n`);
+      }
+      return 1;
+    }
     const browserHeadless = resolveBrowserHeadless({ command: "submit", flags, isDryRun: isDryRun || isInteractiveApproval });
     const browser = await chromium.launch({ headless: browserHeadless });
     const runStatus = isDryRun ? "dry-run" : "submitted";
@@ -1204,8 +1268,8 @@ export async function run(
       }
 
       for (const field of workflow.fields) {
-        const value = options.get(field.name);
-        if (typeof value !== "string") {
+        const value = fieldValuesResult.values.get(field.name);
+        if (value === undefined) {
           continue;
         }
 

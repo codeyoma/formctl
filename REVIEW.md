@@ -1485,6 +1485,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, then run a channel-specific snapshot row with `--channel`, `--posted-url`, `--demo-views`, `--comments`, and `--workflow-leads`.
 
+### 2026-05-28: Load Submit Values From JSON Files
+
+**Date:** 2026-05-28
+
+**Experiment:** Add `formctl submit <workflow> --values <path>` so agents and humans can pass form values as a JSON object when shell flags would be fragile.
+
+**Hypothesis:** A values file lowers first-run friction for long text, booleans, and file paths while keeping the same dry-run, approval, screenshot, and audit behavior.
+
+**Result:** Passed. `submit --dry-run --json --values fields.json` now loads string, number, and boolean values, CLI field flags can still override JSON values, and the README demo includes `demo/expense-values.json`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "values from a JSON file"` because the dry-run completed with an empty `fields` object. GREEN passed after loading the JSON object before the browser run and reusing the existing field-fill path. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety"` because README and the agent guide did not mention `--values`. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run formctl -- submit expense-report --values demo/expense-values.json --dry-run --json --headless`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** Passing every field as a shell flag remains awkward for agent-generated commands and longer text. The first RED showed the command shape was accepted but did not fill any fields because `--values` was treated like an unrelated flag.
+
+**Decision:** Keep `--values` narrow: it accepts one JSON object file and scalar string, number, or boolean values. More complex input mapping should wait for evidence from real workflows.
+
+**Next Step:** Add a guard for unknown keys in `--values` after seeing whether users prefer strict typo detection or permissive extra metadata.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

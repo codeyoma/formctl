@@ -12,6 +12,7 @@ Use this guide when calling `formctl` from Codex, Claude Code, Cursor, Copilot C
 formctl workflows --json
 ```
 
+Use `--values <path>` for structured field input when quoting long values in shell flags would be fragile.
 Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.
 Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.
 Treat `workflow_invalid` items in workflow discovery as repair tasks and inspect their failed checks.

@@ -80,6 +80,12 @@ Preview a submission without sending the form:
 npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless
 ```
 
+Use `--values <path>` to load submit field values from a JSON object file when flags would be hard to quote.
+
+```bash
+npm run formctl -- submit expense-report --values demo/expense-values.json --dry-run --json --headless
+```
+
 Submit only after explicit approval:
 
 ```bash
