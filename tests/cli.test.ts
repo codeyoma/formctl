@@ -498,6 +498,56 @@ describe("formctl CLI", () => {
     expect(parsed.checks[0].message).toEqual(expect.any(String));
   });
 
+  test("inspect --json returns a machine-readable error when workflow YAML is unreadable", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unreadable-inspect-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(path.join(workspace, ".formctl", "workflows", "expense-report.yml"), "name: [\n");
+
+    const result = runFormctl(["inspect", "expense-report", "--json"], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "inspect",
+      workflow: "expense-report",
+      exitCode: 1,
+      error: {
+        code: "workflow_unreadable",
+        path: ".formctl/workflows/expense-report.yml",
+        fix: "Repair .formctl/workflows/expense-report.yml so it is valid YAML before retrying inspect.",
+      },
+    });
+    expect(parsed.error.message).toEqual(expect.any(String));
+  });
+
+  test("submit --dry-run --json returns a machine-readable error when workflow YAML is unreadable", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unreadable-submit-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(path.join(workspace, ".formctl", "workflows", "expense-report.yml"), "name: [\n");
+
+    const result = runFormctl(["submit", "expense-report", "--dry-run", "--json"], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_unreadable",
+        path: ".formctl/workflows/expense-report.yml",
+        fix: "Repair .formctl/workflows/expense-report.yml so it is valid YAML before retrying submit.",
+      },
+    });
+    expect(parsed.error.message).toEqual(expect.any(String));
+  });
+
   test("validate --json exits 1 when safety metadata is missing", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });

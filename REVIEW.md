@@ -1269,6 +1269,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`.
 
+### 2026-05-28: Return JSON For Unreadable Workflows
+
+**Date:** 2026-05-28
+
+**Experiment:** Prevent `inspect --json` and `submit --dry-run --json` from crashing when the workflow YAML cannot be parsed.
+
+**Hypothesis:** Agents should see a structured `workflow_unreadable` error with the path, parser message, and repair hint instead of empty stdout and a process stack trace.
+
+**Result:** Passed. `inspect --json` and `submit --dry-run --json` now return `{ status: "error", command, workflow, exitCode: 1, error: { code: "workflow_unreadable", message, path, fix } }`; submit also includes `submitted: false` and `requiresApproval: false`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "workflow YAML is unreadable"` because both new JSON callers had empty stdout and failed JSON parsing. GREEN passed after `readWorkflow` started catching YAML parse errors and routing them through a shared unreadable-workflow writer. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the contract. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- inspect expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** `validate --json` had a clean malformed-YAML path, but `inspect` and `submit` reused `readWorkflow`, which previously let parse exceptions escape.
+
+**Decision:** Treat unreadable workflow YAML as exit code `1` user/input error rather than `2` workflow not found or `10` runtime error.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

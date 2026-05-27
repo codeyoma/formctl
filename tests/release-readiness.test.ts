@@ -123,6 +123,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Validation rejects unredacted `recording.events` metadata when present.");
     expect(readme).toContain("Invalid workflow names return `invalid_workflow_name` in JSON mode.");
     expect(readme).toContain("Missing workflows return `workflow_not_found` in JSON mode.");
+    expect(readme).toContain("Unreadable workflows return `workflow_unreadable` in JSON mode for inspect and submit.");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
     expect(readme).toContain("failure.json");
@@ -378,6 +379,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Return machine-readable `invalid_workflow_name` errors in JSON mode.");
     expect(task).toContain("- [x] Return machine-readable `workflow_not_found` errors in JSON mode.");
     expect(task).toContain("- [x] Return repair guidance for unreadable workflow YAML in validation JSON.");
+    expect(task).toContain("- [x] Return machine-readable `workflow_unreadable` errors for inspect and submit JSON.");
   });
 
   test("announcement draft is ready for first public launch post", () => {
@@ -578,6 +580,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Treat an invalid workflow name as a user-input error, not as a path to normalize.");
     expect(agents).toContain("Branch on `invalid_workflow_name` JSON errors without retrying path variants.");
     expect(agents).toContain("Branch on `workflow_not_found` JSON errors before attempting record or submit.");
+    expect(agents).toContain("Branch on `workflow_unreadable` JSON errors by reporting the path, parser message, and fix.");
     expect(agents).toContain("Use `record --manual` only when a workflow is missing and the page needs human login, navigation, or setup before saving selectors.");
     expect(agents).toContain("Treat `recording.events` as interaction metadata only; values and file names are redacted.");
     expect(agents).toContain("## Doctor JSON");

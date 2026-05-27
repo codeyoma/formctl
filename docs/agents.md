@@ -59,6 +59,7 @@ Treat a `recording-metadata` validation failure as a possible sensitive-data lea
 Treat an invalid workflow name as a user-input error, not as a path to normalize.
 Branch on `invalid_workflow_name` JSON errors without retrying path variants.
 Branch on `workflow_not_found` JSON errors before attempting record or submit.
+Branch on `workflow_unreadable` JSON errors by reporting the path, parser message, and fix.
 
 ## Doctor JSON
 
