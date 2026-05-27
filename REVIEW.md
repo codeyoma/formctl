@@ -1413,6 +1413,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. Current metrics remain 0 stars, 0 forks, 1 open issue, 0 discussions, and unpublished npm.
 
+### 2026-05-28: Make Growth Snapshot Timezone Explicit
+
+**Date:** 2026-05-28
+
+**Experiment:** Add timezone-aware date formatting to `npm run growth:snapshot` so heartbeat runs near midnight UTC produce the intended local calendar date.
+
+**Hypothesis:** The weekly growth log will be less error-prone if snapshot date defaults use an explicit timezone path and docs show `--timezone Asia/Seoul` for this workspace.
+
+**Result:** Passed. `scripts/growth-snapshot.mjs` now supports `--timezone`, exports `formatDateForTimeZone`, and computes the default date in the resolved or supplied timezone. `docs/GROWTH_LOG.md` shows timezone-based snapshot commands before manual `--date` commands.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth snapshot"` because the growth log lacked `--timezone Asia/Seoul` and the script had no timezone contract. GREEN passed after adding timezone parsing and deterministic date formatting. Broader verification passed with `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run growth:snapshot -- --json --timezone Asia/Seoul`, `npm run growth:snapshot -- --markdown --timezone Asia/Seoul`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The prior script used `new Date().toISOString().slice(0, 10)`, which is UTC and can record the previous day for Asia/Seoul heartbeat runs.
+
+**Decision:** Keep `--date` for fully manual backfills, but prefer `--timezone` for recurring snapshot commands.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. Current metrics remain 0 stars, 0 forks, 1 open issue, 0 discussions, and unpublished npm.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

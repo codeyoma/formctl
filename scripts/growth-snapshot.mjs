@@ -20,15 +20,28 @@ function runCommandLine(commandLine) {
   return run(command, args);
 }
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
+function defaultTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+export function formatDateForTimeZone(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone,
+    year: "numeric",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function parseArgs(args) {
   const options = {
     format: "markdown",
-    date: today(),
+    date: undefined,
     nextAction: defaultNextAction,
+    timezone: defaultTimeZone(),
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -41,6 +54,9 @@ function parseArgs(args) {
     } else if (arg === "--date") {
       options.date = args[index + 1] ?? options.date;
       index += 1;
+    } else if (arg === "--timezone") {
+      options.timezone = args[index + 1] ?? options.timezone;
+      index += 1;
     } else if (arg === "--next-action") {
       options.nextAction = args[index + 1] ?? options.nextAction;
       index += 1;
@@ -48,6 +64,8 @@ function parseArgs(args) {
       throw new Error(`Unknown option: ${arg}`);
     }
   }
+
+  options.date ??= formatDateForTimeZone(new Date(), options.timezone);
 
   return options;
 }
