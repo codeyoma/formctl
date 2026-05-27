@@ -62,6 +62,7 @@ Treat an invalid workflow name as a user-input error, not as a path to normalize
 Branch on `invalid_workflow_name` JSON errors without retrying path variants.
 Branch on `workflow_not_found` JSON errors before attempting record or submit.
 Branch on `workflow_unreadable` JSON errors by reporting the path, parser message, and fix.
+Branch on `workflow_invalid` JSON errors by reporting failed check names, messages, and fixes.
 
 ## Doctor JSON
 

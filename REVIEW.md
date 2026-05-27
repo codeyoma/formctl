@@ -1323,6 +1323,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`; no already-resolved open issue needed closing.
 
+### 2026-05-28: Reject Schema-Invalid Workflows Before Inspect Or Submit
+
+**Date:** 2026-05-28
+
+**Experiment:** Make `inspect --json` and `submit --dry-run --json` reject parseable but schema-invalid workflow files before trusting their contents or launching a browser.
+
+**Hypothesis:** Agents should get the same `workflow_invalid` repair contract from direct workflow use that they get from workflow discovery.
+
+**Result:** Passed. `inspect` and `submit` now validate parsed workflow objects in `readWorkflow` and return structured `workflow_invalid` errors with failed checks, path, message, and fix. Submit includes `submitted: false` and `requiresApproval: false`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "workflow schema is invalid"` because inspect returned success for invalid workflow YAML and submit produced no JSON. GREEN passed after `readWorkflow` validated before casting to `Workflow`. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the direct-use error contract. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- workflows --json`, `npm run formctl -- inspect expense-report --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The broad CLI suite initially failed because older test fixtures created valid-looking workflows without safety metadata. Updating those fixtures exposed that the tests had drifted behind the enforced workflow format.
+
+**Decision:** Keep one validation contract for discovery, inspect, and submit. Direct submit should not be a bypass around workflow repair checks.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

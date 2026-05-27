@@ -181,6 +181,7 @@ formctl doctor
 - [x] Return machine-readable `workflow_not_found` errors in JSON mode.
 - [x] Return repair guidance for unreadable workflow YAML in validation JSON.
 - [x] Return machine-readable `workflow_unreadable` errors for inspect and submit JSON.
+- [x] Return machine-readable `workflow_invalid` errors for inspect and submit JSON.
 - [x] Verify: A shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.
 

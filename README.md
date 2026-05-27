@@ -143,6 +143,7 @@ Validation rejects unredacted `recording.events` metadata when present.
 Invalid workflow names return `invalid_workflow_name` in JSON mode.
 Missing workflows return `workflow_not_found` in JSON mode.
 Unreadable workflows return `workflow_unreadable` in JSON mode for inspect and submit.
+Invalid workflows return `workflow_invalid` in JSON mode for inspect and submit.
 
 ## Create A New Workflow
 

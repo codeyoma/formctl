@@ -269,6 +269,46 @@ function writeWorkflowUnreadableError(
   return 1;
 }
 
+function writeWorkflowInvalidError(
+  command: string,
+  workflowName: string,
+  checks: ValidationCheck[],
+  wantsJson: boolean,
+  stdout: NodeJS.WritableStream,
+  stderr: NodeJS.WritableStream,
+): number {
+  const expectedPath = `.formctl/workflows/${workflowName}.yml`;
+  const failedChecks = checks.filter((check) => check.status === "error");
+  const message = `Workflow validation failed: ${failedChecks.map((check) => check.name).join(", ")}`;
+  const fix = `Run formctl validate ${workflowName} --json for detailed repair guidance.`;
+  if (wantsJson) {
+    stdout.write(`${JSON.stringify({
+      status: "error",
+      command,
+      workflow: workflowName,
+      path: expectedPath,
+      exitCode: 1,
+      ...(command === "submit" ? { submitted: false, requiresApproval: false } : {}),
+      error: {
+        code: "workflow_invalid",
+        message,
+        fix,
+      },
+      checks: failedChecks,
+    })}\n`);
+    return 1;
+  }
+
+  stderr.write(`${message}\nPath: ${expectedPath}\nfix: ${fix}\n`);
+  for (const check of failedChecks) {
+    stderr.write(`- ${check.name}: ${check.message ?? "invalid"}\n`);
+    if (check.fix !== undefined) {
+      stderr.write(`  fix: ${check.fix}\n`);
+    }
+  }
+  return 1;
+}
+
 function hasCurrentSafetyMetadata(value: unknown): boolean {
   if (!isObject(value)) {
     return false;
@@ -347,7 +387,13 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
 
 function readWorkflow(
   workflowName: string,
-): { workflow?: Workflow; error?: string; errorKind?: "invalid_workflow_name" | "workflow_not_found" | "workflow_unreadable"; path: string } {
+): {
+  workflow?: Workflow;
+  error?: string;
+  errorKind?: "invalid_workflow_name" | "workflow_not_found" | "workflow_unreadable" | "workflow_invalid";
+  path: string;
+  checks?: ValidationCheck[];
+} {
   if (!isValidWorkflowName(workflowName)) {
     return {
       path: path.join(process.cwd(), ".formctl", "workflows"),
@@ -366,9 +412,20 @@ function readWorkflow(
   }
 
   try {
+    const workflow = parse(readFileSync(workflowPath, "utf8"));
+    const failedChecks = validateWorkflow(workflowName, workflow).filter((check) => check.status === "error");
+    if (failedChecks.length > 0) {
+      return {
+        path: workflowPath,
+        errorKind: "workflow_invalid",
+        error: `Workflow validation failed: ${failedChecks.map((check) => check.name).join(", ")}`,
+        checks: failedChecks,
+      };
+    }
+
     return {
       path: workflowPath,
-      workflow: parse(readFileSync(workflowPath, "utf8")),
+      workflow: workflow as Workflow,
     };
   } catch (error) {
     return {
@@ -788,6 +845,9 @@ export async function run(
       if (result.errorKind === "workflow_unreadable") {
         return writeWorkflowUnreadableError(command, workflowName, result.error ?? "Workflow YAML could not be parsed.", flags.has("--json"), stdout, stderr);
       }
+      if (result.errorKind === "workflow_invalid") {
+        return writeWorkflowInvalidError(command, workflowName, result.checks ?? [], flags.has("--json"), stdout, stderr);
+      }
       return writeWorkflowNotFoundError(command, workflowName, flags.has("--json"), stdout, stderr);
     }
 
@@ -934,6 +994,9 @@ export async function run(
     if (result.error !== undefined || result.workflow === undefined) {
       if (result.errorKind === "workflow_unreadable") {
         return writeWorkflowUnreadableError(command, workflowName, result.error ?? "Workflow YAML could not be parsed.", wantsJson, stdout, stderr);
+      }
+      if (result.errorKind === "workflow_invalid") {
+        return writeWorkflowInvalidError(command, workflowName, result.checks ?? [], wantsJson, stdout, stderr);
       }
       return writeWorkflowNotFoundError(command, workflowName, wantsJson, stdout, stderr);
     }

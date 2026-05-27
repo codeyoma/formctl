@@ -11,6 +11,13 @@ import { describe, expect, test } from "vitest";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = path.join(projectRoot, "src", "cli.ts");
 const tsxLoaderPath = path.join(projectRoot, "node_modules", "tsx", "dist", "loader.mjs");
+const workflowSafetyYaml = [
+  "safety:",
+  "  dryRunFirst: true",
+  "  approvalRequired: true",
+  "  selectorDrift: fail",
+  "  fileInputs: redacted",
+];
 
 function runFormctl(args: string[], cwd = projectRoot, env: NodeJS.ProcessEnv = {}) {
   return spawnSync(process.execPath, ["--import", tsxLoaderPath, cliPath, ...args], {
@@ -673,6 +680,104 @@ describe("formctl CLI", () => {
     expect(parsed.error.message).toEqual(expect.any(String));
   });
 
+  test("inspect --json returns repair guidance when workflow schema is invalid", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-inspect-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "fields: []",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["inspect", "expense-report", "--json"], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "inspect",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: fields, safety-metadata",
+        fix: "Run formctl validate expense-report --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "fields",
+          status: "error",
+          message: "Workflow must include at least one field with name, selector, and type.",
+          fix: "Add fields entries with name, selector, and type for every required form field.",
+        },
+        {
+          name: "safety-metadata",
+          status: "error",
+          message: "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
+          fix: "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
+        },
+      ],
+    });
+  });
+
+  test("submit --dry-run --json returns repair guidance when workflow schema is invalid", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-submit-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://127.0.0.1:1/expense",
+        "fields: []",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["submit", "expense-report", "--dry-run", "--json"], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: fields, safety-metadata",
+        fix: "Run formctl validate expense-report --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "fields",
+          status: "error",
+          message: "Workflow must include at least one field with name, selector, and type.",
+          fix: "Add fields entries with name, selector, and type for every required form field.",
+        },
+        {
+          name: "safety-metadata",
+          status: "error",
+          message: "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
+          fix: "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
+        },
+      ],
+    });
+  });
+
   test("validate --json exits 1 when safety metadata is missing", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
@@ -869,6 +974,7 @@ describe("formctl CLI", () => {
         "      field: amount",
         "      selector: input[name=\"amount\"]",
         "      value: \"[redacted]\"",
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1120,6 +1226,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1202,6 +1309,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1322,6 +1430,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1385,6 +1494,7 @@ describe("formctl CLI", () => {
       [
         "name: admin-invite",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: email",
         "    selector: input[name=\"email\"]",
@@ -1456,6 +1566,7 @@ describe("formctl CLI", () => {
       [
         "name: support-refund",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: orderId",
         "    selector: input[name=\"orderId\"]",
@@ -1525,6 +1636,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1590,6 +1702,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1640,6 +1753,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1699,6 +1813,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1784,6 +1899,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -1859,6 +1975,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: total",
         "    selector: input[name=\"total\"]",
@@ -1987,6 +2104,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: total",
         "    selector: input[name=\"total\"]",
@@ -2059,6 +2177,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -2129,6 +2248,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -2201,6 +2321,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -2271,6 +2392,7 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
