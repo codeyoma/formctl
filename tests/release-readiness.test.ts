@@ -100,6 +100,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- workflows --json");
     expect(readme).toContain("Workflow discovery reports recording mode and event count when metadata exists.");
     expect(readme).toContain("Workflow discovery reports unreadable workflow files as `workflow_unreadable` items instead of failing the whole list.");
+    expect(readme).toContain("Workflow discovery reports schema-invalid workflow files as `workflow_invalid` items with failed checks.");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless");
     expect(readme).toContain("Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.");
@@ -375,6 +376,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Return stable fields: `status`, `workflow`, `runId`, `artifacts`, `exitCode`, `requiresApproval`, `error`.");
     expect(task).toContain("- [x] Expose recording mode and event count in workflow discovery JSON.");
     expect(task).toContain("- [x] Report unreadable workflow files without failing workflow discovery JSON.");
+    expect(task).toContain("- [x] Report schema-invalid workflow files without failing workflow discovery JSON.");
     expect(task).toContain("- [x] Ensure secrets and file contents are never printed.");
     expect(task).toContain("- [x] Validate optional recording metadata so event values stay redacted.");
     expect(task).toContain("- [x] Reject unsafe workflow names before reading or writing workflow files.");
@@ -576,6 +578,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
     expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.");
+    expect(agents).toContain("Treat `workflow_invalid` items in workflow discovery as repair tasks and inspect their failed checks.");
     expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
     expect(agents).toContain("When `validate --json` returns `status: \"error\"`, report the failed check names plus their `message` and `fix` fields.");
     expect(agents).toContain("For `readable-yaml` failures, report the YAML parse message and fix before retrying.");

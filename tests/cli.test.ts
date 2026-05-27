@@ -386,6 +386,11 @@ describe("formctl CLI", () => {
       [
         "name: admin-invite",
         "url: http://localhost:3000/admin-invite",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
         "fields:",
         "  - name: email",
         "    selector: input[name=\"email\"]",
@@ -439,6 +444,11 @@ describe("formctl CLI", () => {
       [
         "name: expense-report",
         "url: http://localhost:3000/expense",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
         "fields:",
         "  - name: amount",
         "    selector: input[name=\"amount\"]",
@@ -465,6 +475,78 @@ describe("formctl CLI", () => {
       },
     });
     expect(parsed.workflows[0].error.message).toEqual(expect.any(String));
+    expect(parsed.workflows[1]).toEqual({
+      name: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      url: "http://localhost:3000/expense",
+      fieldCount: 1,
+    });
+  });
+
+  test("workflows --json reports invalid workflow files without failing discovery", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-list-invalid-workflows-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "broken-workflow.yml"),
+      [
+        "name: broken-workflow",
+        "url: http://localhost:3000/broken",
+        "fields: []",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["workflows", "--json"], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(parsed.workflows).toHaveLength(2);
+    expect(parsed.workflows[0]).toMatchObject({
+      name: "broken-workflow",
+      path: ".formctl/workflows/broken-workflow.yml",
+      status: "error",
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: fields, safety-metadata",
+        fix: "Run formctl validate broken-workflow --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "fields",
+          status: "error",
+          message: "Workflow must include at least one field with name, selector, and type.",
+          fix: "Add fields entries with name, selector, and type for every required form field.",
+        },
+        {
+          name: "safety-metadata",
+          status: "error",
+          message: "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
+          fix: "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
+        },
+      ],
+    });
     expect(parsed.workflows[1]).toEqual({
       name: "expense-report",
       path: ".formctl/workflows/expense-report.yml",

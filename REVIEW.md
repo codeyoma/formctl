@@ -1305,6 +1305,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`.
 
+### 2026-05-28: Mark Schema-Invalid Workflows In Discovery
+
+**Date:** 2026-05-28
+
+**Experiment:** Prevent `workflows --json` from presenting parseable but schema-invalid workflow files as runnable workflows.
+
+**Hypothesis:** Agents should still discover valid workflows while treating invalid workflow files as repair tasks with failed checks.
+
+**Result:** Passed. `workflows --json` now returns schema-invalid workflows as item-level `{ status: "error", error: { code: "workflow_invalid", message, fix }, checks }` entries while keeping the top-level response `status: "ok"` and listing valid workflows.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "invalid workflow files"` because schema-invalid workflows were listed without error metadata. GREEN passed after workflow discovery reused `validateWorkflow` and only emitted normal list items after validation passed. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the discovery behavior. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- workflows --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The focused filter also matched the existing human invalid-workflow repair-guidance test, so it ran two tests instead of one. That was harmless but less narrow.
+
+**Decision:** Keep discovery best-effort and item-level. A schema-invalid workflow is a repair task, not a runnable workflow and not a reason to hide valid workflows.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`; no already-resolved open issue needed closing.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

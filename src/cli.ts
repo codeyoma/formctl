@@ -96,6 +96,16 @@ type WorkflowListItem = {
     message: string;
     fix: string;
   };
+} | {
+  name: string;
+  path: string;
+  status: "error";
+  error: {
+    code: "workflow_invalid";
+    message: string;
+    fix: string;
+  };
+  checks: ValidationCheck[];
 };
 
 type AuditEvent = Record<string, unknown>;
@@ -380,9 +390,9 @@ function listWorkflowFiles(): WorkflowListItem[] {
     .sort()
     .map((entry) => {
       const displayPath = `.formctl/workflows/${entry}`;
-      let workflow: Workflow;
+      let workflow: unknown;
       try {
-        workflow = parse(readFileSync(path.join(workflowDirectory, entry), "utf8")) as Workflow;
+        workflow = parse(readFileSync(path.join(workflowDirectory, entry), "utf8"));
       } catch (error) {
         return {
           name: entry.replace(/\.ya?ml$/, ""),
@@ -396,16 +406,35 @@ function listWorkflowFiles(): WorkflowListItem[] {
         };
       }
 
+      const workflowName = isObject(workflow) && isNonEmptyString(workflow.name)
+        ? workflow.name
+        : entry.replace(/\.ya?ml$/, "");
+      const failedChecks = validateWorkflow(workflowName, workflow).filter((check) => check.status === "error");
+      if (failedChecks.length > 0) {
+        return {
+          name: workflowName,
+          path: displayPath,
+          status: "error",
+          error: {
+            code: "workflow_invalid",
+            message: `Workflow validation failed: ${failedChecks.map((check) => check.name).join(", ")}`,
+            fix: `Run formctl validate ${workflowName} --json for detailed repair guidance.`,
+          },
+          checks: failedChecks,
+        };
+      }
+
+      const workflowItem = workflow as Workflow;
       return {
-        name: workflow.name,
+        name: workflowItem.name,
         path: displayPath,
-        url: workflow.url,
-        fieldCount: workflow.fields.length,
-        ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
-        ...(workflow.recording === undefined ? {} : {
+        url: workflowItem.url,
+        fieldCount: workflowItem.fields.length,
+        ...(workflowItem.screenshots === undefined ? {} : { screenshots: workflowItem.screenshots }),
+        ...(workflowItem.recording === undefined ? {} : {
           recording: {
-            mode: workflow.recording.mode,
-            eventCount: workflow.recording.events.length,
+            mode: workflowItem.recording.mode,
+            eventCount: workflowItem.recording.events.length,
           },
         }),
       };
