@@ -126,6 +126,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("failure.png");
     expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.");
     expect(readme).toContain("Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.");
+    expect(readme).toContain("Workflow names may contain only letters, numbers, dots, underscores, and dashes.");
     expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
     expect(readme).toContain("[Agent safety guide](docs/agents.md)");
     expect(readme).toContain("Exit codes");
@@ -370,6 +371,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Expose recording mode and event count in workflow discovery JSON.");
     expect(task).toContain("- [x] Ensure secrets and file contents are never printed.");
     expect(task).toContain("- [x] Validate optional recording metadata so event values stay redacted.");
+    expect(task).toContain("- [x] Reject unsafe workflow names before reading or writing workflow files.");
   });
 
   test("announcement draft is ready for first public launch post", () => {
@@ -566,6 +568,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.");
     expect(agents).toContain("When `validate --json` returns `status: \"error\"`, report the failed check names plus their `message` and `fix` fields.");
     expect(agents).toContain("Treat a `recording-metadata` validation failure as a possible sensitive-data leak.");
+    expect(agents).toContain("Treat an invalid workflow name as a user-input error, not as a path to normalize.");
     expect(agents).toContain("Use `record --manual` only when a workflow is missing and the page needs human login, navigation, or setup before saving selectors.");
     expect(agents).toContain("Treat `recording.events` as interaction metadata only; values and file names are redacted.");
     expect(agents).toContain("## Doctor JSON");

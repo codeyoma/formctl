@@ -200,6 +200,63 @@ describe("formctl CLI", () => {
     expect(result.stderr).toContain(".formctl/workflows/expense-report.yml");
   });
 
+  test("inspect rejects unsafe workflow names before reading outside the workflows directory", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-inspect-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "leaked.yml"),
+      [
+        "name: leaked",
+        "url: http://localhost:3000/leaked",
+        "fields:",
+        "  - name: token",
+        "    selector: input[name=\"token\"]",
+        "    type: text",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["inspect", "../leaked", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Invalid workflow name");
+    expect(result.stderr).not.toContain("leaked");
+  });
+
+  test("validate rejects unsafe workflow names before reading outside the workflows directory", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-validate-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "leaked.yml"),
+      [
+        "name: leaked",
+        "url: http://localhost:3000/leaked",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
+        "fields:",
+        "  - name: token",
+        "    selector: input[name=\"token\"]",
+        "    type: text",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "../leaked", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Invalid workflow name");
+    expect(result.stderr).not.toContain("leaked");
+  });
+
   test("workflows --json lists available workflow files", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-list-workflows-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });

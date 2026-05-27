@@ -174,6 +174,7 @@ formctl doctor
 - [x] Expose recording mode and event count in workflow discovery JSON.
 - [x] Ensure secrets and file contents are never printed.
 - [x] Validate optional recording metadata so event values stay redacted.
+- [x] Reject unsafe workflow names before reading or writing workflow files.
 - [x] Verify: A shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.
 

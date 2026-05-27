@@ -1197,6 +1197,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish remains blocked by npm auth.
 
+### 2026-05-27: Reject Unsafe Workflow Names
+
+**Date:** 2026-05-27
+
+**Experiment:** Stop workflow commands from interpreting `../` or path-like names as filesystem paths.
+
+**Hypothesis:** Since workflow files are trusted review artifacts under `.formctl/workflows/`, commands should reject unsafe names before reading or writing files outside that directory.
+
+**Result:** Passed. `inspect`, `validate`, `submit`, and `record` now accept only workflow names made of letters, numbers, dots, underscores, and dashes, starting with a letter or number. Unsafe names exit with user-input error code `1`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "unsafe workflow names"` because `inspect ../leaked --json` read `.formctl/leaked.yml`, and `validate ../leaked --json` parsed it as `.formctl/workflows/../leaked.yml`. GREEN passed after adding workflow name validation before path construction. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the constraint. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- inspect expense-report --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, `npm pack --dry-run --json`, and a direct unsafe-name CLI smoke showing `inspect ../expense --json` exits `1`.
+
+**What Failed:** The original `validate --json` behavior made the path traversal visible in JSON output, which confirmed the risk but also showed that invalid input was being treated as a workflow validation problem rather than an input problem.
+
+**Decision:** Treat invalid workflow names as user-input errors instead of normalizing paths. Keep the allowed grammar intentionally narrow.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish remains blocked by npm auth.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

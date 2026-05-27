@@ -16,6 +16,8 @@ const DEFAULT_WORKFLOW_SAFETY = {
   selectorDrift: "fail",
   fileInputs: "redacted",
 } as const;
+const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.\n";
 
 const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
 
@@ -162,6 +164,10 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
+function isValidWorkflowName(value: string): boolean {
+  return WORKFLOW_NAME_PATTERN.test(value);
+}
+
 function hasCurrentSafetyMetadata(value: unknown): boolean {
   if (!isObject(value)) {
     return false;
@@ -239,6 +245,13 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
 }
 
 function readWorkflow(workflowName: string): { workflow?: Workflow; error?: string; path: string } {
+  if (!isValidWorkflowName(workflowName)) {
+    return {
+      path: path.join(process.cwd(), ".formctl", "workflows"),
+      error: INVALID_WORKFLOW_NAME_MESSAGE,
+    };
+  }
+
   const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
   if (!existsSync(workflowPath)) {
     return {
@@ -619,6 +632,10 @@ export async function run(
       stderr.write("Usage: formctl inspect <workflow-name>\n");
       return 1;
     }
+    if (!isValidWorkflowName(workflowName)) {
+      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
+      return 1;
+    }
 
     const result = readWorkflow(workflowName);
     if (result.error !== undefined || result.workflow === undefined) {
@@ -673,6 +690,10 @@ export async function run(
 
     if (workflowName === undefined) {
       stderr.write("Usage: formctl validate <workflow-name> [--json]\n");
+      return 1;
+    }
+    if (!isValidWorkflowName(workflowName)) {
+      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
       return 1;
     }
 
@@ -730,6 +751,10 @@ export async function run(
 
     if (workflowName === undefined) {
       stderr.write("Usage: formctl submit <workflow-name> [flags]\n");
+      return 1;
+    }
+    if (!isValidWorkflowName(workflowName)) {
+      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
       return 1;
     }
 
@@ -1100,6 +1125,10 @@ export async function run(
 
     if (workflowName === undefined || url === undefined) {
       stderr.write("Usage: formctl record <workflow-name> <url>\n");
+      return 1;
+    }
+    if (!isValidWorkflowName(workflowName)) {
+      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
       return 1;
     }
 
