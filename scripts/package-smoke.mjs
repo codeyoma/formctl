@@ -97,6 +97,13 @@ try {
     throw new Error(`Installed formctl validate failed: ${validation.stdout}`);
   }
 
+  run(process.execPath, [path.join(projectRoot, "scripts", "agent-branch-smoke.mjs")], {
+    env: {
+      ...process.env,
+      FORMCTL_BINARY: formctl,
+    },
+  });
+
   await smokeMcpServer(formctlMcp);
 
   process.stdout.write("Package smoke passed\n");

@@ -9,8 +9,16 @@ const projectRoot = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const cliPath = path.join(projectRoot, "src", "cli.ts");
 const tsxLoaderPath = path.join(projectRoot, "node_modules", "tsx", "dist", "loader.mjs");
 const tempRoot = mkdtempSync(path.join(os.tmpdir(), "formctl-agent-branch-smoke-"));
+const formctlBinary = process.env.FORMCTL_BINARY;
 
 function runFormctl(args) {
+  if (formctlBinary !== undefined && formctlBinary.length > 0) {
+    return spawnSync(formctlBinary, args, {
+      cwd: tempRoot,
+      encoding: "utf8",
+    });
+  }
+
   return spawnSync(process.execPath, ["--import", tsxLoaderPath, cliPath, ...args], {
     cwd: tempRoot,
     encoding: "utf8",

@@ -332,6 +332,8 @@ describe("release readiness docs", () => {
   test("CI runs demo replay tests on pull requests", () => {
     const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
     const ci = readFileSync(path.join(projectRoot, ".github", "workflows", "ci.yml"), "utf8");
+    const packageSmoke = readFileSync(path.join(projectRoot, "scripts", "package-smoke.mjs"), "utf8");
+    const agentBranchSmoke = readFileSync(path.join(projectRoot, "scripts", "agent-branch-smoke.mjs"), "utf8");
 
     expect(packageJson.scripts["test:replay"]).toBe("vitest run tests/demo-replay.test.ts");
     expect(packageJson.scripts["test:agent"]).toBe("node scripts/agent-branch-smoke.mjs");
@@ -349,6 +351,9 @@ describe("release readiness docs", () => {
     expect(ci).toContain("npm run test:package");
     expect(ci).toContain("npm run build");
     expect(ci).toContain("npx tsc --noEmit");
+    expect(agentBranchSmoke).toContain("process.env.FORMCTL_BINARY");
+    expect(packageSmoke).toContain("agent-branch-smoke.mjs");
+    expect(packageSmoke).toContain("FORMCTL_BINARY");
   });
 
   test("TASK plan reflects shipped MVP behavior without overclaiming", () => {

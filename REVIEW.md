@@ -1359,6 +1359,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`.
 
+### 2026-05-28: Run Agent Branch Smoke Against Installed Binary
+
+**Date:** 2026-05-28
+
+**Experiment:** Reuse the agent JSON branch smoke inside package smoke while pointing it at the installed `formctl` binary.
+
+**Hypothesis:** Source-level agent branch checks are useful, but release readiness should also prove the packed and globally installed CLI preserves the same JSON error-code contract.
+
+**Result:** Passed. `scripts/agent-branch-smoke.mjs` now accepts `FORMCTL_BINARY`; `scripts/package-smoke.mjs` installs the tarball, then runs the branch smoke against that installed binary before MCP smoke.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "CI runs"` because package smoke did not call the branch smoke and the branch smoke could not target an installed binary. GREEN passed after adding `FORMCTL_BINARY` support and wiring package smoke to call `scripts/agent-branch-smoke.mjs`. The first GREEN attempt exposed an over-specific test expectation for the path string, so the assertion was narrowed to `agent-branch-smoke.mjs`. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:agent`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `git diff --check`, `npm run formctl -- workflows --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The original release-readiness assertion required the literal string `scripts/agent-branch-smoke.mjs`, but the implementation correctly used `path.join(projectRoot, "scripts", "agent-branch-smoke.mjs")`. The test was too brittle, not the implementation.
+
+**Decision:** Keep `test:agent` as a fast source-level gate and make `test:package` reuse it through `FORMCTL_BINARY` for installed-binary verification.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
