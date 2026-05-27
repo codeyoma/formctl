@@ -38,10 +38,12 @@ export function formatDateForTimeZone(date, timeZone) {
 
 function parseArgs(args) {
   const options = {
+    channel: "Not posted",
     demoViews: "Not measured",
     format: "markdown",
     date: undefined,
     nextAction: defaultNextAction,
+    postedUrl: "Not posted",
     timezone: defaultTimeZone(),
     workflowLeads: 0,
   };
@@ -64,6 +66,12 @@ function parseArgs(args) {
       index += 1;
     } else if (arg === "--workflow-leads") {
       options.workflowLeads = Number.parseInt(args[index + 1] ?? `${options.workflowLeads}`, 10);
+      index += 1;
+    } else if (arg === "--channel") {
+      options.channel = args[index + 1] ?? options.channel;
+      index += 1;
+    } else if (arg === "--posted-url") {
+      options.postedUrl = args[index + 1] ?? options.postedUrl;
       index += 1;
     } else if (arg === "--next-action") {
       options.nextAction = args[index + 1] ?? options.nextAction;
@@ -129,12 +137,14 @@ function describeNpmStatus(result) {
 }
 
 export function formatMarkdownRow(snapshot) {
-  return `| ${snapshot.date} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
+  return `| ${snapshot.date} | ${snapshot.channel} | ${snapshot.postedUrl} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
 }
 
-export function createSnapshot({ date, github, discussions, npmDownloads, demoViews, workflowLeads, nextAction }) {
+export function createSnapshot({ date, channel, postedUrl, github, discussions, npmDownloads, demoViews, workflowLeads, nextAction }) {
   return {
     date,
+    channel,
+    postedUrl,
     githubRepository: "codeyoma/formctl",
     stars: github.stars,
     forks: github.forks,
@@ -156,6 +166,8 @@ function printSnapshot(options) {
   const npmResult = runCommandLine(npmCommand);
   const snapshot = createSnapshot({
     date: options.date,
+    channel: options.channel,
+    postedUrl: options.postedUrl,
     github: parseGithubRepo(githubResult.stdout),
     discussions: fetchGithubDiscussions(),
     npmDownloads: describeNpmStatus(npmResult),

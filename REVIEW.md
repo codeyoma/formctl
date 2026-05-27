@@ -1449,6 +1449,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, then run `npm run growth:snapshot -- --markdown --timezone Asia/Seoul --demo-views N --workflow-leads N` for the 24-hour follow-up.
 
+### 2026-05-28: Track Launch Channel And Posted URL In Growth Snapshots
+
+**Date:** 2026-05-28
+
+**Experiment:** Add `--channel` and `--posted-url` to `npm run growth:snapshot` so a metric row can identify where an outreach result came from.
+
+**Hypothesis:** A growth log row is much less useful if it records stars and leads without the channel and URL that produced them; adding source fields makes follow-up and later comparison easier.
+
+**Result:** Passed. Growth snapshots now include `channel` and `postedUrl` in JSON output and the markdown table row. Existing historical rows use `Not posted`, and `docs/GROWTH_LOG.md` documents the new flags.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth"` because the growth log did not include Channel/Posted URL columns or the `--channel CHANNEL --posted-url URL` command. GREEN passed after adding the flags, snapshot fields, and table columns. Broader verification passed with `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run growth:snapshot -- --json --timezone Asia/Seoul --channel "Reddit r/commandline" --posted-url https://reddit.example/formctl --demo-views 42 --workflow-leads 7 --next-action "Follow up with workflow leads"`, `npm run growth:snapshot -- --markdown --timezone Asia/Seoul --channel "Reddit r/commandline" --posted-url https://reddit.example/formctl --demo-views 42 --workflow-leads 7 --next-action "Follow up with workflow leads"`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The previous snapshot command could carry the measured numbers after outreach, but it still lost the source URL unless someone manually edited the surrounding notes.
+
+**Decision:** Keep source tracking as plain strings instead of trying to validate URLs or enumerate channels; early launch data will be messy and should not be rejected by the helper script.
+
+**Next Step:** Post the prepared launch outreach externally, then run a channel-specific snapshot row with `--channel`, `--posted-url`, `--demo-views`, and `--workflow-leads`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
