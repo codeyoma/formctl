@@ -200,7 +200,7 @@ describe("formctl CLI", () => {
     expect(result.stderr).toContain(".formctl/workflows/expense-report.yml");
   });
 
-  test("inspect rejects unsafe workflow names before reading outside the workflows directory", () => {
+  test("inspect --json rejects unsafe workflow names with a machine-readable error", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-inspect-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
     writeFileSync(
@@ -221,12 +221,20 @@ describe("formctl CLI", () => {
     const result = runFormctl(["inspect", "../leaked", "--json"], workspace);
 
     expect(result.status).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Invalid workflow name");
-    expect(result.stderr).not.toContain("leaked");
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "inspect",
+      exitCode: 1,
+      error: {
+        code: "invalid_workflow_name",
+        message: "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.",
+      },
+    });
+    expect(result.stdout).not.toContain("leaked");
   });
 
-  test("validate rejects unsafe workflow names before reading outside the workflows directory", () => {
+  test("validate --json rejects unsafe workflow names with a machine-readable error", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-validate-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
     writeFileSync(
@@ -252,9 +260,35 @@ describe("formctl CLI", () => {
     const result = runFormctl(["validate", "../leaked", "--json"], workspace);
 
     expect(result.status).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Invalid workflow name");
-    expect(result.stderr).not.toContain("leaked");
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "validate",
+      exitCode: 1,
+      error: {
+        code: "invalid_workflow_name",
+        message: "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.",
+      },
+    });
+    expect(result.stdout).not.toContain("leaked");
+  });
+
+  test("submit --json rejects unsafe workflow names before approval checks", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-submit-"));
+    const result = runFormctl(["submit", "../leaked", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "submit",
+      exitCode: 1,
+      error: {
+        code: "invalid_workflow_name",
+        message: "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.",
+      },
+    });
+    expect(result.stdout).not.toContain("leaked");
   });
 
   test("workflows --json lists available workflow files", () => {

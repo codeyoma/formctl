@@ -17,7 +17,7 @@ const DEFAULT_WORKFLOW_SAFETY = {
   fileInputs: "redacted",
 } as const;
 const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.\n";
+const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.";
 
 const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
 
@@ -168,6 +168,29 @@ function isValidWorkflowName(value: string): boolean {
   return WORKFLOW_NAME_PATTERN.test(value);
 }
 
+function writeInvalidWorkflowNameError(
+  command: string,
+  wantsJson: boolean,
+  stdout: NodeJS.WritableStream,
+  stderr: NodeJS.WritableStream,
+): number {
+  if (wantsJson) {
+    stdout.write(`${JSON.stringify({
+      status: "error",
+      command,
+      exitCode: 1,
+      error: {
+        code: "invalid_workflow_name",
+        message: INVALID_WORKFLOW_NAME_MESSAGE,
+      },
+    })}\n`);
+    return 1;
+  }
+
+  stderr.write(`${INVALID_WORKFLOW_NAME_MESSAGE}\n`);
+  return 1;
+}
+
 function hasCurrentSafetyMetadata(value: unknown): boolean {
   if (!isObject(value)) {
     return false;
@@ -248,7 +271,7 @@ function readWorkflow(workflowName: string): { workflow?: Workflow; error?: stri
   if (!isValidWorkflowName(workflowName)) {
     return {
       path: path.join(process.cwd(), ".formctl", "workflows"),
-      error: INVALID_WORKFLOW_NAME_MESSAGE,
+      error: `${INVALID_WORKFLOW_NAME_MESSAGE}\n`,
     };
   }
 
@@ -633,8 +656,7 @@ export async function run(
       return 1;
     }
     if (!isValidWorkflowName(workflowName)) {
-      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
-      return 1;
+      return writeInvalidWorkflowNameError(command, flags.has("--json"), stdout, stderr);
     }
 
     const result = readWorkflow(workflowName);
@@ -693,8 +715,7 @@ export async function run(
       return 1;
     }
     if (!isValidWorkflowName(workflowName)) {
-      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
-      return 1;
+      return writeInvalidWorkflowNameError(command, flags.has("--json"), stdout, stderr);
     }
 
     const workflowPath = path.join(process.cwd(), ".formctl", "workflows", `${workflowName}.yml`);
@@ -754,8 +775,7 @@ export async function run(
       return 1;
     }
     if (!isValidWorkflowName(workflowName)) {
-      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
-      return 1;
+      return writeInvalidWorkflowNameError(command, flags.has("--json"), stdout, stderr);
     }
 
     const isDryRun = flags.has("--dry-run");
@@ -1128,8 +1148,7 @@ export async function run(
       return 1;
     }
     if (!isValidWorkflowName(workflowName)) {
-      stderr.write(INVALID_WORKFLOW_NAME_MESSAGE);
-      return 1;
+      return writeInvalidWorkflowNameError(command, flags.has("--json"), stdout, stderr);
     }
 
     const browser = await chromium.launch({

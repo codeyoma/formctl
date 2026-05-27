@@ -1215,6 +1215,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish remains blocked by npm auth.
 
+### 2026-05-27: Return JSON For Invalid Workflow Names
+
+**Date:** 2026-05-27
+
+**Experiment:** Make unsafe workflow-name failures machine-readable when callers pass `--json`.
+
+**Hypothesis:** Agents should branch on a structured `invalid_workflow_name` error instead of parsing stderr or retrying path-like variants.
+
+**Result:** Passed. `inspect --json`, `validate --json`, and `submit --json` now return `{ status: "error", command, exitCode: 1, error: { code: "invalid_workflow_name", message } }` for unsafe workflow names without echoing the unsafe input.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "unsafe workflow names|unsafe workflow"` because invalid names still wrote stderr in JSON mode. GREEN passed after adding a shared invalid-name JSON error helper. Release-readiness RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|TASK plan|agent safety"` until README, `docs/agents.md`, and `TASK.md` documented the JSON contract. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:package`, `npm run build`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- inspect expense-report --json`, direct unsafe-name CLI smoke for `inspect ../expense --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The old behavior was safe after the previous path traversal fix, but it was harder for agents to handle because `--json` callers had to parse stderr for a normal input error.
+
+**Decision:** Keep human mode on stderr and JSON mode on stdout. Do not include the unsafe workflow name in the JSON payload.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. npm publish remains blocked by npm auth.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

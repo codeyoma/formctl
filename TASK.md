@@ -175,6 +175,7 @@ formctl doctor
 - [x] Ensure secrets and file contents are never printed.
 - [x] Validate optional recording metadata so event values stay redacted.
 - [x] Reject unsafe workflow names before reading or writing workflow files.
+- [x] Return machine-readable `invalid_workflow_name` errors in JSON mode.
 - [x] Verify: A shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.
 

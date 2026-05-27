@@ -137,6 +137,7 @@ Workflow names may contain only letters, numbers, dots, underscores, and dashes.
 Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.
 Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.
 Validation rejects unredacted `recording.events` metadata when present.
+Invalid workflow names return `invalid_workflow_name` in JSON mode.
 
 ## Create A New Workflow
 
