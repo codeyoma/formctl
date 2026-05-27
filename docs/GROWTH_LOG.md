@@ -4,15 +4,15 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 ## Baseline: 2026-05-26
 
-| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |
-| --- | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-26 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message from `docs/POSTING_QUEUE.md` |
+| Date | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |
+| --- | ---: | ---: | ---: | ---: | --- | --- | ---: | --- |
+| 2026-05-26 | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message from `docs/POSTING_QUEUE.md` |
 
 ## Snapshot: 2026-05-27
 
-| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |
-| --- | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-27 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |
+| Date | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |
+| --- | ---: | ---: | ---: | ---: | --- | --- | ---: | --- |
+| 2026-05-27 | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |
 
 **Shipped:** Shipped MCP workflow discovery and validation tools for agent clients.
 
@@ -20,9 +20,9 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 ## Snapshot: 2026-05-28
 
-| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |
-| --- | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-28 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |
+| Date | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |
+| --- | ---: | ---: | ---: | ---: | --- | --- | ---: | --- |
+| 2026-05-28 | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |
 
 **Shipped:** Added `npm run growth:snapshot` so weekly growth metrics can be captured as JSON or a markdown table row before updating this log.
 
@@ -35,6 +35,7 @@ npm run growth:snapshot -- --markdown --date YYYY-MM-DD
 npm run growth:snapshot -- --json --date YYYY-MM-DD
 gh repo view codeyoma/formctl --json stargazerCount,forkCount
 gh api repos/codeyoma/formctl --jq '{stars: .stargazers_count, forks: .forks_count, open_issues_count: .open_issues_count, pushed_at: .pushed_at}'
+gh api graphql -F owner=codeyoma -F name=formctl -f 'query=query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { discussions(first: 1) { totalCount } } }'
 gh issue list --repo codeyoma/formctl --state open --json number,title --jq 'length'
 npm view formctl version --json
 ```
@@ -47,7 +48,7 @@ The npm package name still appears available, but npm publish blocked until npm 
 
 **Week Ending:** YYYY-MM-DD
 
-**Metrics:** GitHub stars, forks, open issues, npm downloads, demo views, workflow leads.
+**Metrics:** GitHub stars, forks, open issues, discussions, npm downloads, demo views, workflow leads.
 
 **Shipped:** Product, docs, examples, launch assets, or reliability improvements.
 

@@ -3,15 +3,21 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const githubCommand = "gh api repos/codeyoma/formctl";
+const githubDiscussionsCommand = "gh api graphql";
+const discussionsQuery = "query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { discussions(first: 1) { totalCount } } }";
 const npmCommand = "npm view formctl version --json";
 const defaultNextAction = "Post one example-led outreach message";
 
-function run(commandLine) {
-  const [command, ...args] = commandLine.split(" ");
-
+function run(command, args) {
   return spawnSync(command, args, {
     encoding: "utf8",
   });
+}
+
+function runCommandLine(commandLine) {
+  const [command, ...args] = commandLine.split(" ");
+
+  return run(command, args);
 }
 
 function today() {
@@ -56,6 +62,31 @@ function parseGithubRepo(stdout) {
   };
 }
 
+function parseGithubDiscussions(stdout) {
+  const response = JSON.parse(stdout);
+
+  return response.data.repository.discussions.totalCount;
+}
+
+function fetchGithubDiscussions() {
+  const [command, ...args] = githubDiscussionsCommand.split(" ");
+  const result = run(command, [
+    ...args,
+    "-F",
+    "owner=codeyoma",
+    "-F",
+    "name=formctl",
+    "-f",
+    `query=${discussionsQuery}`,
+  ]);
+
+  if (result.status !== 0) {
+    return 0;
+  }
+
+  return parseGithubDiscussions(result.stdout);
+}
+
 function describeNpmStatus(result) {
   const output = `${result.stdout}\n${result.stderr}`;
 
@@ -72,16 +103,17 @@ function describeNpmStatus(result) {
 }
 
 export function formatMarkdownRow(snapshot) {
-  return `| ${snapshot.date} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
+  return `| ${snapshot.date} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
 }
 
-export function createSnapshot({ date, github, npmDownloads, nextAction }) {
+export function createSnapshot({ date, github, discussions, npmDownloads, nextAction }) {
   return {
     date,
     githubRepository: "codeyoma/formctl",
     stars: github.stars,
     forks: github.forks,
     openIssues: github.openIssues,
+    discussions,
     npmDownloads,
     demoViews: "Not measured",
     workflowLeads: 0,
@@ -90,15 +122,16 @@ export function createSnapshot({ date, github, npmDownloads, nextAction }) {
 }
 
 function printSnapshot(options) {
-  const githubResult = run(githubCommand);
+  const githubResult = runCommandLine(githubCommand);
   if (githubResult.status !== 0) {
     throw new Error(`GitHub metrics failed: ${githubResult.stderr.trim()}`);
   }
 
-  const npmResult = run(npmCommand);
+  const npmResult = runCommandLine(npmCommand);
   const snapshot = createSnapshot({
     date: options.date,
     github: parseGithubRepo(githubResult.stdout),
+    discussions: fetchGithubDiscussions(),
     npmDownloads: describeNpmStatus(npmResult),
     nextAction: options.nextAction,
   });

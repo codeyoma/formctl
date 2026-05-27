@@ -1395,6 +1395,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. GitHub metrics remain 0 stars, 0 forks, and 1 open issue; npm still returns `E404`.
 
+### 2026-05-28: Include Discussions In Growth Snapshot
+
+**Date:** 2026-05-28
+
+**Experiment:** Extend the weekly growth snapshot to include GitHub Discussions, matching the growth-loop metric list in `TASK.md`.
+
+**Hypothesis:** If discussions are tracked in the same row as stars, forks, issues, npm status, demo views, and workflow leads, the project can notice early qualitative interest instead of only star count.
+
+**Result:** Passed. `scripts/growth-snapshot.mjs` now queries GitHub GraphQL for `discussions(first: 1) { totalCount }`, emits `discussions` in JSON, and includes a Discussions column in markdown output and `docs/GROWTH_LOG.md`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth"` because the growth log lacked a Discussions column and the snapshot script did not call `gh api graphql`. GREEN passed after adding the GraphQL lookup and updating the growth log tables. Broader verification passed with `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run growth:snapshot -- --json --date 2026-05-28`, `npm run growth:snapshot -- --markdown --date 2026-05-28`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The previous growth snapshot automated only the easiest REST metrics and left one metric from the weekly loop out of the table.
+
+**Decision:** Keep GitHub Discussions as a numeric count for now. Demo views and workflow leads remain manual because there is no configured analytics source or intake database yet.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. Current metrics remain 0 stars, 0 forks, 1 open issue, 0 discussions, and unpublished npm.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

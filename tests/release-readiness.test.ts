@@ -503,8 +503,8 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("# Growth Log");
     expect(growthLog).toContain("## Baseline: 2026-05-26");
     expect(growthLog).toContain("## Snapshot: 2026-05-27");
-    expect(growthLog).toContain("| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |");
-    expect(growthLog).toContain("| 2026-05-27 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |");
+    expect(growthLog).toContain("| Date | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |");
+    expect(growthLog).toContain("| 2026-05-27 | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |");
     expect(growthLog).toContain("Shipped MCP workflow discovery and validation tools for agent clients.");
     expect(growthLog).toContain("gh repo view codeyoma/formctl");
     expect(growthLog).toContain("npm view formctl");
@@ -525,6 +525,8 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("npm run growth:snapshot -- --markdown");
     expect(growthLog).toContain("npm run growth:snapshot -- --json");
     expect(snapshotScript).toContain("gh api repos/codeyoma/formctl");
+    expect(snapshotScript).toContain("gh api graphql");
+    expect(snapshotScript).toContain("discussions(first: 1)");
     expect(snapshotScript).toContain("npm view formctl version --json");
     expect(snapshotScript).toContain("--markdown");
 
@@ -533,11 +535,12 @@ describe("release readiness docs", () => {
       stars: 12,
       forks: 3,
       openIssues: 1,
+      discussions: 2,
       npmDownloads: "Not published: `npm view formctl` returns `E404`",
       demoViews: "Not measured",
       workflowLeads: 0,
       nextAction: "Post one example-led outreach message",
-    })).toBe("| 2026-05-28 | 12 | 3 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |");
+    })).toBe("| 2026-05-28 | 12 | 3 | 1 | 2 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |");
   });
 
   test("example-led posting queue is ready for a human to publish", () => {
