@@ -503,8 +503,8 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("# Growth Log");
     expect(growthLog).toContain("## Baseline: 2026-05-26");
     expect(growthLog).toContain("## Snapshot: 2026-05-27");
-    expect(growthLog).toContain("| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |");
-    expect(growthLog).toContain("| 2026-05-27 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |");
+    expect(growthLog).toContain("| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Comments | Workflow Leads | Next Action |");
+    expect(growthLog).toContain("| 2026-05-27 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |");
     expect(growthLog).toContain("Shipped MCP workflow discovery and validation tools for agent clients.");
     expect(growthLog).toContain("gh repo view codeyoma/formctl");
     expect(growthLog).toContain("npm view formctl");
@@ -527,6 +527,7 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("--timezone Asia/Seoul");
     expect(growthLog).toContain("--demo-views N --workflow-leads N");
     expect(growthLog).toContain("--channel CHANNEL --posted-url URL");
+    expect(growthLog).toContain("--comments N");
     expect(snapshotScript).toContain("gh api repos/codeyoma/formctl");
     expect(snapshotScript).toContain("gh api graphql");
     expect(snapshotScript).toContain("discussions(first: 1)");
@@ -537,6 +538,7 @@ describe("release readiness docs", () => {
     expect(snapshotScript).toContain("--workflow-leads");
     expect(snapshotScript).toContain("--channel");
     expect(snapshotScript).toContain("--posted-url");
+    expect(snapshotScript).toContain("--comments");
     expect(snapshot.formatDateForTimeZone(new Date("2026-05-27T20:02:54.310Z"), "Asia/Seoul")).toBe("2026-05-28");
     expect(snapshot.createSnapshot({
       date: "2026-05-28",
@@ -550,10 +552,12 @@ describe("release readiness docs", () => {
       discussions: 2,
       npmDownloads: "Published: 0.1.0",
       demoViews: "42",
+      comments: 5,
       workflowLeads: 7,
       nextAction: "Follow up with workflow leads",
     })).toMatchObject({
       channel: "Reddit r/commandline",
+      comments: 5,
       demoViews: "42",
       postedUrl: "https://reddit.example/formctl",
       workflowLeads: 7,
@@ -569,9 +573,10 @@ describe("release readiness docs", () => {
       discussions: 2,
       npmDownloads: "Not published: `npm view formctl` returns `E404`",
       demoViews: "Not measured",
+      comments: 5,
       workflowLeads: 0,
       nextAction: "Post one example-led outreach message",
-    })).toBe("| 2026-05-28 | Reddit r/commandline | https://reddit.example/formctl | 12 | 3 | 1 | 2 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |");
+    })).toBe("| 2026-05-28 | Reddit r/commandline | https://reddit.example/formctl | 12 | 3 | 1 | 2 | Not published: `npm view formctl` returns `E404` | Not measured | 5 | 0 | Post one example-led outreach message |");
   });
 
   test("example-led posting queue is ready for a human to publish", () => {

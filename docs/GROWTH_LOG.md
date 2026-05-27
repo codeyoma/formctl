@@ -4,15 +4,15 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 ## Baseline: 2026-05-26
 
-| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-26 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message from `docs/POSTING_QUEUE.md` |
+| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Comments | Workflow Leads | Next Action |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| 2026-05-26 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | 0 | Post one example-led outreach message from `docs/POSTING_QUEUE.md` |
 
 ## Snapshot: 2026-05-27
 
-| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-27 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |
+| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Comments | Workflow Leads | Next Action |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| 2026-05-27 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | 0 | Human posts Reddit r/commandline candidate from `docs/POSTING_QUEUE.md` |
 
 **Shipped:** Shipped MCP workflow discovery and validation tools for agent clients.
 
@@ -20,9 +20,9 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 ## Snapshot: 2026-05-28
 
-| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Workflow Leads | Next Action |
-| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | --- |
-| 2026-05-28 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |
+| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Comments | Workflow Leads | Next Action |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| 2026-05-28 | Not posted | Not posted | 0 | 0 | 1 | 0 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | 0 | Post one example-led outreach message |
 
 **Shipped:** Added `npm run growth:snapshot` so weekly growth metrics can be captured as JSON or a markdown table row before updating this log.
 
@@ -34,6 +34,8 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 npm run growth:snapshot -- --markdown --timezone Asia/Seoul
 npm run growth:snapshot -- --json --timezone Asia/Seoul
 npm run growth:snapshot -- --markdown --timezone Asia/Seoul --demo-views N --workflow-leads N
+npm run growth:snapshot -- --markdown --timezone Asia/Seoul --demo-views N --comments N --workflow-leads N
+npm run growth:snapshot -- --markdown --timezone Asia/Seoul --comments N
 npm run growth:snapshot -- --markdown --timezone Asia/Seoul --channel CHANNEL --posted-url URL
 npm run growth:snapshot -- --markdown --date YYYY-MM-DD
 gh repo view codeyoma/formctl --json stargazerCount,forkCount
@@ -51,7 +53,7 @@ The npm package name still appears available, but npm publish blocked until npm 
 
 **Week Ending:** YYYY-MM-DD
 
-**Metrics:** Channel, posted URL, GitHub stars, forks, open issues, discussions, npm downloads, demo views, workflow leads.
+**Metrics:** Channel, posted URL, GitHub stars, forks, open issues, discussions, npm downloads, demo views, comments, workflow leads.
 
 **Shipped:** Product, docs, examples, launch assets, or reliability improvements.
 

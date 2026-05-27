@@ -39,6 +39,7 @@ export function formatDateForTimeZone(date, timeZone) {
 function parseArgs(args) {
   const options = {
     channel: "Not posted",
+    comments: 0,
     demoViews: "Not measured",
     format: "markdown",
     date: undefined,
@@ -63,6 +64,9 @@ function parseArgs(args) {
       index += 1;
     } else if (arg === "--demo-views") {
       options.demoViews = args[index + 1] ?? options.demoViews;
+      index += 1;
+    } else if (arg === "--comments") {
+      options.comments = Number.parseInt(args[index + 1] ?? `${options.comments}`, 10);
       index += 1;
     } else if (arg === "--workflow-leads") {
       options.workflowLeads = Number.parseInt(args[index + 1] ?? `${options.workflowLeads}`, 10);
@@ -137,10 +141,10 @@ function describeNpmStatus(result) {
 }
 
 export function formatMarkdownRow(snapshot) {
-  return `| ${snapshot.date} | ${snapshot.channel} | ${snapshot.postedUrl} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
+  return `| ${snapshot.date} | ${snapshot.channel} | ${snapshot.postedUrl} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.comments} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
 }
 
-export function createSnapshot({ date, channel, postedUrl, github, discussions, npmDownloads, demoViews, workflowLeads, nextAction }) {
+export function createSnapshot({ date, channel, postedUrl, github, discussions, npmDownloads, demoViews, comments, workflowLeads, nextAction }) {
   return {
     date,
     channel,
@@ -152,6 +156,7 @@ export function createSnapshot({ date, channel, postedUrl, github, discussions, 
     discussions,
     npmDownloads,
     demoViews,
+    comments,
     workflowLeads,
     nextAction,
   };
@@ -172,6 +177,7 @@ function printSnapshot(options) {
     discussions: fetchGithubDiscussions(),
     npmDownloads: describeNpmStatus(npmResult),
     demoViews: options.demoViews,
+    comments: options.comments,
     workflowLeads: options.workflowLeads,
     nextAction: options.nextAction,
   });

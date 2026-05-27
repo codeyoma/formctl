@@ -1467,6 +1467,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, then run a channel-specific snapshot row with `--channel`, `--posted-url`, `--demo-views`, and `--workflow-leads`.
 
+### 2026-05-28: Track Outreach Comments In Growth Snapshots
+
+**Date:** 2026-05-28
+
+**Experiment:** Add `--comments` to `npm run growth:snapshot` so 24-hour launch follow-up rows can capture discussion volume next to demo views and workflow leads.
+
+**Hypothesis:** Comments are often the earliest high-signal feedback for a CLI launch, so they should be tracked in the same reproducible row as channel, posted URL, stars, views, and leads.
+
+**Result:** Passed. Growth snapshots now include `comments` in JSON output and the markdown row, and `docs/GROWTH_LOG.md` includes a Comments column plus `--comments N` source-command examples.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth"` because the growth log and snapshot script had no Comments column or `--comments` flag. GREEN passed after adding the flag and carrying the value through `createSnapshot`. Broader verification passed with `npm test -- --run tests/release-readiness.test.ts -t "growth"`, `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run growth:snapshot -- --json --timezone Asia/Seoul --channel "Reddit r/commandline" --posted-url https://reddit.example/formctl --demo-views 42 --comments 5 --workflow-leads 7 --next-action "Follow up with workflow leads"`, `npm run growth:snapshot -- --markdown --timezone Asia/Seoul --channel "Reddit r/commandline" --posted-url https://reddit.example/formctl --demo-views 42 --comments 5 --workflow-leads 7 --next-action "Follow up with workflow leads"`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The previous manual-metric snapshot could capture views and leads but still dropped public reply volume, so a 24-hour launch row would miss whether the post generated useful discussion.
+
+**Decision:** Keep comments as a numeric count. The qualitative best comment belongs in the weekly review template's feedback field, not in the metric row.
+
+**Next Step:** Post the prepared launch outreach externally, then run a channel-specific snapshot row with `--channel`, `--posted-url`, `--demo-views`, `--comments`, and `--workflow-leads`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
