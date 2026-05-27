@@ -1521,6 +1521,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Consider adding the same `--values` support to the MCP dry-run tool once the CLI contract has settled.
 
+### 2026-05-28: Expose Values Files Through MCP Dry Run
+
+**Date:** 2026-05-28
+
+**Experiment:** Add `valuesFile` to `formctl_submit_dry_run` so MCP clients can pass a checked-in JSON values file through to `formctl submit --values`.
+
+**Hypothesis:** MCP users should not need to expand a reusable values file into individual tool fields when the CLI already supports a reviewed JSON input file.
+
+**Result:** Passed. The MCP dry-run tool schema now accepts `valuesFile`, and `buildFormctlArgsForTool` emits `--values <path>` before any inline fields so CLI field flags can still override values-file defaults.
+
+**Evidence:** RED was observed with `npm test -- --run tests/mcp.test.ts -t "approval-safe"` because `valuesFile` was ignored. GREEN passed after adding the schema property and argument generation. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "MCP setup"` because `docs/MCP.md` did not document `valuesFile`. Broader verification passed with `npm test -- --run tests/mcp.test.ts tests/release-readiness.test.ts tests/package-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run test:package`, `npm run test:agent`, and `npm pack --dry-run --json`.
+
+**What Failed:** The MCP surface lagged behind the CLI surface, so agents using MCP could not reuse the same checked-in values file path shown in the README.
+
+**Decision:** Keep approved submit outside MCP. `valuesFile` only feeds the dry-run-safe tool.
+
+**Next Step:** Publish the first external outreach post or authenticate npm; the MCP values-file path is now aligned with the CLI.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -63,6 +63,15 @@ Use the workspace that contains `.formctl/workflows/<name>.yml`.
 6. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl`.
 7. Ask for explicit approval before running `formctl submit ... --approve` outside MCP.
 
+Use `valuesFile` to pass a checked-in JSON values file through to `formctl submit --values`.
+
+```json
+{
+  "workflow": "expense-report",
+  "valuesFile": "demo/expense-values.json"
+}
+```
+
 ## MCP SDK smoke test
 
 From a local checkout after `npm run build`:

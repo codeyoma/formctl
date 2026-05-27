@@ -78,6 +78,18 @@ describe("formctl MCP wrapper", () => {
       "--reimburse",
       "true",
     ]);
+    expect(buildFormctlArgsForTool("formctl_submit_dry_run", {
+      workflow: "expense-report",
+      valuesFile: "demo/expense-values.json",
+    })).toEqual([
+      "submit",
+      "expense-report",
+      "--dry-run",
+      "--json",
+      "--headless",
+      "--values",
+      "demo/expense-values.json",
+    ]);
     expect(() => buildFormctlArgsForTool("formctl_submit_dry_run", {
       workflow: "expense-report",
       fields: { approve: true },

@@ -705,6 +705,7 @@ describe("release readiness docs", () => {
     expect(mcp).toContain("formctl_submit_dry_run");
     expect(mcp).toContain("Call `formctl_workflows` to discover available workflow names.");
     expect(mcp).toContain("Call `formctl_validate` before `formctl_inspect` or `formctl_submit_dry_run` when using a checked-in workflow.");
+    expect(mcp).toContain("Use `valuesFile` to pass a checked-in JSON values file through to `formctl submit --values`.");
     expect(mcp).toContain("does not expose approved submit");
     expect(mcp).toContain("approval stays in the CLI");
     expect(mcp).toContain("MCP SDK smoke test");

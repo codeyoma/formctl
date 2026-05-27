@@ -184,6 +184,7 @@ formctl doctor
 - [x] Return repair guidance for unreadable workflow YAML in validation JSON.
 - [x] Return machine-readable `workflow_unreadable` errors for inspect and submit JSON.
 - [x] Return machine-readable `workflow_invalid` errors for inspect and submit JSON.
+- [x] Let the MCP dry-run tool pass a checked-in values file through `valuesFile`.
 - [x] Verify: `npm run test:agent` proves a shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.
 

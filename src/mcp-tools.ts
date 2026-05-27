@@ -62,6 +62,7 @@ export function createMcpToolDefinitions(): McpToolDefinition[] {
         required: ["workflow"],
         properties: {
           workflow: { type: "string" },
+          valuesFile: { type: "string" },
           fields: {
             type: "object",
             additionalProperties: {
@@ -83,6 +84,7 @@ export function createMcpToolDefinitions(): McpToolDefinition[] {
 
 type ToolInput = {
   workflow?: unknown;
+  valuesFile?: unknown;
   fields?: unknown;
   headed?: unknown;
 };
@@ -149,6 +151,13 @@ export function buildFormctlArgsForTool(toolName: string, input: unknown): strin
       "--json",
       parsedInput.headed === true ? "--headed" : "--headless",
     ];
+    if (parsedInput.valuesFile !== undefined) {
+      if (typeof parsedInput.valuesFile !== "string" || parsedInput.valuesFile.length === 0) {
+        throw new Error("MCP tool valuesFile must be a non-empty string.");
+      }
+
+      args.push("--values", parsedInput.valuesFile);
+    }
     const fields = asRecord(parsedInput.fields);
 
     for (const [fieldName, value] of Object.entries(fields)) {
