@@ -522,6 +522,16 @@ function parseOptions(args: string[]): Map<string, string | true> {
   return options;
 }
 
+const SUBMIT_CONTROL_OPTIONS = new Set([
+  "approve",
+  "dry-run",
+  "headed",
+  "headless",
+  "help",
+  "json",
+  "values",
+]);
+
 function readSubmitFieldValues(
   options: Map<string, string | true>,
   fields: WorkflowField[],
@@ -529,6 +539,18 @@ function readSubmitFieldValues(
   const values = new Map<string, string>();
   const valuesFile = options.get("values");
   const workflowFieldNames = new Set(fields.map((field) => field.name));
+  const unknownFieldFlags = Array.from(options.keys())
+    .filter((optionName) => !SUBMIT_CONTROL_OPTIONS.has(optionName) && !workflowFieldNames.has(optionName));
+
+  if (unknownFieldFlags.length > 0) {
+    const plural = unknownFieldFlags.length === 1 ? "flag" : "flags";
+    return {
+      error: {
+        message: `Unknown submit field ${plural}: ${unknownFieldFlags.join(", ")}`,
+        unknownFields: unknownFieldFlags,
+      },
+    };
+  }
 
   if (valuesFile !== undefined) {
     if (typeof valuesFile !== "string") {

@@ -1539,6 +1539,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Publish the first external outreach post or authenticate npm; the MCP values-file path is now aligned with the CLI.
 
+### 2026-05-28: Reject Unknown Submit Field Flags Before Browser Work
+
+**Date:** 2026-05-28
+
+**Experiment:** Reject direct submit field flags that do not match recorded workflow field names.
+
+**Hypothesis:** A typo like `--amonut` is more dangerous than a hard failure because it can silently skip a required field while still reaching browser execution.
+
+**Result:** Passed. `submit --dry-run --json` now returns `field_values_invalid` with `unknownFields` before launching Playwright when a direct field flag is not in the workflow.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "unknown field flags"` because `--amonut` was ignored and the command attempted `page.goto`. GREEN passed after validating parsed submit option names against the workflow fields plus allowed control flags. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety"`. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, a real `npm run formctl -- submit expense-report --amonut 120000 --dry-run --json --headless` smoke that returned `unknownFields: ["amonut"]`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The CLI previously ignored unknown direct field flags, so a misspelled value could be omitted without a clear error.
+
+**Decision:** Treat unknown direct field flags and unknown values-file keys consistently as `field_values_invalid`.
+
+**Next Step:** Keep the next cycle focused on launch outreach or npm authentication unless another first-run safety issue appears.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

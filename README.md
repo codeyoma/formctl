@@ -82,6 +82,7 @@ npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.
 
 Use `--values <path>` to load submit field values from a JSON object file when flags would be hard to quote.
 Unknown keys in a `--values` file are rejected as `field_values_invalid` before opening the browser.
+Unknown submit field flags are rejected as `field_values_invalid` before opening the browser.
 
 ```bash
 npm run formctl -- submit expense-report --values demo/expense-values.json --dry-run --json --headless

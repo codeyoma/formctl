@@ -105,6 +105,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("npm run formctl -- submit expense-report --values demo/expense-values.json --dry-run --json --headless");
     expect(readme).toContain("Use `--values <path>` to load submit field values from a JSON object file when flags would be hard to quote.");
     expect(readme).toContain("Unknown keys in a `--values` file are rejected as `field_values_invalid` before opening the browser.");
+    expect(readme).toContain("Unknown submit field flags are rejected as `field_values_invalid` before opening the browser.");
     expect(readme).toContain("npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless");
     expect(readme).toContain("Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.");
     expect(readme).toContain("npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless");
@@ -656,6 +657,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
     expect(agents).toContain("Use `--values <path>` for structured field input when quoting long values in shell flags would be fragile.");
     expect(agents).toContain("Treat unknown keys in a `--values` file as typos and stop on `field_values_invalid`.");
+    expect(agents).toContain("Treat unknown submit field flags as typos and stop on `field_values_invalid`.");
     expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.");
     expect(agents).toContain("Treat `workflow_invalid` items in workflow discovery as repair tasks and inspect their failed checks.");

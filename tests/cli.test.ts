@@ -1405,6 +1405,52 @@ describe("formctl CLI", () => {
     expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
   });
 
+  test("submit --dry-run --json rejects unknown field flags before browser work", async () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unknown-field-flag-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://127.0.0.1:9/expense",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = await runFormctlAsync([
+      "submit",
+      "expense-report",
+      "--amonut",
+      "120000",
+      "--dry-run",
+      "--json",
+      "--headless",
+    ], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      workflow: "expense-report",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "field_values_invalid",
+        message: "Unknown submit field flag: amonut",
+        unknownFields: ["amonut"],
+      },
+    });
+    expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+  });
+
   test("submit --dry-run writes an audit log with redacted values and artifacts", async () => {
     const fixture = await serveFixture(`
       <!doctype html>
