@@ -430,6 +430,49 @@ describe("formctl CLI", () => {
     });
   });
 
+  test("workflows --json reports unreadable workflow files without failing discovery", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-list-unreadable-workflows-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(path.join(workspace, ".formctl", "workflows", "broken-workflow.yml"), "name: [\n");
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["workflows", "--json"], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(parsed.workflows).toHaveLength(2);
+    expect(parsed.workflows[0]).toMatchObject({
+      name: "broken-workflow",
+      path: ".formctl/workflows/broken-workflow.yml",
+      status: "error",
+      error: {
+        code: "workflow_unreadable",
+        fix: "Repair .formctl/workflows/broken-workflow.yml so it is valid YAML before retrying workflows.",
+      },
+    });
+    expect(parsed.workflows[0].error.message).toEqual(expect.any(String));
+    expect(parsed.workflows[1]).toEqual({
+      name: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      url: "http://localhost:3000/expense",
+      fieldCount: 1,
+    });
+  });
+
   test("validate --json confirms a reviewable workflow file", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-valid-workflow-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });

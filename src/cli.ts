@@ -87,6 +87,15 @@ type WorkflowListItem = {
     mode: "manual";
     eventCount: number;
   };
+} | {
+  name: string;
+  path: string;
+  status: "error";
+  error: {
+    code: "workflow_unreadable";
+    message: string;
+    fix: string;
+  };
 };
 
 type AuditEvent = Record<string, unknown>;
@@ -370,11 +379,26 @@ function listWorkflowFiles(): WorkflowListItem[] {
     .filter((entry) => entry.endsWith(".yml") || entry.endsWith(".yaml"))
     .sort()
     .map((entry) => {
-      const workflow = parse(readFileSync(path.join(workflowDirectory, entry), "utf8")) as Workflow;
+      const displayPath = `.formctl/workflows/${entry}`;
+      let workflow: Workflow;
+      try {
+        workflow = parse(readFileSync(path.join(workflowDirectory, entry), "utf8")) as Workflow;
+      } catch (error) {
+        return {
+          name: entry.replace(/\.ya?ml$/, ""),
+          path: displayPath,
+          status: "error",
+          error: {
+            code: "workflow_unreadable",
+            message: error instanceof Error ? error.message : "Workflow YAML could not be parsed.",
+            fix: `Repair ${displayPath} so it is valid YAML before retrying workflows.`,
+          },
+        };
+      }
 
       return {
         name: workflow.name,
-        path: `.formctl/workflows/${entry}`,
+        path: displayPath,
         url: workflow.url,
         fieldCount: workflow.fields.length,
         ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),

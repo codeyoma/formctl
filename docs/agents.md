@@ -13,6 +13,7 @@ formctl workflows --json
 ```
 
 Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.
+Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.
 
 3. Run `formctl validate <workflow-name> --json` before trusting a checked-in workflow.
 

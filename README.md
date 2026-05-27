@@ -65,6 +65,7 @@ npm run formctl -- workflows --json
 ```
 
 Workflow discovery reports recording mode and event count when metadata exists.
+Workflow discovery reports unreadable workflow files as `workflow_unreadable` items instead of failing the whole list.
 
 Validate workflow YAML before review or sharing:
 
