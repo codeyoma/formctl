@@ -525,13 +525,14 @@ function parseOptions(args: string[]): Map<string, string | true> {
 function readSubmitFieldValues(
   options: Map<string, string | true>,
   fields: WorkflowField[],
-): { values: Map<string, string> } | { error: string } {
+): { values: Map<string, string> } | { error: { message: string; unknownFields?: string[] } } {
   const values = new Map<string, string>();
   const valuesFile = options.get("values");
+  const workflowFieldNames = new Set(fields.map((field) => field.name));
 
   if (valuesFile !== undefined) {
     if (typeof valuesFile !== "string") {
-      return { error: "--values requires a JSON file path." };
+      return { error: { message: "--values requires a JSON file path." } };
     }
 
     let parsedValues: unknown;
@@ -539,16 +540,27 @@ function readSubmitFieldValues(
       const valuesPath = path.isAbsolute(valuesFile) ? valuesFile : path.join(process.cwd(), valuesFile);
       parsedValues = JSON.parse(readFileSync(valuesPath, "utf8"));
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Could not read --values JSON file." };
+      return { error: { message: error instanceof Error ? error.message : "Could not read --values JSON file." } };
     }
 
     if (!isObject(parsedValues) || Array.isArray(parsedValues)) {
-      return { error: "--values JSON must be an object." };
+      return { error: { message: "--values JSON must be an object." } };
+    }
+
+    const unknownFields = Object.keys(parsedValues).filter((fieldName) => !workflowFieldNames.has(fieldName));
+    if (unknownFields.length > 0) {
+      const plural = unknownFields.length === 1 ? "field" : "fields";
+      return {
+        error: {
+          message: `Unknown --values ${plural}: ${unknownFields.join(", ")}`,
+          unknownFields,
+        },
+      };
     }
 
     for (const [fieldName, value] of Object.entries(parsedValues)) {
       if (!["string", "number", "boolean"].includes(typeof value)) {
-        return { error: `--values field ${fieldName} must be a string, number, or boolean.` };
+        return { error: { message: `--values field ${fieldName} must be a string, number, or boolean.` } };
       }
 
       values.set(fieldName, String(value));
@@ -1057,13 +1069,14 @@ export async function run(
         requiresApproval: false,
         error: {
           code: "field_values_invalid",
-          message: fieldValuesResult.error,
+          message: fieldValuesResult.error.message,
+          ...(fieldValuesResult.error.unknownFields === undefined ? {} : { unknownFields: fieldValuesResult.error.unknownFields }),
         },
       };
       if (wantsJson) {
         stdout.write(`${JSON.stringify(payload)}\n`);
       } else {
-        stderr.write(`${fieldValuesResult.error}\n`);
+        stderr.write(`${fieldValuesResult.error.message}\n`);
       }
       return 1;
     }

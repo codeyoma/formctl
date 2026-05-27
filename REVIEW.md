@@ -1503,6 +1503,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add a guard for unknown keys in `--values` after seeing whether users prefer strict typo detection or permissive extra metadata.
 
+### 2026-05-28: Reject Unknown Values File Keys Before Browser Work
+
+**Date:** 2026-05-28
+
+**Experiment:** Reject keys in `--values` JSON that do not match recorded workflow field names.
+
+**Hypothesis:** A typo in a values file is more dangerous than extra metadata for the current product because it can silently leave a form field unset while the run still reaches the browser.
+
+**Result:** Passed. `submit --dry-run --json --values fields.json` now returns `field_values_invalid` with `unknownFields` before launching Playwright when the JSON file contains keys that are not in the workflow.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "unknown keys"` because `amonut` was ignored and the command attempted `page.goto`. GREEN passed after comparing JSON keys to workflow field names before browser launch. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety"`. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, a real `npm run formctl -- submit expense-report --values <bad-json> --dry-run --json --headless` smoke that returned `unknownFields: ["amonut"]`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first implementation of `--values` was permissive and treated unknown JSON keys as harmless. The RED test exposed that the command continued into browser work instead of reporting a likely typo.
+
+**Decision:** Prefer strict values-file validation for now. Field flags remain scoped to recorded workflow field names because the fill loop only reads known fields.
+
+**Next Step:** Consider adding the same `--values` support to the MCP dry-run tool once the CLI contract has settled.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

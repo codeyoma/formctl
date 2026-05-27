@@ -130,6 +130,7 @@ formctl doctor
 - [x] Load the workflow file.
 - [x] Accept field values from CLI flags.
 - [x] Accept field values from a JSON object file with `--values <path>` when shell flags are fragile.
+- [x] Reject unknown keys in `--values` JSON before opening the browser.
 - [x] Open the target page.
 - [x] Fill fields.
 - [x] Stop before the final submit action.
