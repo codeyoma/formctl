@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, test } from "vitest";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -512,6 +512,32 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("Post one example-led outreach message");
     expect(growthLog).toContain("Weekly Review Template");
     expect(growthLog).toContain("Positioning Change");
+  });
+
+  test("growth snapshot command produces markdown-ready metrics", async () => {
+    const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
+    const growthLog = readFileSync(path.join(projectRoot, "docs", "GROWTH_LOG.md"), "utf8");
+    const snapshotScriptPath = path.join(projectRoot, "scripts", "growth-snapshot.mjs");
+    const snapshotScript = readFileSync(snapshotScriptPath, "utf8");
+    const snapshot = await import(pathToFileURL(snapshotScriptPath).href);
+
+    expect(packageJson.scripts["growth:snapshot"]).toBe("node scripts/growth-snapshot.mjs");
+    expect(growthLog).toContain("npm run growth:snapshot -- --markdown");
+    expect(growthLog).toContain("npm run growth:snapshot -- --json");
+    expect(snapshotScript).toContain("gh api repos/codeyoma/formctl");
+    expect(snapshotScript).toContain("npm view formctl version --json");
+    expect(snapshotScript).toContain("--markdown");
+
+    expect(snapshot.formatMarkdownRow({
+      date: "2026-05-28",
+      stars: 12,
+      forks: 3,
+      openIssues: 1,
+      npmDownloads: "Not published: `npm view formctl` returns `E404`",
+      demoViews: "Not measured",
+      workflowLeads: 0,
+      nextAction: "Post one example-led outreach message",
+    })).toBe("| 2026-05-28 | 12 | 3 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |");
   });
 
   test("example-led posting queue is ready for a human to publish", () => {

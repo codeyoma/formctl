@@ -1377,6 +1377,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`.
 
+### 2026-05-28: Add Growth Snapshot Command
+
+**Date:** 2026-05-28
+
+**Experiment:** Turn the manual growth-log metric commands into one reproducible `npm run growth:snapshot` command that emits either a markdown table row or JSON.
+
+**Hypothesis:** The weekly 10k-star loop will be less likely to drift if stars, forks, open issues, and npm publication status can be captured with one command before editing `docs/GROWTH_LOG.md`.
+
+**Result:** Passed. `scripts/growth-snapshot.mjs` now reads `gh api repos/codeyoma/formctl` and `npm view formctl version --json`, formats the current snapshot as markdown or JSON, and `docs/GROWTH_LOG.md` includes a 2026-05-28 snapshot.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth snapshot"` because `scripts/growth-snapshot.mjs` did not exist. GREEN passed after adding the script, `growth:snapshot` package script, and growth-log usage docs. Broader verification passed with `npm test -- --run tests/release-readiness.test.ts`, `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm run growth:snapshot -- --json`, `npm run growth:snapshot -- --markdown --date 2026-05-28`, `npm pack --dry-run --json`, and `npm run test:package`.
+
+**What Failed:** The first real JSON smoke used the process default date, which can be UTC in this environment. The markdown smoke used the explicit `--date 2026-05-28` flag, and the growth-log source command now shows `--date YYYY-MM-DD` to avoid timezone ambiguity.
+
+**Decision:** Keep this as a repo maintenance script rather than CLI product surface. It measures growth for the public repo; it should not affect user-facing `formctl` commands.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. GitHub metrics remain 0 stars, 0 forks, and 1 open issue; npm still returns `E404`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

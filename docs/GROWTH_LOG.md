@@ -18,14 +18,28 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 **Notes:** Repository remains public at https://github.com/codeyoma/formctl. npm package name still returns `E404`; npm publish is still blocked until npm auth is configured. Open issue #1 tracks the first outreach channels and remains active.
 
+## Snapshot: 2026-05-28
+
+| Date | GitHub Stars | Forks | Open Issues | npm Downloads | Demo Views | Workflow Leads | Next Action |
+| --- | ---: | ---: | ---: | --- | --- | ---: | --- |
+| 2026-05-28 | 0 | 0 | 1 | Not published: `npm view formctl` returns `E404` | Not measured | 0 | Post one example-led outreach message |
+
+**Shipped:** Added `npm run growth:snapshot` so weekly growth metrics can be captured as JSON or a markdown table row before updating this log.
+
+**Notes:** Repository metrics were captured from `gh api repos/codeyoma/formctl`; npm still reports `E404`, so package publication remains blocked on npm authentication rather than package name availability.
+
 ## Source commands
 
 ```bash
+npm run growth:snapshot -- --markdown --date YYYY-MM-DD
+npm run growth:snapshot -- --json --date YYYY-MM-DD
 gh repo view codeyoma/formctl --json stargazerCount,forkCount
 gh api repos/codeyoma/formctl --jq '{stars: .stargazers_count, forks: .forks_count, open_issues_count: .open_issues_count, pushed_at: .pushed_at}'
 gh issue list --repo codeyoma/formctl --state open --json number,title --jq 'length'
 npm view formctl version --json
 ```
+
+Use the snapshot command first; the raw `gh` and `npm` commands are kept here for auditability if the script output needs to be checked by hand.
 
 The npm package name still appears available, but npm publish blocked until npm auth is configured.
 
