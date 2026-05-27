@@ -1341,6 +1341,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`.
 
+### 2026-05-28: Add Agent JSON Branch Smoke
+
+**Date:** 2026-05-28
+
+**Experiment:** Add a real shell-level smoke script that proves agents can branch on JSON `error.code` and process exit status without launching a browser.
+
+**Hypothesis:** The "machine-readable output" contract should be verified by a standalone script, not only by Vitest assertions embedded in the source test suite.
+
+**Result:** Passed. `npm run test:agent` now runs `scripts/agent-branch-smoke.mjs`, which creates a temporary workspace and verifies `invalid_workflow_name`, `workflow_not_found`, `workflow_unreadable`, `workflow_invalid`, and `approval_required` branches. CI and `docs/LAUNCH.md` now include the gate.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "launch checklist|CI runs"` because `test:agent`, the CI step, and the launch checklist entry were missing. GREEN passed after adding the script, package script, CI step, and checklist entry. Broader verification passed with `npm test -- --run tests/browser-mode.test.ts tests/cli.test.ts tests/mcp.test.ts tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm run test:replay`, `npm run test:agent`, `npm run test:package`, `npm run build`, `npx tsc --noEmit`, `git diff --check`, `npm run formctl -- workflows --json`, `npm run formctl -- validate expense-report --json`, `npm run formctl -- doctor --json`, and `npm pack --dry-run --json`.
+
+**What Failed:** The project previously marked "A shell script can branch on output status and exit code" complete, but the actual reusable branch smoke script did not exist.
+
+**Decision:** Keep `test:agent` separate from package smoke. Package smoke proves installed binaries; agent branch smoke proves JSON control-flow semantics quickly without browser startup.
+
+**Next Step:** Post the prepared launch outreach externally, or authenticate npm and publish the package. `npm whoami` still returns `ENEEDAUTH`; `npm view formctl version --json` still returns `E404`. GitHub currently has one open issue, `#1 Launch outreach: first developer channels`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
