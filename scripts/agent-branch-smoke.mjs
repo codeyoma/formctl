@@ -121,6 +121,11 @@ try {
       throw new Error(`approval gate returned unexpected state: ${JSON.stringify(payload)}`);
     }
   });
+  expectBranch("dry-run runtime failure", ["submit", "valid", "--amount", "120000", "--dry-run", "--json", "--headless"], 4, "dry_run_failed", (payload) => {
+    if (payload.submitted !== false || payload.requiresApproval !== false || payload.artifacts?.failure === undefined) {
+      throw new Error(`dry-run runtime failure returned weak state: ${JSON.stringify(payload)}`);
+    }
+  });
 
   process.stdout.write("Agent branch smoke passed\n");
 } finally {

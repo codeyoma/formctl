@@ -943,6 +943,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to npm publish if auth is available or first external outreach if not.
 
+### 2026-05-28: Return JSON For Dry-Run Runtime Failures
+
+**Date:** 2026-05-28
+
+**Experiment:** Convert browser-backed dry-run runtime failures into the documented exit code `4` contract.
+
+**Hypothesis:** Agents should get a machine-readable `dry_run_failed` response, plus failure and audit artifacts, when Playwright cannot reach or run the target page.
+
+**Result:** Passed. `submit --dry-run --json` now catches browser runtime failures during the preview path, writes `failure.json` and `audit.jsonl`, and returns `exitCode: 4` with `submitted: false`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "browser runtime failures"`: the test failed with `Unexpected end of JSON input` because the current path threw without JSON. Focused GREEN passed with the same command after adding dry-run failure handling. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npm run formctl -- validate expense-report --json`, and `npm pack --dry-run --json`. `npm run test:agent` now also branches on `dry_run_failed`. `npm run publish:check -- --json` still returns `npm_auth_required`; GitHub issue #1 remains open and valid for launch outreach.
+
+**Decision:** Treat failed previews as first-class dry-run failures, not unexpected CLI crashes. Keep approved-submit runtime handling separate because submit state can be ambiguous after a click.
+
+**Next Step:** Return to npm publish if auth is available or first external outreach if not.
+
 ### Template
 
 **Date:** YYYY-MM-DD

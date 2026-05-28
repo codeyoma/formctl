@@ -1720,6 +1720,58 @@ describe("formctl CLI", () => {
     expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
   });
 
+  test("submit --dry-run --json reports browser runtime failures without throwing", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-dry-run-runtime-failure-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://127.0.0.1:9/expense",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl([
+      "submit",
+      "expense-report",
+      "--amount",
+      "120000",
+      "--dry-run",
+      "--json",
+      "--headless",
+    ], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(4);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      workflow: "expense-report",
+      exitCode: 4,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "dry_run_failed",
+      },
+    });
+    expect(parsed.error.message).toContain("Dry-run failed:");
+    expect(parsed.runId).toMatch(/^\d+-dry-run$/);
+    expect(parsed.artifacts).toEqual({
+      failure: `.formctl/runs/${parsed.runId}/failure.json`,
+      audit: `.formctl/runs/${parsed.runId}/audit.jsonl`,
+    });
+    expect(existsSync(path.join(workspace, parsed.artifacts.failure))).toBe(true);
+    expect(existsSync(path.join(workspace, parsed.artifacts.audit))).toBe(true);
+  });
+
   test("submit --dry-run writes an audit log with redacted values and artifacts", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

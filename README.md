@@ -220,6 +220,8 @@ Workflow files are stored at:
 10 unexpected runtime error
 ```
 
+Dry-run browser runtime failures return `dry_run_failed` in JSON mode with `failure.json` and `audit.jsonl` artifacts.
+
 ## Agent Usage
 
 Agents should call `submit --dry-run --json` first, inspect the returned artifacts, and only use `--approve` when the user or policy explicitly allows submission.

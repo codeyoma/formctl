@@ -222,6 +222,10 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unexpected runtime error.";
+}
+
 function isValidWorkflowName(value: string): boolean {
   return WORKFLOW_NAME_PATTERN.test(value);
 }
@@ -1228,8 +1232,6 @@ export async function run(
     const auditEvents: AuditEvent[] = [];
 
     try {
-      const page = await browser.newPage();
-      await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
       auditEvents.push({
         event: "run_started",
         workflow: workflow.name,
@@ -1245,6 +1247,8 @@ export async function run(
           json: wantsJson,
         },
       });
+      const page = await browser.newPage();
+      await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
 
       for (const field of workflow.fields) {
         const matchCount = await page.locator(field.selector).count();
@@ -1546,6 +1550,50 @@ export async function run(
 
       stdout.write(`${isDryRun ? "Dry-run complete" : "Submitted workflow"}: ${workflow.name}\nRun: ${relativeRunDirectory}\n`);
       return 0;
+    } catch (error) {
+      if (!isDryRun && !isInteractiveApproval) {
+        throw error;
+      }
+
+      mkdirSync(runDirectory, { recursive: true });
+      const failureArtifact = `${relativeRunDirectory}/failure.json`;
+      const auditArtifact = `${relativeRunDirectory}/audit.jsonl`;
+      const artifacts = {
+        failure: failureArtifact,
+        audit: auditArtifact,
+      };
+      const message = `Dry-run failed: ${getErrorMessage(error)}`;
+      const payload = {
+        status: "error",
+        workflow: workflow.name,
+        exitCode: 4,
+        runId,
+        submitted: false,
+        requiresApproval: false,
+        artifacts,
+        error: {
+          code: "dry_run_failed",
+          message,
+        },
+      };
+      auditEvents.push({
+        event: "run_failed",
+        status: "dry-run-failed",
+        submitted: false,
+        error: payload.error,
+        artifacts,
+      });
+      writeFileSync(path.join(runDirectory, "failure.json"), `${JSON.stringify(payload, null, 2)}\n`);
+      for (const event of auditEvents) {
+        appendAuditEvent(path.join(runDirectory, "audit.jsonl"), event);
+      }
+
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify(payload)}\n`);
+      } else {
+        stderr.write(`${message}\nRun: ${relativeRunDirectory}\n`);
+      }
+      return 4;
     } finally {
       await browser.close();
     }

@@ -183,6 +183,7 @@ formctl doctor
 - [x] Reject unsafe workflow names before reading or writing workflow files.
 - [x] Return machine-readable `invalid_workflow_name` errors in JSON mode.
 - [x] Return machine-readable `workflow_not_found` errors in JSON mode.
+- [x] Return machine-readable `dry_run_failed` errors for browser dry-run runtime failures.
 - [x] Return repair guidance for unreadable workflow YAML in validation JSON.
 - [x] Return machine-readable `workflow_unreadable` errors for inspect and submit JSON.
 - [x] Return machine-readable `workflow_invalid` errors for inspect and submit JSON.
