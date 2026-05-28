@@ -1593,6 +1593,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Continue launch outreach or npm authentication; the core dry-run artifact set now includes screenshot, summary, audit, and field diff.
 
+### 2026-05-28: Keep Field Diff Semantics Pre-Submit
+
+**Date:** 2026-05-28
+
+**Experiment:** Ensure `field-diff.json` remains a pre-submit artifact even when the run later performs an approved submission.
+
+**Hypothesis:** If the diff is meant for approval review, its own `submitted` field should describe the diff moment, not the final run outcome.
+
+**Result:** Passed. Approved submits still return `status: "submitted"` in `summary.json` and stdout, but their `field-diff.json` now keeps `submitted: false`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "submit --approve"` because approved submit field diffs had `submitted: true`. The first attempted RED command used a mismatched test filter and skipped all tests, so the filter was corrected before implementation. GREEN passed after writing field diffs with `submitted: false` unconditionally. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:agent`, `npm run test:package`, `npm pack --dry-run --json`, and a real approved demo smoke: `npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless`, whose `field-diff.json` kept `submitted: false`. `npm run publish:check -- --json` still reports only `npm_auth_required` as the publish blocker.
+
+**What Failed:** The initial field-diff implementation reused final run submission state, which made an approval-review artifact look post-submit.
+
+**Decision:** Treat `summary.json` as final run state and `field-diff.json` as pre-submit review state.
+
+**Next Step:** Continue launch outreach or npm authentication; no code-quality blocker remains for the current package.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

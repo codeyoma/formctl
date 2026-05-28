@@ -2203,6 +2203,20 @@ describe("formctl CLI", () => {
           audit: `.formctl/runs/${runId}/audit.jsonl`,
         },
       });
+      expect(JSON.parse(readFileSync(diffPath, "utf8"))).toEqual({
+        status: "field-diff",
+        workflow: "expense-report",
+        submitted: false,
+        fields: [
+          {
+            name: "amount",
+            selector: 'input[name="amount"]',
+            type: "number",
+            action: "set",
+            value: "120000",
+          },
+        ],
+      });
     } finally {
       await fixture.close();
     }

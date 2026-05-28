@@ -1372,7 +1372,7 @@ export async function run(
       const fieldDiffArtifact = `${relativeRunDirectory}/field-diff.json`;
       writeFileSync(
         path.join(runDirectory, "field-diff.json"),
-        `${JSON.stringify(buildFieldDiff(workflow, filledFields, !isDryRun), null, 2)}\n`,
+        `${JSON.stringify(buildFieldDiff(workflow, filledFields, false), null, 2)}\n`,
       );
       let dryRunScreenshotArtifact: string | undefined;
       auditEvents.push({
