@@ -1733,6 +1733,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Enable npm 2FA for writes or create a granular automation token with publish bypass, rerun `npm run publish:check -- --json`, then run `npm publish` for `formctl@0.1.1`.
 
+### 2026-05-28: Add Submit-Time Storage State Handoff
+
+**Date:** 2026-05-28
+
+**Experiment:** Add a local authenticated-session handoff for protected forms without storing credentials in workflow YAML.
+
+**Hypothesis:** If a user has already logged in locally, `formctl submit --storage-state <path>` can replay the protected form with Playwright storageState while keeping the existing dry-run, approval, selector-check, and audit contracts intact.
+
+**Result:** Passed. `submit` now accepts `--storage-state <path>`, loads it into a dedicated Playwright browser context, rejects missing storage-state paths as `storage_state_invalid`, and records only `storageState: true` in audit command metadata when the option is used. README, agent safety guidance, trust notes, task tracking, and the pending changelog now document the local-only cookie/session risk.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "storage state file"` because `--storage-state` was treated as an unknown field flag. GREEN passed after adding the control option, path validation, and browser context setup. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety|trust and comparison"`. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm test`, `npm run build`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first broad CLI test run failed because the audit-log tests exactly matched the `run_started.command` object and did not allow `storageState: false` on normal runs. The implementation was narrowed so storage-state metadata appears only when the option is actually used.
+
+**Publish Status:** `npm run publish:check -- --json` still reports `npm_publish_2fa_required`; npm auth is present, the package name is available, and pack dry-run succeeds, but publishing remains blocked until npm 2FA for writes or a publish-capable granular token is configured.
+
+**Next Step:** Finish the remaining Task 6.2 work by adding a record-time session handoff or explicit headed manual login/resume path, then rerun the protected-form fixture through both record and submit.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

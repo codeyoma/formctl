@@ -41,6 +41,7 @@ const SUBMIT_CONTROL_OPTIONS = new Set([
   "headless",
   "help",
   "json",
+  "storage-state",
   "values",
 ]);
 
@@ -67,6 +68,8 @@ Flags:
   --version     Show the installed formctl version
   --headed      Run with a visible browser
   --headless    Run without a visible browser
+  --storage-state PATH
+                Use a local Playwright storageState JSON file for submit
   --values PATH Load submit field values from a JSON object file
   --manual      For record: wait for Enter after you complete the form in the browser
 `;
@@ -734,6 +737,25 @@ function readSubmitFieldValues(
   return { values };
 }
 
+function readSubmitStorageState(
+  options: Map<string, string | true>,
+): { storageStatePath?: string } | { error: { message: string } } {
+  const storageState = options.get("storage-state");
+  if (storageState === undefined) {
+    return {};
+  }
+  if (typeof storageState !== "string") {
+    return { error: { message: "--storage-state requires a Playwright storageState JSON file path." } };
+  }
+
+  const storageStatePath = path.isAbsolute(storageState) ? storageState : path.join(process.cwd(), storageState);
+  if (!existsSync(storageStatePath)) {
+    return { error: { message: `--storage-state file not found: ${storageState}` } };
+  }
+
+  return { storageStatePath };
+}
+
 function buildSelectorMismatchPayload(
   workflowName: string,
   selector: string,
@@ -1337,6 +1359,26 @@ export async function run(
       }
       return 1;
     }
+    const storageStateResult = readSubmitStorageState(options);
+    if ("error" in storageStateResult) {
+      const payload = {
+        status: "error",
+        workflow: workflowName,
+        exitCode: 1,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "storage_state_invalid",
+          message: storageStateResult.error.message,
+        },
+      };
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify(payload)}\n`);
+      } else {
+        stderr.write(`${storageStateResult.error.message}\n`);
+      }
+      return 1;
+    }
     const browserHeadless = resolveBrowserHeadless({ command: "submit", flags, isDryRun: isDryRun || isInteractiveApproval });
     const browser = await chromium.launch({ headless: browserHeadless });
     const runStatus = isDryRun ? "dry-run" : "submitted";
@@ -1361,9 +1403,13 @@ export async function run(
           ...(isInteractiveApproval ? { interactive: true } : {}),
           headless: browserHeadless,
           json: wantsJson,
+          ...(storageStateResult.storageStatePath === undefined ? {} : { storageState: true }),
         },
       });
-      const page = await browser.newPage();
+      const context = await browser.newContext(
+        storageStateResult.storageStatePath === undefined ? {} : { storageState: storageStateResult.storageStatePath },
+      );
+      const page = await context.newPage();
       await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
       const interactionRequired = await detectInteractionRequired(page);
       if (interactionRequired !== undefined) {

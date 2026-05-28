@@ -365,9 +365,10 @@ npx formctl doctor
 **Goal:** Improve login and setup flows without storing credentials in `formctl`.
 
 - [ ] Support an explicit local session handoff, such as Playwright `storageState` or a documented browser-profile path, for `record` and `submit`.
+- [x] Support submit-time Playwright `storageState` handoff for local authenticated sessions.
 - [ ] Document manual login and MFA setup before recording or replaying protected forms.
 - [x] Return a typed JSON failure when a run reaches a login wall instead of continuing ambiguously.
-- [ ] Verify: A fixture that requires a pre-created session succeeds with the session handoff and fails safely without it.
+- [x] Verify: A fixture that requires a pre-created session succeeds with submit-time session handoff and fails safely without it.
 - [ ] Record auth and session risks in `REVIEW.md`.
 
 ### Task 6.3: Handle CAPTCHA And MFA Boundaries Safely

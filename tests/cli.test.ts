@@ -2794,6 +2794,133 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit --dry-run --json uses a storage state file for authenticated forms", async () => {
+    let postCount = 0;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        postCount += 1;
+      }
+      const isAuthenticated = request.headers.cookie?.includes("formctl_session=valid") ?? false;
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(isAuthenticated ? `
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/submit" aria-label="Expense report">
+              <label>Amount <input name="amount" type="number" /></label>
+              <button type="submit">Submit expense</button>
+            </form>
+          </body>
+        </html>
+      ` : `
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/login" aria-label="Sign in">
+              <label>Email <input name="email" type="email" autocomplete="username" /></label>
+              <label>Password <input name="password" type="password" autocomplete="current-password" /></label>
+              <button type="submit">Sign in</button>
+            </form>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Authenticated fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-storage-state-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: http://127.0.0.1:${address.port}/expense`,
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      path.join(workspace, "storage-state.json"),
+      JSON.stringify({
+        cookies: [
+          {
+            name: "formctl_session",
+            value: "valid",
+            domain: "127.0.0.1",
+            path: "/",
+            expires: -1,
+            httpOnly: false,
+            secure: false,
+            sameSite: "Lax",
+          },
+        ],
+        origins: [],
+      }),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--storage-state",
+        "storage-state.json",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const parsed = JSON.parse(result.stdout);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "dry-run",
+        workflow: "expense-report",
+        exitCode: 0,
+        submitted: false,
+        requiresApproval: false,
+        fields: {
+          amount: "120000",
+        },
+      });
+      expect(parsed.artifacts).toEqual({
+        screenshot: `.formctl/runs/${parsed.runId}/dry-run.png`,
+        summary: `.formctl/runs/${parsed.runId}/summary.json`,
+        diff: `.formctl/runs/${parsed.runId}/field-diff.json`,
+        audit: `.formctl/runs/${parsed.runId}/audit.jsonl`,
+      });
+      expect(existsSync(path.join(workspace, parsed.artifacts.screenshot))).toBe(true);
+      const auditEvents = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+      expect(auditEvents[0].command).toMatchObject({ storageState: true });
+      expect(postCount).toBe(0);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
   test("submit --dry-run exits 3 when a recorded field type changed", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

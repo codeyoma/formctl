@@ -47,6 +47,8 @@ If the loaded page appears to require login, CAPTCHA, or MFA, `formctl` stops be
 - `audit.jsonl`
 
 `formctl` does not bypass these controls. Complete the required step in a headed browser or provide a valid local session before retrying.
+When replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.
+Storage state files can contain cookies or session tokens; keep them local, exclude them from git, and do not print them in agent output.
 
 ## Selector breakage
 
