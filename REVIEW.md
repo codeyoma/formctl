@@ -1999,6 +1999,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add a checked-in demo workflow for a bounded setup-click modal, then extend demo replay coverage so the public package proves the multi-step path end to end.
 
+### 2026-05-29: Add Setup-Click Demo Replay Coverage
+
+**Date:** 2026-05-29
+
+**Experiment:** Make the public procurement approval demo require bounded setup click replay, and verify that the checked-in workflow proves it through the existing demo replay smoke path.
+
+**Hypothesis:** Runtime setup-click support is more credible if the package ships a demo workflow that needs it. A user or agent running `npm run test:replay` should see the multi-step modal path dry-run safely and submit exactly once after approval.
+
+**Result:** Passed. `demo/procurement-approval.html` now starts with a named `open-approval` button and inserts the approval form only after that setup click. `.formctl/workflows/procurement-approval.yml` includes a redacted manual `click` event for `button[name="open-approval"]`. The demo replay test now asserts that the dry-run audit log contains `setup_click`, while still proving no POST happens during dry-run and exactly one POST happens after `--approve`.
+
+**Why This Was Highest Value:** The previous session added runtime support but only unit-style fixture coverage. For a 100k-star CLI, the demo and packaged artifacts must prove the feature without asking users to record their own workflow first.
+
+**Evidence:** RED was observed with `npx vitest run tests/demo-replay.test.ts` because the checked-in procurement workflow did not emit `setup_click`. GREEN passed after updating the demo HTML and workflow. Focused verification passed with `npx vitest run tests/demo-replay.test.ts`, `npm run formctl -- validate procurement-approval --json`, and `npx vitest run tests/release-readiness.test.ts -t "README explains|demo fixture"`. Broader verification passed with `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The existing release-readiness fixture checks still passed because the form markup lives inside a template. I added explicit checks for `name="open-approval"` and the workflow `recording` block so the setup-click demo cannot silently regress into a static always-open form. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown`, while the pack dry-run check is ok with 44 package entries.
+
+**Suggested Next Task:** Add a selector-drift regression for setup-click selectors so a missing or submit-typed setup control exits `3` before any field filling or side effect.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -67,44 +67,58 @@
   <body>
     <h1>Procurement queue</h1>
     <p>Open approval modal for a two-step internal purchase request.</p>
-    <dialog open aria-label="Procurement approval modal">
-      <form method="post" action="/procurement-approval/submit" aria-label="Procurement approval">
-        <fieldset data-step="1">
-          <legend>Step 1: requester</legend>
-          <label>
-            Requestor email
-            <input name="requestorEmail" type="email" required />
-          </label>
-          <label>
-            Department
-            <select name="department" required>
-              <option value="engineering">Engineering</option>
-              <option value="finance">Finance</option>
-              <option value="operations">Operations</option>
-            </select>
-          </label>
-          <label>
-            Amount
-            <input name="amount" type="number" min="1" required />
-          </label>
-        </fieldset>
-        <fieldset data-step="2">
-          <legend>Step 2: approval details</legend>
-          <label>
-            Needed by
-            <input name="neededBy" type="date" required />
-          </label>
-          <label>
-            Justification
-            <textarea name="justification" required></textarea>
-          </label>
-          <label>
-            <input name="urgent" type="checkbox" />
-            Urgent request
-          </label>
-        </fieldset>
-        <button type="submit">Approve procurement</button>
-      </form>
-    </dialog>
+    <button type="button" name="open-approval">Open approval modal</button>
+    <div id="approval-root"></div>
+    <template id="approval-template">
+      <dialog open aria-label="Procurement approval modal">
+        <form method="post" action="/procurement-approval/submit" aria-label="Procurement approval">
+          <fieldset data-step="1">
+            <legend>Step 1: requester</legend>
+            <label>
+              Requestor email
+              <input name="requestorEmail" type="email" required />
+            </label>
+            <label>
+              Department
+              <select name="department" required>
+                <option value="engineering">Engineering</option>
+                <option value="finance">Finance</option>
+                <option value="operations">Operations</option>
+              </select>
+            </label>
+            <label>
+              Amount
+              <input name="amount" type="number" min="1" required />
+            </label>
+          </fieldset>
+          <fieldset data-step="2">
+            <legend>Step 2: approval details</legend>
+            <label>
+              Needed by
+              <input name="neededBy" type="date" required />
+            </label>
+            <label>
+              Justification
+              <textarea name="justification" required></textarea>
+            </label>
+            <label>
+              <input name="urgent" type="checkbox" />
+              Urgent request
+            </label>
+          </fieldset>
+          <button type="submit">Approve procurement</button>
+        </form>
+      </dialog>
+    </template>
+    <script>
+      document.querySelector('button[name="open-approval"]').addEventListener("click", () => {
+        const root = document.querySelector("#approval-root");
+        if (root.childElementCount > 0) {
+          return;
+        }
+
+        root.append(document.querySelector("#approval-template").content.cloneNode(true));
+      });
+    </script>
   </body>
 </html>

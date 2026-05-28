@@ -103,6 +103,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("That is the main loop: discover, validate, dry-run, approve.");
     expect(readme).toContain("The demo workflows are already checked in under `.formctl/workflows/`.");
     expect(readme).toContain("Run `npm run formctl -- inspect <workflow-name> --json` to see required fields");
+    expect(readme).toContain("The `procurement-approval` demo also proves bounded setup click replay");
     expect(readme).toContain("Use `--values <path>` when field flags would be hard to quote.");
     expect(readme).toContain("Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.");
     expect(readme).toContain("Use `--storage-state <path>` to replay a protected form with a local Playwright storageState JSON file after the user has already logged in.");
@@ -230,6 +231,7 @@ describe("release readiness docs", () => {
     const supportRefund = readFileSync(path.join(projectRoot, "demo", "support-refund.html"), "utf8");
     const vendorOnboarding = readFileSync(path.join(projectRoot, "demo", "vendor-onboarding.html"), "utf8");
     const procurementApproval = readFileSync(path.join(projectRoot, "demo", "procurement-approval.html"), "utf8");
+    const procurementApprovalWorkflow = readFileSync(path.join(projectRoot, ".formctl", "workflows", "procurement-approval.yml"), "utf8");
     const crmUpdate = readFileSync(path.join(projectRoot, "demo", "crm-update.html"), "utf8");
     const complianceAttestation = readFileSync(path.join(projectRoot, "demo", "compliance-attestation.html"), "utf8");
     const taxForm = readFileSync(path.join(projectRoot, "demo", "tax-form.txt"), "utf8");
@@ -270,6 +272,7 @@ describe("release readiness docs", () => {
     expect(vendorOnboarding).toContain("<textarea");
     expect(procurementApproval).toContain("<dialog");
     expect(procurementApproval).toContain("open");
+    expect(procurementApproval).toContain('name="open-approval"');
     expect(procurementApproval).toContain('action="/procurement-approval/submit"');
     expect(procurementApproval).toContain('data-step="1"');
     expect(procurementApproval).toContain('data-step="2"');
@@ -285,6 +288,9 @@ describe("release readiness docs", () => {
     expect(procurementApproval).toContain("<textarea");
     expect(procurementApproval).toContain('name="urgent"');
     expect(procurementApproval).toContain('type="checkbox"');
+    expect(procurementApprovalWorkflow).toContain("recording:");
+    expect(procurementApprovalWorkflow).toContain("event: click");
+    expect(procurementApprovalWorkflow).toContain('selector: button[name="open-approval"]');
     expect(crmUpdate).toContain('action="/crm-update/submit"');
     expect(crmUpdate).toContain('name="accountName"');
     expect(crmUpdate).toContain('name="stage"');

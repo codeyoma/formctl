@@ -1,5 +1,11 @@
 name: procurement-approval
 url: http://127.0.0.1:4173/procurement-approval
+recording:
+  mode: manual
+  events:
+    - event: click
+      selector: button[name="open-approval"]
+      value: "[redacted]"
 safety:
   dryRunFirst: true
   approvalRequired: true

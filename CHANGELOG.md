@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add a checked-in procurement approval demo workflow that proves bounded setup click replay.
 - Replay bounded named setup clicks before field selector checks.
 - Add multi-step recording guidance for bounded click/wait metadata boundaries.
 - Record page navigation during manual recording as redacted `waitFor: navigation` metadata.

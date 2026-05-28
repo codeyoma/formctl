@@ -63,6 +63,7 @@ npm run formctl -- submit expense-report --values demo/expense-values.json --app
 That is the main loop: discover, validate, dry-run, approve.
 
 The demo workflows are already checked in under `.formctl/workflows/`. Run `npm run formctl -- inspect <workflow-name> --json` to see required fields for `expense-report`, `admin-invite`, `support-refund`, `vendor-onboarding`, `procurement-approval`, `crm-update`, and `compliance-attestation`.
+The `procurement-approval` demo also proves bounded setup click replay: the workflow opens a named approval modal before checking and filling fields.
 
 Use `--values <path>` when field flags would be hard to quote. Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.
 Use `--storage-state <path>` to replay a protected form with a local Playwright storageState JSON file after the user has already logged in.

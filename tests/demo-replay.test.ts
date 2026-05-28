@@ -17,6 +17,7 @@ type ReplayCase = {
   htmlFile: string;
   args: string[];
   expectedFields: Record<string, string>;
+  expectedAuditEvents?: string[];
 };
 
 const replayCases: ReplayCase[] = [
@@ -113,6 +114,7 @@ const replayCases: ReplayCase[] = [
       justification: "Quarterly laptop refresh",
       urgent: "true",
     },
+    expectedAuditEvents: ["setup_click"],
   },
   {
     name: "crm-update",
@@ -278,6 +280,12 @@ describe("demo fixture replay", () => {
           submitted: false,
           fields: fixture.expectedFields,
         });
+        if (fixture.expectedAuditEvents !== undefined) {
+          const auditLog = readFileSync(path.join(workspace, dryRunJson.artifacts.audit), "utf8");
+          for (const eventName of fixture.expectedAuditEvents) {
+            expect(auditLog).toContain(`"event":"${eventName}"`);
+          }
+        }
         expect(server.postCount(fixture.submitRoute)).toBe(0);
 
         const approved = await runFormctlAsync([

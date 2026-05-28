@@ -421,6 +421,7 @@ npx formctl doctor
 
 - [x] Document current click/wait recording metadata as review-only before adding step replay.
 - [x] Replay bounded named setup clicks before field selector checks.
+- [x] Add a checked-in demo workflow that proves setup-click replay in package/demo smoke tests.
 - [ ] Add workflow steps for known navigation, modal opening, intermediate confirmation, and final form submission.
 - [ ] Add per-step selector checks, screenshots, JSON output, and audit events.
 - [ ] Preserve dry-run stopping before the final submit action.
