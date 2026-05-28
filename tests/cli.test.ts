@@ -1123,8 +1123,8 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change events, and known field selectors.",
-          fix: "Use recording.mode: manual and events with event input/change, field, selector matching a workflow field, and value [redacted] or [file].",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file events, and known field selectors.",
+          fix: "Use recording.mode: manual and events with event input/change/select/file, field, selector matching a workflow field, and redacted values.",
         },
       ],
     });
@@ -1183,8 +1183,8 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change events, and known field selectors.",
-          fix: "Use recording.mode: manual and events with event input/change, field, selector matching a workflow field, and value [redacted] or [file].",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file events, and known field selectors.",
+          fix: "Use recording.mode: manual and events with event input/change/select/file, field, selector matching a workflow field, and redacted values.",
         },
       ],
     });
@@ -1583,6 +1583,13 @@ describe("formctl CLI", () => {
               Receipt
               <input name="receipt" type="file" />
             </label>
+            <label>
+              Department
+              <select name="department">
+                <option value="">Choose department</option>
+                <option value="ops">Ops</option>
+              </select>
+            </label>
             <button type="submit">Submit expense</button>
           </form>
           <script>
@@ -1594,6 +1601,9 @@ describe("formctl CLI", () => {
               const amount = document.querySelector('input[name="amount"]');
               amount.value = "120000";
               amount.dispatchEvent(new Event("input", { bubbles: true }));
+              const department = document.querySelector('select[name="department"]');
+              department.value = "ops";
+              department.dispatchEvent(new Event("change", { bubbles: true }));
               const receipt = document.querySelector('input[name="receipt"]');
               receipt.dispatchEvent(new Event("change", { bubbles: true }));
             }, 20);
@@ -1639,13 +1649,25 @@ describe("formctl CLI", () => {
             value: "[redacted]",
           },
           {
-            event: "change",
+            event: "select",
+            field: "department",
+            selector: 'select[name="department"]',
+            value: "[redacted]",
+          },
+          {
+            event: "file",
             field: "receipt",
             selector: 'input[name="receipt"]',
             value: "[file]",
           },
         ],
       });
+      const validation = await run(
+        [process.execPath, cliPath, "validate", "expense-report", "--json"],
+        createWritableCapture().stream,
+        createWritableCapture().stream,
+      );
+      expect(validation).toBe(0);
     } finally {
       process.chdir(previousCwd);
       await fixture.close();

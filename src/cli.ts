@@ -86,7 +86,7 @@ type WorkflowField = {
 };
 
 type WorkflowRecordingEvent = {
-  event: "input" | "change";
+  event: "input" | "change" | "select" | "file";
   field: string;
   selector: string;
   value: "[redacted]" | "[file]";
@@ -422,12 +422,28 @@ function hasValidRecordingMetadata(value: unknown, fields: unknown): boolean {
     }))
     : new Map<string, string>();
 
-  return value.events.every((event) => isObject(event)
-    && (event.event === "input" || event.event === "change")
-    && isNonEmptyString(event.field)
-    && isNonEmptyString(event.selector)
-    && fieldSelectors.get(event.field) === event.selector
-    && (event.value === "[redacted]" || event.value === "[file]"));
+  return value.events.every((event) => {
+    if (!isObject(event)
+      || !isNonEmptyString(event.field)
+      || !isNonEmptyString(event.selector)
+      || fieldSelectors.get(event.field) !== event.selector) {
+      return false;
+    }
+
+    if (event.event === "input" || event.event === "select") {
+      return event.value === "[redacted]";
+    }
+
+    if (event.event === "file") {
+      return event.value === "[file]";
+    }
+
+    if (event.event === "change") {
+      return event.value === "[redacted]" || event.value === "[file]";
+    }
+
+    return false;
+  });
 }
 
 function validateWorkflow(workflowName: string, workflow: unknown): ValidationCheck[] {
@@ -541,8 +557,8 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       buildValidationCheck(
         "recording-metadata",
         hasValidRecordingMetadata(workflowObject.recording, fields),
-        "Recording metadata must use manual mode, redacted input/change events, and known field selectors.",
-        "Use recording.mode: manual and events with event input/change, field, selector matching a workflow field, and value [redacted] or [file].",
+        "Recording metadata must use manual mode, redacted input/change/select/file events, and known field selectors.",
+        "Use recording.mode: manual and events with event input/change/select/file, field, selector matching a workflow field, and redacted values.",
       ),
     ]),
   ];
@@ -1898,9 +1914,10 @@ export async function run(
       let recordingEvents: WorkflowRecordingEvent[] | undefined;
       if (flags.has("--manual")) {
         await page.evaluate(() => {
+          type RecordingEventName = "input" | "change" | "select" | "file";
           type RecordingWindow = Window & {
             __formctlRecordingEvents?: Array<{
-              event: "input" | "change";
+              event: RecordingEventName;
               field: string;
               selector: string;
               value: "[redacted]" | "[file]";
@@ -1919,9 +1936,20 @@ export async function run(
 
             const inputType = tagName === "input" ? element.getAttribute("type") ?? "text" : tagName;
             const selector = `${tagName}[name="${field}"]`;
+            const recordedEventName = (event: Event): RecordingEventName => {
+              if (inputType === "file") {
+                return "file";
+              }
+
+              if (tagName === "select") {
+                return "select";
+              }
+
+              return event.type === "change" ? "change" : "input";
+            };
             const record = (event: Event) => {
               recordingWindow.__formctlRecordingEvents?.push({
-                event: event.type === "change" ? "change" : "input",
+                event: recordedEventName(event),
                 field,
                 selector,
                 value: inputType === "file" ? "[file]" : "[redacted]",

@@ -1909,6 +1909,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Define the first bounded non-field event metadata, starting with click and explicit navigation wait, and add validation before adding replay behavior.
 
+### 2026-05-29: Record Semantic Select And File Events
+
+**Date:** 2026-05-29
+
+**Experiment:** Make `record --manual` record select controls and file uploads as reviewable `select` and `file` events instead of generic `change` events.
+
+**Hypothesis:** Event history becomes easier to inspect and safer to evolve when the YAML distinguishes ordinary text input, select choices, and file uploads while still redacting values and file names.
+
+**Result:** Passed. Manual recording now emits `input`, `select`, and `file` event names for the tested field controls. Validation accepts the new semantic events, keeps old `change` events compatible, and still requires each event to match a known workflow field selector with redacted metadata.
+
+**Why This Was Highest Value:** Task 6.1 is the active reliability thread and `recording.events` now affects replay order. Naming select/file events semantically improves auditability without expanding into unsafe open-ended browser automation.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "captures redacted field interaction events"` because manual select and file interactions were recorded as `change`. GREEN passed after classifying select controls as `select` and file inputs as `file`, with the test also validating the generated workflow. Verification passed with `npx vitest run tests/cli.test.ts -t "recording metadata|captures redacted field interaction events"`, `npx vitest run tests/release-readiness.test.ts -t "README|TASK|changelog"`, `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** `npm run publish:check -- --json` remains blocked by `npm_publish_otp_required`, which is expected for the current npm account. No new package-content issue was found; pack dry-run still produced 43 entries.
+
+**Suggested Next Task:** Continue Task 6.1 by defining bounded `click` and explicit navigation wait metadata with validation first, keeping replay behavior conservative until the metadata contract is tested.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

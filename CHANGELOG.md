@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Record manual select controls and file uploads as semantic `select` and `file` events.
 - Reject `recording.events` entries that reference fields or selectors outside the workflow field list.
 - Cancel `record --manual` without saving when the confirmation input closes before Enter.
 - Replay manually recorded workflow fields in first-recorded event order when `recording.events` metadata is present.

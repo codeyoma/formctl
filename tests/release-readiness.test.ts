@@ -117,6 +117,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Use `--manual` when login, navigation, or form setup needs a human-visible browser before saving selectors.");
     expect(readme).toContain("Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.");
     expect(readme).toContain("Manual recording stores redacted `recording.events` entries for changed fields and file inputs.");
+    expect(readme).toContain("Manual recording labels text input as `input`, select controls as `select`, and file inputs as `file` so the YAML is easier to review.");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
