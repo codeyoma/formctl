@@ -371,6 +371,20 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       && isNonEmptyString(field.name)
       && isNonEmptyString(field.selector)
       && isNonEmptyString(field.type));
+  const duplicateFieldNames = Array.isArray(fields)
+    ? fields.reduce<string[]>((duplicates, field, index, fieldList) => {
+      if (!isObject(field) || !isNonEmptyString(field.name)) {
+        return duplicates;
+      }
+
+      const firstIndex = fieldList.findIndex((candidate) => isObject(candidate) && candidate.name === field.name);
+      if (firstIndex !== index && !duplicates.includes(field.name)) {
+        duplicates.push(field.name);
+      }
+
+      return duplicates;
+    }, [])
+    : [];
   const unsupportedFieldTypes = Array.isArray(fields)
     ? fields.flatMap((field) => {
       if (!isObject(field) || !isNonEmptyString(field.type)) {
@@ -405,6 +419,14 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       "Workflow must include at least one field with name, selector, and type.",
       "Add fields entries with name, selector, and type for every required form field.",
     ),
+    ...(Array.isArray(fields) && fields.length > 0 ? [
+      buildValidationCheck(
+        "field-names",
+        duplicateFieldNames.length === 0,
+        `Workflow field names must be unique. Duplicate field name(s): ${duplicateFieldNames.join(", ")}.`,
+        "Use unique field names so CLI flags and values files map to exactly one form field.",
+      ),
+    ] : []),
     ...(Array.isArray(fields) && fields.length > 0 ? [
       buildValidationCheck(
         "field-types",

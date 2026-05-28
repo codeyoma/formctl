@@ -150,6 +150,7 @@ Run `formctl validate <workflow-name> --json` before reviewing or sharing workfl
 Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.
 Unreadable workflow YAML returns a `readable-yaml` check with `message` and `fix` fields.
 Validation rejects unredacted `recording.events` metadata when present.
+Validation rejects duplicate workflow field names before any browser work.
 Validation rejects unsupported workflow field types before any browser work.
 Invalid workflow names return `invalid_workflow_name` in JSON mode.
 Missing workflows return `workflow_not_found` in JSON mode.

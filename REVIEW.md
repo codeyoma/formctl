@@ -911,6 +911,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** If npm auth is available, publish the package. Otherwise execute the first external outreach post from `docs/POSTING_QUEUE.md` and measure response.
 
+### 2026-05-28: Reject Duplicate Workflow Field Names
+
+**Date:** 2026-05-28
+
+**Experiment:** Validate duplicate workflow field names before browser-backed submit work starts.
+
+**Hypothesis:** Duplicate field names should fail as `workflow_invalid` because CLI flags and values files cannot map one value to exactly one field when names repeat.
+
+**Result:** Passed. `submit --dry-run --json` now rejects duplicate field names with a `field-names` validation check, `submitted: false`, and no `.formctl/runs` directory.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "duplicate field names"`: the test failed with `Unexpected end of JSON input` because the current path did not emit validation JSON before browser work. Focused GREEN passed with the same command after adding duplicate field-name validation. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npm run formctl -- validate expense-report --json`, and `npm pack --dry-run --json`. `npm run publish:check -- --json` still returns `npm_auth_required`; GitHub issue #1 remains open and valid for launch outreach.
+
+**Decision:** Keep workflow validation strict where ambiguity can make CLI input map to multiple browser fields. Repair guidance should point authors toward one stable field name per CLI flag.
+
+**Next Step:** Return to npm publish if auth is available or first external outreach if not.
+
 ### Template
 
 **Date:** YYYY-MM-DD

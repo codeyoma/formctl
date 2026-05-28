@@ -600,6 +600,7 @@ describe("formctl CLI", () => {
         { name: "workflow-name", status: "ok" },
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
+        { name: "field-names", status: "ok" },
         { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         { name: "safety-metadata", status: "ok" },
@@ -836,6 +837,66 @@ describe("formctl CLI", () => {
     expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
   });
 
+  test("submit --dry-run --json rejects duplicate field names before browser work", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-duplicate-field-name-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://127.0.0.1:9/expense",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"subtotal\"]",
+        "    type: number",
+        "  - name: amount",
+        "    selector: input[name=\"total\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl([
+      "submit",
+      "expense-report",
+      "--amount",
+      "120000",
+      "--dry-run",
+      "--json",
+      "--headless",
+    ], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: field-names",
+        fix: "Run formctl validate expense-report --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "field-names",
+          status: "error",
+          message: "Workflow field names must be unique. Duplicate field name(s): amount.",
+          fix: "Use unique field names so CLI flags and values files map to exactly one form field.",
+        },
+      ],
+    });
+    expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+  });
+
   test("validate --json exits 1 when safety metadata is missing", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
@@ -869,6 +930,7 @@ describe("formctl CLI", () => {
         { name: "workflow-name", status: "ok" },
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
+        { name: "field-names", status: "ok" },
         { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         {
@@ -926,6 +988,7 @@ describe("formctl CLI", () => {
         { name: "workflow-name", status: "ok" },
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
+        { name: "field-names", status: "ok" },
         { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         { name: "safety-metadata", status: "ok" },
