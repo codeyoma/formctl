@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Constrain setup click replay to leading click events before field input begins.
 - Add a checked-in procurement approval demo workflow that proves bounded setup click replay.
 - Replay bounded named setup clicks before field selector checks.
 - Add multi-step recording guidance for bounded click/wait metadata boundaries.

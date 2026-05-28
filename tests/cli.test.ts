@@ -2796,6 +2796,117 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit does not replay clicks recorded after field events as setup", async () => {
+    let submittedValues: URLSearchParams | undefined;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        let body = "";
+        request.setEncoding("utf8");
+        request.on("data", (chunk) => {
+          body += chunk;
+        });
+        request.on("end", () => {
+          submittedValues = new URLSearchParams(body);
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          response.end("<!doctype html><html><body>Submitted</body></html>");
+        });
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/submit" aria-label="Approval">
+              <input name="amount" type="number" />
+              <input name="afterFieldClicked" type="hidden" value="false" />
+              <button type="button" name="after-field-action">After field action</button>
+              <button type="submit">Approve</button>
+            </form>
+            <script>
+              document.querySelector('button[name="after-field-action"]').addEventListener("click", () => {
+                document.querySelector('input[name="afterFieldClicked"]').value = "true";
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Post-field click fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-post-field-click-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval.yml"),
+      [
+        "name: approval",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: input",
+        "      field: amount",
+        "      selector: input[name=\"amount\"]",
+        "      value: \"[redacted]\"",
+        "    - event: click",
+        "      selector: button[name=\"after-field-action\"]",
+        "      value: \"[redacted]\"",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "approval",
+        "--amount",
+        "4500",
+        "--approve",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toMatchObject({
+        status: "submitted",
+        submitted: true,
+        fields: {
+          amount: "4500",
+        },
+      });
+      expect(submittedValues?.get("amount")).toBe("4500");
+      expect(submittedValues?.get("afterFieldClicked")).toBe("false");
+      const auditLog = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8");
+      expect(auditLog).not.toContain('"event":"setup_click"');
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
   test("submit --dry-run supports textarea and date fields", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

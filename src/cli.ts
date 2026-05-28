@@ -1011,7 +1011,16 @@ function orderFieldsForReplay(workflow: Workflow): WorkflowField[] {
 }
 
 function setupClicksForReplay(workflow: Workflow): WorkflowClickRecordingEvent[] {
-  return workflow.recording?.events.filter((event): event is WorkflowClickRecordingEvent => event.event === "click") ?? [];
+  const replayEvents: WorkflowClickRecordingEvent[] = [];
+  for (const event of workflow.recording?.events ?? []) {
+    if (event.event !== "click") {
+      break;
+    }
+
+    replayEvents.push(event);
+  }
+
+  return replayEvents;
 }
 
 async function readSetupClickControlType(page: Page, selector: string): Promise<"non-submit" | "submit"> {

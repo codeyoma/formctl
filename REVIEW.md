@@ -2017,6 +2017,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add a selector-drift regression for setup-click selectors so a missing or submit-typed setup control exits `3` before any field filling or side effect.
 
+### 2026-05-29: Constrain Setup Click Replay To Leading Events
+
+**Date:** 2026-05-29
+
+**Experiment:** Tighten setup-click replay so only leading click events at the start of `recording.events` are executed before field selector checks.
+
+**Hypothesis:** A click recorded after a field interaction may be a later workflow action, not setup. Replaying it before field filling can reorder the human workflow and create hidden side effects.
+
+**Result:** Passed. `setupClicksForReplay` now stops at the first non-click recording event, so only the initial setup-click prefix is replayed. Post-field clicks remain review metadata until explicit step replay exists.
+
+**Why This Was Highest Value:** It fixes a correctness edge case in the newly added Task 6.7 runtime behavior. Narrowing replay semantics now prevents the feature from becoming implicit arbitrary click replay.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "after field events"` because a click recorded after an input event was replayed before filling and changed a hidden submitted value from `false` to `true`. GREEN passed after limiting setup replay to leading click events. Focused verification passed with `npx vitest run tests/cli.test.ts -t "after field events|bounded setup clicks"` and `npx vitest run tests/release-readiness.test.ts -t "multi-step recording metadata"`. Broader verification passed with `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The first targeted command used `-t "post-field click"` and skipped all tests because it did not match the test name; rerunning with `-t "after field events"` produced the expected RED. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown`, while the pack dry-run check is ok with 44 package entries.
+
+**Suggested Next Task:** Add explicit selector-drift tests for leading setup clicks: missing setup selector, ambiguous setup selector, and submit-typed setup selector should exit `3` before any field filling or side effect.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -163,6 +163,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("[Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md)");
     expect(guide).toContain("# Multi-Step Recording Metadata");
     expect(guide).toContain("bounded setup click replay");
+    expect(guide).toContain("Only leading `click` events");
     expect(guide).toContain("`submit` replays fields");
     expect(guide).toContain("does not replay arbitrary clicks or waits");
     expect(guide).toContain("`setup_click`");
@@ -171,8 +172,10 @@ describe("release readiness docs", () => {
     expect(guide).toContain("waitFor: navigation");
     expect(guide).toContain('value: "[redacted]"');
     expect(guide).toContain("Use raw Playwright or a browser agent");
+    expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
+    expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });
 

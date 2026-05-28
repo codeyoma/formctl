@@ -115,7 +115,7 @@ Use `--storage-state <path>` with `record` or `submit` only after the user has c
 Manual recording stores redacted `recording.events` entries for changed fields and file inputs.
 Manual recording labels text input as `input`, select controls as `select`, file inputs as `file`, named non-submit button clicks as `click`, and page navigation as `wait` so the YAML is easier to review.
 When present, `submit` uses the first recorded event for each field to replay fields in the same order the human recorded them.
-See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: bounded named `click` events can open known setup UI before field checks, `wait` events remain review metadata, and side effects still require dry-run/approval.
+See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: leading bounded named `click` events can open known setup UI before field checks, later clicks and `wait` events remain review metadata, and side effects still require dry-run/approval.
 If terminal input closes before Enter, `record --manual` cancels without writing a workflow file.
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
 `record` also saves a baseline screenshot next to the workflow file.
