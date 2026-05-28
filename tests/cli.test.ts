@@ -2653,6 +2653,149 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit replays bounded setup clicks before field selector checks", async () => {
+    let postCount = 0;
+    let submittedValues: URLSearchParams | undefined;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        postCount += 1;
+        let body = "";
+        request.setEncoding("utf8");
+        request.on("data", (chunk) => {
+          body += chunk;
+        });
+        request.on("end", () => {
+          submittedValues = new URLSearchParams(body);
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          response.end("<!doctype html><html><body>Submitted</body></html>");
+        });
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <button type="button" name="open-approval">Open approval form</button>
+            <div id="approval-root"></div>
+            <script>
+              document.querySelector('button[name="open-approval"]').addEventListener("click", () => {
+                document.querySelector("#approval-root").innerHTML = [
+                  '<form method="post" action="/submit" aria-label="Approval">',
+                  '<input name="requestorEmail" type="email" />',
+                  '<input name="amount" type="number" />',
+                  '<button type="submit">Approve</button>',
+                  '</form>'
+                ].join("");
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Setup click fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-setup-click-replay-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-modal.yml"),
+      [
+        "name: approval-modal",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: click",
+        "      selector: button[name=\"open-approval\"]",
+        "      value: \"[redacted]\"",
+        "    - event: input",
+        "      field: requestorEmail",
+        "      selector: input[name=\"requestorEmail\"]",
+        "      value: \"[redacted]\"",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: requestorEmail",
+        "    selector: input[name=\"requestorEmail\"]",
+        "    type: email",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const dryRun = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--requestorEmail",
+        "ops@example.com",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(dryRun.status).toBe(0);
+      expect(dryRun.stderr).toBe("");
+      const dryRunJson = JSON.parse(dryRun.stdout);
+      expect(dryRunJson).toMatchObject({
+        status: "dry-run",
+        submitted: false,
+        fields: {
+          requestorEmail: "ops@example.com",
+          amount: "4500",
+        },
+      });
+      expect(postCount).toBe(0);
+      const auditLog = readFileSync(path.join(workspace, dryRunJson.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"role":"setup-click"');
+      expect(auditLog).toContain('"event":"setup_click"');
+
+      const approved = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--requestorEmail",
+        "ops@example.com",
+        "--amount",
+        "4500",
+        "--approve",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(approved.status).toBe(0);
+      expect(approved.stderr).toBe("");
+      expect(JSON.parse(approved.stdout)).toMatchObject({
+        status: "submitted",
+        submitted: true,
+      });
+      expect(postCount).toBe(1);
+      expect(submittedValues?.get("requestorEmail")).toBe("ops@example.com");
+      expect(submittedValues?.get("amount")).toBe("4500");
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
   test("submit --dry-run supports textarea and date fields", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

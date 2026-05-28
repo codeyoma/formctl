@@ -1010,6 +1010,27 @@ function orderFieldsForReplay(workflow: Workflow): WorkflowField[] {
   return orderedFields;
 }
 
+function setupClicksForReplay(workflow: Workflow): WorkflowClickRecordingEvent[] {
+  return workflow.recording?.events.filter((event): event is WorkflowClickRecordingEvent => event.event === "click") ?? [];
+}
+
+async function readSetupClickControlType(page: Page, selector: string): Promise<"non-submit" | "submit"> {
+  return page.locator(selector).evaluate((element) => {
+    const tagName = element.tagName.toLowerCase();
+    if (tagName === "button") {
+      const button = element as HTMLButtonElement;
+      return button.type === "submit" ? "submit" : "non-submit";
+    }
+
+    if (tagName === "input") {
+      const input = element as HTMLInputElement;
+      return input.type === "submit" || input.type === "image" ? "submit" : "non-submit";
+    }
+
+    return "non-submit";
+  });
+}
+
 async function readApprovalLine(stdin: ApprovalInput): Promise<string | undefined> {
   stdin.setEncoding?.("utf8");
 
@@ -1570,6 +1591,78 @@ export async function run(
           failure.artifacts,
         );
         return 6;
+      }
+
+      for (const clickEvent of setupClicksForReplay(workflow)) {
+        const matchCount = await page.locator(clickEvent.selector).count();
+        auditEvents.push({
+          event: "selector_check",
+          role: "setup-click",
+          selector: clickEvent.selector,
+          expectedMatches: 1,
+          actualMatches: matchCount,
+          result: matchCount === 1 ? "ok" : "mismatch",
+        });
+        if (matchCount !== 1) {
+          const failurePayload = buildSelectorMismatchPayload(
+            workflow.name,
+            clickEvent.selector,
+            matchCount,
+          );
+          const failure = await writeSelectorMismatchFailureArtifacts(
+            page,
+            process.cwd(),
+            failurePayload,
+            auditEvents,
+          );
+          writeSelectorFailure(
+            wantsJson ? stdout : stderr,
+            failurePayload,
+            wantsJson,
+            failure.runId,
+            failure.artifacts,
+          );
+          return 3;
+        }
+
+        const actualType = await readSetupClickControlType(page, clickEvent.selector);
+        auditEvents.push({
+          event: "setup_click_type_check",
+          role: "setup-click",
+          selector: clickEvent.selector,
+          expectedType: "non-submit",
+          actualType,
+          result: actualType === "non-submit" ? "ok" : "mismatch",
+        });
+        if (actualType !== "non-submit") {
+          const failurePayload = buildFieldTypeMismatchPayload(
+            workflow.name,
+            clickEvent.selector,
+            "non-submit",
+            actualType,
+          );
+          const failure = await writeSelectorMismatchFailureArtifacts(
+            page,
+            process.cwd(),
+            failurePayload,
+            auditEvents,
+          );
+          writeSelectorFailure(
+            wantsJson ? stdout : stderr,
+            failurePayload,
+            wantsJson,
+            failure.runId,
+            failure.artifacts,
+          );
+          return 3;
+        }
+
+        await page.locator(clickEvent.selector).click();
+        auditEvents.push({
+          event: "setup_click",
+          selector: clickEvent.selector,
+          result: "clicked",
+        });
       }
 
       for (const field of workflow.fields) {

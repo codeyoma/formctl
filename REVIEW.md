@@ -1981,6 +1981,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Start Task 6.7 runtime work with one bounded known-step fixture: replay a named setup click or modal-opening step under explicit validation, while dry-run still stops before final submit.
 
+### 2026-05-29: Replay Bounded Setup Clicks
+
+**Date:** 2026-05-29
+
+**Experiment:** Add the first runtime slice of Task 6.7 by replaying named non-submit setup clicks before field selector checks.
+
+**Hypothesis:** A known form that requires a stable modal or panel-opening click before fields exist should still fit `formctl`'s safety model if the setup selector is bounded, checked, audited, and never treated as the final submit approval.
+
+**Result:** Passed. `submit` now reads manual `click` events, verifies each setup click selector resolves to exactly one non-submit control, emits `selector_check`, `setup_click_type_check`, and `setup_click` audit events, then performs field selector checks and normal dry-run/approved submission. It still does not replay arbitrary clicks or navigation waits.
+
+**Why This Was Highest Value:** Task 6.7 was the next active product gap, and modal-opening forms are common in internal tools. This adds useful multi-step coverage without jumping to open-ended browser automation or weakening the approval gate.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "bounded setup clicks"` because the dynamic form fields did not exist before the setup click and submit exited `3`. GREEN passed after adding setup click replay. Documentation RED was observed with `npx vitest run tests/release-readiness.test.ts -t "multi-step recording metadata"` because the guide still said non-field click metadata was review-only. Focused GREEN passed with `npx vitest run tests/cli.test.ts -t "bounded setup clicks|recording metadata"` and `npx vitest run tests/release-readiness.test.ts -t "multi-step recording metadata"`. Broader verification passed with `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The runtime change needed a non-submit DOM check in addition to YAML validation, because a named button can still be a submit control in HTML. This keeps setup click replay from becoming a hidden approval bypass. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown`, while the pack dry-run check is ok with 44 package entries.
+
+**Suggested Next Task:** Add a checked-in demo workflow for a bounded setup-click modal, then extend demo replay coverage so the public package proves the multi-step path end to end.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

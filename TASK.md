@@ -420,6 +420,7 @@ npx formctl doctor
 **Goal:** Expand beyond simple form pages without becoming open-ended browser automation.
 
 - [x] Document current click/wait recording metadata as review-only before adding step replay.
+- [x] Replay bounded named setup clicks before field selector checks.
 - [ ] Add workflow steps for known navigation, modal opening, intermediate confirmation, and final form submission.
 - [ ] Add per-step selector checks, screenshots, JSON output, and audit events.
 - [ ] Preserve dry-run stopping before the final submit action.

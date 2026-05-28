@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Add multi-step recording guidance for review-only click/wait metadata.
+- Replay bounded named setup clicks before field selector checks.
+- Add multi-step recording guidance for bounded click/wait metadata boundaries.
 - Record page navigation during manual recording as redacted `waitFor: navigation` metadata.
 - Record named non-submit button clicks as redacted manual `click` events.
 - Record manual select controls and file uploads as semantic `select` and `file` events.

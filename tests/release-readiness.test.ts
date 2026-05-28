@@ -161,16 +161,18 @@ describe("release readiness docs", () => {
 
     expect(readme).toContain("[Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md)");
     expect(guide).toContain("# Multi-Step Recording Metadata");
-    expect(guide).toContain("review-only metadata");
+    expect(guide).toContain("bounded setup click replay");
     expect(guide).toContain("`submit` replays fields");
     expect(guide).toContain("does not replay arbitrary clicks or waits");
+    expect(guide).toContain("`setup_click`");
     expect(guide).toContain("event: click");
     expect(guide).toContain("event: wait");
     expect(guide).toContain("waitFor: navigation");
     expect(guide).toContain('value: "[redacted]"');
     expect(guide).toContain("Use raw Playwright or a browser agent");
+    expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
-    expect(changelog).toContain("Add multi-step recording guidance for review-only click/wait metadata.");
+    expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });
 
   test("demo media shows the core record dry-run approve flow", () => {
