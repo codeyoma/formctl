@@ -42,7 +42,7 @@
 - Record field labels and detect label drift before filling or submitting a workflow.
 - Record `aria-describedby` field descriptions and detect description drift before replay.
 - Detect common login, CAPTCHA, and MFA walls as interaction-required safe stops before filling fields or submitting.
-- Add `submit --storage-state <path>` for local authenticated-session handoff without storing credentials in workflow YAML.
+- Add `record` and `submit --storage-state <path>` for local authenticated-session handoff without storing credentials in workflow YAML.
 
 ## 0.1.0 - 2026-05-26
 

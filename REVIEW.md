@@ -1751,6 +1751,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Finish the remaining Task 6.2 work by adding a record-time session handoff or explicit headed manual login/resume path, then rerun the protected-form fixture through both record and submit.
 
+### 2026-05-28: Complete Record-Time Storage State Handoff
+
+**Date:** 2026-05-28
+
+**Experiment:** Extend the authenticated-session handoff from `submit` to `record` so protected forms can be captured without saving credentials in workflow YAML.
+
+**Hypothesis:** A pre-created local Playwright storageState file should let `formctl record` load the authenticated page, capture the real form selectors, and avoid accidentally recording the login wall.
+
+**Result:** Passed. `record` now accepts `--storage-state <path>`, validates the file path before launching the browser, and records from a browser context that has the storageState loaded. Task 6.2 is now complete for local Playwright storageState handoff across record and submit, and README, TRUST, agent guidance, TASK, and CHANGELOG now describe the login/MFA prerequisite and cookie/session risk.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "record uses a storage state file"` because `record` ignored the storage-state flag and captured the login form fields (`email`, `password`) instead of the protected `amount` field. GREEN passed after reusing the storage-state option parser for `record` and creating the record page from a Playwright context. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety|trust and comparison"`. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm test`, `npm run build`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** No implementation surprises beyond the expected RED. `npm run publish:check -- --json` still reports `npm_publish_2fa_required`; packaging is healthy but npm publishing remains externally blocked.
+
+**Next Step:** Move to Task 6.3 by adding a headed manual pause/resume safe-stop path for CAPTCHA/MFA/login boundaries, keeping headless runs blocked by typed JSON failures.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -112,7 +112,9 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Use `record` only when you need to create a workflow that does not exist yet.");
     expect(readme).toContain("formctl record expense-report https://example.internal/expense");
     expect(readme).toContain("formctl record expense-report https://example.internal/expense --manual");
+    expect(readme).toContain("formctl record expense-report https://example.internal/expense --storage-state ./storage-state.json --headless");
     expect(readme).toContain("Use `--manual` when login, navigation, or form setup needs a human-visible browser before saving selectors.");
+    expect(readme).toContain("Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.");
     expect(readme).toContain("Manual recording stores redacted `recording.events` entries for changed fields and file inputs.");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
@@ -633,7 +635,7 @@ describe("release readiness docs", () => {
     expect(trust).toContain("does not bypass authentication");
     expect(trust).toContain("does not solve CAPTCHA");
     expect(trust).toContain("does not silently heal selectors");
-    expect(trust).toContain("When replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.");
+    expect(trust).toContain("When recording or replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.");
     expect(trust).toContain("Storage state files can contain cookies or session tokens; keep them local, exclude them from git, and do not print them in agent output.");
     expect(comparison).toContain("# Comparison");
     expect(comparison).toContain("formctl");
@@ -664,6 +666,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Treat unknown keys in a `--values` file as typos and stop on `field_values_invalid`.");
     expect(agents).toContain("Treat unknown submit field flags as typos and stop on `field_values_invalid`.");
     expect(agents).toContain("Use `--storage-state <path>` only with a user-provided local Playwright storageState file for authenticated forms.");
+    expect(agents).toContain("For protected forms, require the user to complete login, MFA, or setup before recording or replaying with `--storage-state`.");
     expect(agents).toContain("Never create, print, commit, or paste storage state files because they can contain cookies or session tokens.");
     expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.");

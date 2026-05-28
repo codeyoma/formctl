@@ -69,7 +69,7 @@ Flags:
   --headed      Run with a visible browser
   --headless    Run without a visible browser
   --storage-state PATH
-                Use a local Playwright storageState JSON file for submit
+                Use a local Playwright storageState JSON file for record or submit
   --values PATH Load submit field values from a JSON object file
   --manual      For record: wait for Enter after you complete the form in the browser
 `;
@@ -737,7 +737,7 @@ function readSubmitFieldValues(
   return { values };
 }
 
-function readSubmitStorageState(
+function readStorageStateOption(
   options: Map<string, string | true>,
 ): { storageStatePath?: string } | { error: { message: string } } {
   const storageState = options.get("storage-state");
@@ -1359,7 +1359,7 @@ export async function run(
       }
       return 1;
     }
-    const storageStateResult = readSubmitStorageState(options);
+    const storageStateResult = readStorageStateOption(options);
     if ("error" in storageStateResult) {
       const payload = {
         status: "error",
@@ -1797,11 +1797,21 @@ export async function run(
       return writeInvalidWorkflowNameError(command, flags.has("--json"), stdout, stderr);
     }
 
+    const options = parseOptions(args.slice(5));
+    const storageStateResult = readStorageStateOption(options);
+    if ("error" in storageStateResult) {
+      stderr.write(`${storageStateResult.error.message}\n`);
+      return 1;
+    }
+
     const browser = await chromium.launch({
       headless: resolveBrowserHeadless({ command: "record", flags, isDryRun: false }),
     });
     try {
-      const page = await browser.newPage();
+      const context = await browser.newContext(
+        storageStateResult.storageStatePath === undefined ? {} : { storageState: storageStateResult.storageStatePath },
+      );
+      const page = await context.newPage();
       await page.goto(url, { waitUntil: "domcontentloaded" });
       let recordingEvents: WorkflowRecordingEvent[] | undefined;
       if (flags.has("--manual")) {

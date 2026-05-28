@@ -1309,6 +1309,98 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("record uses a storage state file for authenticated forms", async () => {
+    const server = http.createServer((request, response) => {
+      const isAuthenticated = request.headers.cookie?.includes("formctl_session=valid") ?? false;
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(isAuthenticated ? `
+        <!doctype html>
+        <html>
+          <body>
+            <form aria-label="Expense report">
+              <label>
+                Amount
+                <input name="amount" type="number" />
+              </label>
+              <button type="submit">Submit expense</button>
+            </form>
+          </body>
+        </html>
+      ` : `
+        <!doctype html>
+        <html>
+          <body>
+            <form aria-label="Sign in">
+              <label>Email <input name="email" type="email" autocomplete="username" /></label>
+              <label>Password <input name="password" type="password" autocomplete="current-password" /></label>
+              <button type="submit">Sign in</button>
+            </form>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Authenticated fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-record-storage-state-"));
+    writeFileSync(
+      path.join(workspace, "storage-state.json"),
+      JSON.stringify({
+        cookies: [
+          {
+            name: "formctl_session",
+            value: "valid",
+            domain: "127.0.0.1",
+            path: "/",
+            expires: -1,
+            httpOnly: false,
+            secure: false,
+            sameSite: "Lax",
+          },
+        ],
+        origins: [],
+      }),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "record",
+        "expense-report",
+        `http://127.0.0.1:${address.port}/expense`,
+        "--storage-state",
+        "storage-state.json",
+        "--headless",
+      ], workspace);
+      const workflowPath = path.join(workspace, ".formctl", "workflows", "expense-report.yml");
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(parse(readFileSync(workflowPath, "utf8")).fields).toEqual([
+        {
+          name: "amount",
+          selector: 'input[name="amount"]',
+          type: "number",
+          label: "Amount",
+        },
+      ]);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
   test("record --manual waits for user confirmation before saving the workflow", async () => {
     const fixture = await serveFixture(`
       <!doctype html>
