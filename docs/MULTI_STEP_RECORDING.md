@@ -33,6 +33,7 @@ What this means:
 - `click` documents a named non-submit control the human used during setup.
 - Only leading `click` events before the first field or wait event are replayed as setup.
 - `submit` checks that each setup click selector resolves to exactly one non-submit control, clicks it, and writes `selector_check` plus `setup_click` audit events.
+- Setup click selector failures return selector-mismatch JSON with `role: "setup-click"` before any field filling or final submission.
 - `wait` documents a bounded navigation wait without storing the destination URL.
 - Field events can affect replay order because `submit` replays fields in the order the human first recorded them.
 - `wait` events are not replayed by `submit` yet.
@@ -55,5 +56,6 @@ Validation rejects recording metadata that is not bounded and redacted:
 - click events must use named non-submit selectors
 - only leading click events are replayed as setup
 - setup click selectors must resolve to exactly one non-submit control before fields are checked
+- setup click selector drift is reported with `role: "setup-click"` in JSON failure output
 - wait events must use `waitFor: navigation`
 - wait events must not store URLs, tokens, or private navigation data

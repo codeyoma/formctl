@@ -167,14 +167,17 @@ describe("release readiness docs", () => {
     expect(guide).toContain("`submit` replays fields");
     expect(guide).toContain("does not replay arbitrary clicks or waits");
     expect(guide).toContain("`setup_click`");
+    expect(guide).toContain('`role: "setup-click"`');
     expect(guide).toContain("event: click");
     expect(guide).toContain("event: wait");
     expect(guide).toContain("waitFor: navigation");
     expect(guide).toContain('value: "[redacted]"');
     expect(guide).toContain("Use raw Playwright or a browser agent");
+    expect(task).toContain("- [x] Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
+    expect(changelog).toContain("Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });

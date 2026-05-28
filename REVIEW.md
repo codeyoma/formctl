@@ -2035,6 +2035,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add explicit selector-drift tests for leading setup clicks: missing setup selector, ambiguous setup selector, and submit-typed setup selector should exit `3` before any field filling or side effect.
 
+### 2026-05-29: Report Setup-Click Selector Drift Role
+
+**Date:** 2026-05-29
+
+**Experiment:** Add regression coverage for leading setup-click selector drift and expose the failing selector role in JSON output.
+
+**Hypothesis:** Missing, ambiguous, or submit-typed setup-click controls should stop with selector mismatch before field filling or final submission, and agents should be able to distinguish this from ordinary field selector drift without parsing the audit log.
+
+**Result:** Passed. Setup-click selector mismatch and setup-click type mismatch JSON now include `error.role: "setup-click"`. Regression tests cover missing setup selector, ambiguous setup selector, and submit-typed setup selector, and each test verifies no field-fill mutation request and no form POST occurred.
+
+**Why This Was Highest Value:** The previous session made setup-click replay useful, but the next correctness risk was drift around the setup control itself. This tightens the safety boundary before adding broader multi-step workflow steps.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "setup-click selector drift"` because the selector failure JSON lacked `role: "setup-click"` for all three drift cases. GREEN passed after adding the role to setup-click failure payloads. Documentation RED was observed with `npx vitest run tests/release-readiness.test.ts -t "multi-step recording metadata"` because the guide did not describe the JSON role. Focused GREEN passed with both commands. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The runtime already stopped safely with exit `3`; the missing piece was machine-readable attribution for the failure role. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 44 package entries.
+
+**Suggested Next Task:** Add the next bounded multi-step slice: a structured workflow step model for one intermediate confirmation step, preserving dry-run before final submit and adding per-step screenshots/audit events.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

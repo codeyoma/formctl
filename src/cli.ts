@@ -168,6 +168,8 @@ type FailureArtifacts = {
   audit: string;
 };
 
+type SelectorFailureRole = "setup-click" | "field" | "submit";
+
 type FieldDiff = {
   status: "field-diff";
   workflow: string;
@@ -190,6 +192,7 @@ type SelectorFailurePayload = {
   error: {
     code: "selector_mismatch";
     selector: string;
+    role?: SelectorFailureRole;
     message: string;
   } & (
     | { expectedMatches: 1; actualMatches: number }
@@ -824,6 +827,7 @@ function buildSelectorMismatchPayload(
   workflowName: string,
   selector: string,
   actualMatches: number,
+  role?: SelectorFailureRole,
 ): SelectorFailurePayload {
   const message = `Selector mismatch: ${selector} expected exactly 1 match, found ${actualMatches}`;
 
@@ -836,6 +840,7 @@ function buildSelectorMismatchPayload(
     error: {
       code: "selector_mismatch",
       selector,
+      ...(role === undefined ? {} : { role }),
       expectedMatches: 1,
       actualMatches,
       message,
@@ -848,6 +853,7 @@ function buildFieldTypeMismatchPayload(
   selector: string,
   expectedType: string,
   actualType: string,
+  role?: SelectorFailureRole,
 ): SelectorFailurePayload {
   const message = `Selector mismatch: ${selector} expected type ${expectedType}, found ${actualType}`;
 
@@ -860,6 +866,7 @@ function buildFieldTypeMismatchPayload(
     error: {
       code: "selector_mismatch",
       selector,
+      ...(role === undefined ? {} : { role }),
       expectedType,
       actualType,
       message,
@@ -1617,6 +1624,7 @@ export async function run(
             workflow.name,
             clickEvent.selector,
             matchCount,
+            "setup-click",
           );
           const failure = await writeSelectorMismatchFailureArtifacts(
             page,
@@ -1649,6 +1657,7 @@ export async function run(
             clickEvent.selector,
             "non-submit",
             actualType,
+            "setup-click",
           );
           const failure = await writeSelectorMismatchFailureArtifacts(
             page,

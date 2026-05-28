@@ -2796,6 +2796,160 @@ describe("formctl CLI", () => {
     }
   });
 
+  test.each([
+    {
+      name: "missing",
+      setupControls: "",
+      expectedError: {
+        expectedMatches: 1,
+        actualMatches: 0,
+      },
+      expectedAudit: '"actualMatches":0',
+    },
+    {
+      name: "ambiguous",
+      setupControls: [
+        '<button type="button" name="open-approval">Open approval form</button>',
+        '<button type="button" name="open-approval">Open duplicate approval form</button>',
+      ].join(""),
+      expectedError: {
+        expectedMatches: 1,
+        actualMatches: 2,
+      },
+      expectedAudit: '"actualMatches":2',
+    },
+    {
+      name: "submit-typed",
+      setupControls: '<button type="submit" name="open-approval">Open approval form</button>',
+      expectedError: {
+        expectedType: "non-submit",
+        actualType: "submit",
+      },
+      expectedAudit: '"event":"setup_click_type_check"',
+    },
+  ])("submit reports setup-click selector drift before field filling: $name", async ({
+    setupControls,
+    expectedError,
+    expectedAudit,
+  }) => {
+    let mutationCount = 0;
+    let submitCount = 0;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST" && request.url === "/mutation") {
+        mutationCount += 1;
+        response.writeHead(204);
+        response.end();
+        return;
+      }
+
+      if (request.method === "POST") {
+        submitCount += 1;
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        response.end("<!doctype html><html><body>Submitted</body></html>");
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/submit" aria-label="Approval">
+              ${setupControls}
+              <input name="requestorEmail" type="email" />
+              <button type="submit" name="final-submit">Approve</button>
+            </form>
+            <script>
+              document.querySelector('input[name="requestorEmail"]').addEventListener("input", () => {
+                fetch("/mutation", { method: "POST", body: "field-filled" }).catch(() => {});
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Setup click drift fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-setup-click-drift-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-modal.yml"),
+      [
+        "name: approval-modal",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: click",
+        "      selector: button[name=\"open-approval\"]",
+        "      value: \"[redacted]\"",
+        "    - event: input",
+        "      field: requestorEmail",
+        "      selector: input[name=\"requestorEmail\"]",
+        "      value: \"[redacted]\"",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: requestorEmail",
+        "    selector: input[name=\"requestorEmail\"]",
+        "    type: email",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--requestorEmail",
+        "ops@example.com",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(3);
+      expect(result.stderr).toBe("");
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toMatchObject({
+        status: "error",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          role: "setup-click",
+          selector: 'button[name="open-approval"]',
+          ...expectedError,
+        },
+      });
+      expect(mutationCount).toBe(0);
+      expect(submitCount).toBe(0);
+      const auditLog = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"role":"setup-click"');
+      expect(auditLog).toContain(expectedAudit);
+      expect(auditLog).not.toContain('"role":"field"');
+      expect(auditLog).not.toContain('"event":"setup_click","selector":"button[name=\\"open-approval\\"]","result":"clicked"');
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
   test("submit does not replay clicks recorded after field events as setup", async () => {
     let submittedValues: URLSearchParams | undefined;
     const server = http.createServer((request, response) => {
