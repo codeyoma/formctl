@@ -112,6 +112,7 @@ Use `--manual` when login, navigation, or form setup needs a human-visible brows
 Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.
 Manual recording stores redacted `recording.events` entries for changed fields and file inputs.
 When present, `submit` uses the first recorded event for each field to replay fields in the same order the human recorded them.
+If terminal input closes before Enter, `record --manual` cancels without writing a workflow file.
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
 `record` also saves a baseline screenshot next to the workflow file.
 

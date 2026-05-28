@@ -1459,6 +1459,56 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("record --manual cancels without saving when confirmation input closes", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form aria-label="Expense report">
+            <label>
+              Amount
+              <input name="amount" type="number" />
+            </label>
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-manual-record-closed-"));
+    const stdout = createWritableCapture();
+    const stderr = createWritableCapture();
+    const previousCwd = process.cwd();
+
+    try {
+      const { run } = await import("../src/cli.js");
+
+      process.chdir(workspace);
+      const status = await run(
+        [
+          process.execPath,
+          cliPath,
+          "record",
+          "expense-report",
+          fixture.url,
+          "--manual",
+          "--headless",
+        ],
+        stdout.stream,
+        stderr.stream,
+        createClosedInteractiveInput(),
+      );
+      const workflowPath = path.join(workspace, ".formctl", "workflows", "expense-report.yml");
+
+      expect(status).toBe(1);
+      expect(stdout.text()).toContain("Manual record: complete the form in the browser, then press Enter here to save.");
+      expect(stderr.text()).toContain("Manual record canceled: no confirmation received.");
+      expect(existsSync(workflowPath)).toBe(false);
+    } finally {
+      process.chdir(previousCwd);
+      await fixture.close();
+    }
+  });
+
   test("record --manual captures redacted field interaction events", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

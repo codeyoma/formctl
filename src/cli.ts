@@ -1923,7 +1923,11 @@ export async function run(
           recordingWindow.__formctlManualReady = true;
         });
         stdout.write("Manual record: complete the form in the browser, then press Enter here to save.\n");
-        await readApprovalLine(stdin);
+        const manualRecordInput = await readApprovalLine(stdin);
+        if (manualRecordInput === undefined) {
+          stderr.write("Manual record canceled: no confirmation received.\n");
+          return 1;
+        }
         recordingEvents = await page.evaluate(() => {
           return (window as Window & { __formctlRecordingEvents?: WorkflowRecordingEvent[] }).__formctlRecordingEvents ?? [];
         });

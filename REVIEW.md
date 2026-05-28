@@ -1873,6 +1873,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Define and validate the next bounded event types for Task 6.1, especially click and explicit navigation wait, without turning `formctl` into open-ended browser automation.
 
+### 2026-05-29: Cancel Manual Record On Closed Confirmation Input
+
+**Date:** 2026-05-29
+
+**Experiment:** Make `record --manual` require an actual Enter confirmation before saving workflow YAML, matching the manual resume safety boundary.
+
+**Hypothesis:** If stdin closes before the user presses Enter, `record --manual` should cancel and leave no workflow file, because the user may not have completed login, navigation, or form setup.
+
+**Result:** Passed. `record --manual` now checks the `readApprovalLine` result and exits `1` with a clear cancellation message when no newline-backed confirmation is received.
+
+**Why This Was Highest Value:** This was a correctness edge case introduced by hardening `readApprovalLine` for submit resume. A 100k-star CLI cannot treat closed stdin as manual consent when it is about to write reusable automation YAML.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "confirmation input closes"` because closed stdin still returned status `0` and saved the workflow. GREEN passed after checking for `undefined` before reading selectors and writing workflow artifacts. Broader verification passed with `npx vitest run tests/cli.test.ts -t "record --manual cancels|record --manual waits"`, `npm run build`, `npx vitest run tests/release-readiness.test.ts -t "README"`, `npm test`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npx tsc --noEmit`, and `npm pack --dry-run --json`.
+
+**What Failed:** The shared input reader had already learned to distinguish EOF from Enter, but the manual record path ignored that distinction. `npm run publish:check -- --json` remains blocked with `npm_publish_otp_required`, which is expected without a human OTP or publish-capable granular token.
+
+**Suggested Next Task:** Continue Task 6.1 by defining bounded `click` and explicit wait recording metadata, with validation before replay behavior.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
