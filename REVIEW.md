@@ -1675,6 +1675,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Continue launch outreach or npm authentication; no code-quality blocker remains for the current package.
 
+### 2026-05-28: Reject Invalid Workflow Target URLs
+
+**Date:** 2026-05-28
+
+**Experiment:** Validate workflow target URLs as absolute `http` or `https` URLs before browser-backed submit work starts.
+
+**Hypothesis:** Malformed or non-web URLs should fail as workflow repair tasks, not as late browser dry-run runtime failures.
+
+**Result:** Passed. `submit --dry-run --json` now rejects invalid target URLs with a `target-url` validation check, `submitted: false`, and no `.formctl/runs` directory.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "invalid target URLs"`: the command returned exit code `4` via `dry_run_failed` instead of `workflow_invalid`, proving invalid URLs reached browser runtime. Focused GREEN passed with the same command after adding URL validation. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npm run formctl -- validate expense-report --json`, and `npm pack --dry-run --json`. `npm run publish:check -- --json` still returns `npm_auth_required`; GitHub issue #1 remains open and valid for launch outreach.
+
+**What Failed:** The previous `target-url` validation only checked for a non-empty string, so `url: not-a-url` was accepted until Playwright attempted navigation.
+
+**Decision:** Treat workflow URLs as part of schema validation. Keep the accepted schemes narrow to `http` and `https` because formctl records and replays browser form pages.
+
+**Next Step:** Continue launch outreach or npm authentication; the workflow validation surface now catches another pre-browser repair case.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

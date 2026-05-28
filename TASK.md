@@ -190,6 +190,7 @@ formctl doctor
 - [x] Reject duplicate workflow field names before browser work.
 - [x] Reject reserved or unsafe workflow field names before browser work.
 - [x] Reject unsupported workflow field types before browser work.
+- [x] Reject invalid workflow target URLs before browser work.
 - [x] Let the MCP dry-run tool pass a checked-in values file through `valuesFile`.
 - [x] Verify: `npm run test:agent` proves a shell script can branch on output status and exit code.
 - [x] Record schema changes in `REVIEW.md`.

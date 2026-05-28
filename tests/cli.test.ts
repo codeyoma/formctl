@@ -781,6 +781,63 @@ describe("formctl CLI", () => {
     });
   });
 
+  test("submit --dry-run --json rejects invalid target URLs before browser work", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-target-url-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: not-a-url",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl([
+      "submit",
+      "expense-report",
+      "--amount",
+      "120000",
+      "--dry-run",
+      "--json",
+      "--headless",
+    ], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: target-url",
+        fix: "Run formctl validate expense-report --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "target-url",
+          status: "error",
+          message: "Workflow target URL must be an absolute http or https URL.",
+          fix: "Set url to an absolute http:// or https:// URL for the form page.",
+        },
+      ],
+    });
+    expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+  });
+
   test("submit --dry-run --json rejects unsupported field types before browser work", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsupported-field-type-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });

@@ -226,6 +226,19 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unexpected runtime error.";
 }
 
+function isValidWorkflowUrl(value: unknown): value is string {
+  if (!isNonEmptyString(value)) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function isValidWorkflowName(value: string): boolean {
   return WORKFLOW_NAME_PATTERN.test(value);
 }
@@ -436,9 +449,9 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
     ),
     buildValidationCheck(
       "target-url",
-      isNonEmptyString(workflowObject.url),
-      "Workflow must include a target URL.",
-      "Add a non-empty url field with the form page URL.",
+      isValidWorkflowUrl(workflowObject.url),
+      "Workflow target URL must be an absolute http or https URL.",
+      "Set url to an absolute http:// or https:// URL for the form page.",
     ),
     buildValidationCheck(
       "fields",

@@ -153,6 +153,7 @@ Validation rejects unredacted `recording.events` metadata when present.
 Validation rejects duplicate workflow field names before any browser work.
 Validation rejects reserved or unsafe workflow field names before any browser work.
 Validation rejects unsupported workflow field types before any browser work.
+Validation rejects missing or non-http workflow target URLs before any browser work.
 Invalid workflow names return `invalid_workflow_name` in JSON mode.
 Missing workflows return `workflow_not_found` in JSON mode.
 Unreadable workflows return `workflow_unreadable` in JSON mode for inspect and submit.
