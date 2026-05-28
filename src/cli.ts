@@ -19,6 +19,7 @@ const DEFAULT_WORKFLOW_SAFETY = {
 const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.";
 const WORKFLOW_FIELD_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
+const RECORDING_CLICK_SELECTOR_PATTERN = /^[a-z][a-z0-9-]*\[name="[^"]+"\]$/;
 const SUPPORTED_FIELD_TYPE_LIST = [
   "text",
   "email",
@@ -85,12 +86,20 @@ type WorkflowField = {
   description?: string;
 };
 
-type WorkflowRecordingEvent = {
+type WorkflowFieldRecordingEvent = {
   event: "input" | "change" | "select" | "file";
   field: string;
   selector: string;
   value: "[redacted]" | "[file]";
 };
+
+type WorkflowClickRecordingEvent = {
+  event: "click";
+  selector: string;
+  value: "[redacted]";
+};
+
+type WorkflowRecordingEvent = WorkflowFieldRecordingEvent | WorkflowClickRecordingEvent;
 
 type Workflow = {
   name: string;
@@ -423,10 +432,17 @@ function hasValidRecordingMetadata(value: unknown, fields: unknown): boolean {
     : new Map<string, string>();
 
   return value.events.every((event) => {
-    if (!isObject(event)
-      || !isNonEmptyString(event.field)
-      || !isNonEmptyString(event.selector)
-      || fieldSelectors.get(event.field) !== event.selector) {
+    if (!isObject(event) || !isNonEmptyString(event.selector)) {
+      return false;
+    }
+
+    if (event.event === "click") {
+      return event.field === undefined
+        && event.value === "[redacted]"
+        && RECORDING_CLICK_SELECTOR_PATTERN.test(event.selector);
+    }
+
+    if (!isNonEmptyString(event.field) || fieldSelectors.get(event.field) !== event.selector) {
       return false;
     }
 
@@ -557,8 +573,8 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       buildValidationCheck(
         "recording-metadata",
         hasValidRecordingMetadata(workflowObject.recording, fields),
-        "Recording metadata must use manual mode, redacted input/change/select/file events, and known field selectors.",
-        "Use recording.mode: manual and events with event input/change/select/file, field, selector matching a workflow field, and redacted values.",
+        "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
+        "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
       ),
     ]),
   ];
@@ -954,6 +970,10 @@ function orderFieldsForReplay(workflow: Workflow): WorkflowField[] {
   const orderedFields: WorkflowField[] = [];
   const seenFields = new Set<string>();
   for (const event of workflow.recording.events) {
+    if (!("field" in event)) {
+      continue;
+    }
+
     const field = fieldsByName.get(event.field);
     if (field === undefined || seenFields.has(field.name)) {
       continue;
@@ -1914,14 +1934,19 @@ export async function run(
       let recordingEvents: WorkflowRecordingEvent[] | undefined;
       if (flags.has("--manual")) {
         await page.evaluate(() => {
-          type RecordingEventName = "input" | "change" | "select" | "file";
+          type FieldRecordingEventName = "input" | "change" | "select" | "file";
+          type RecordingEvent = {
+            event: FieldRecordingEventName;
+            field: string;
+            selector: string;
+            value: "[redacted]" | "[file]";
+          } | {
+            event: "click";
+            selector: string;
+            value: "[redacted]";
+          };
           type RecordingWindow = Window & {
-            __formctlRecordingEvents?: Array<{
-              event: RecordingEventName;
-              field: string;
-              selector: string;
-              value: "[redacted]" | "[file]";
-            }>;
+            __formctlRecordingEvents?: RecordingEvent[];
             __formctlManualReady?: boolean;
           };
 
@@ -1936,7 +1961,7 @@ export async function run(
 
             const inputType = tagName === "input" ? element.getAttribute("type") ?? "text" : tagName;
             const selector = `${tagName}[name="${field}"]`;
-            const recordedEventName = (event: Event): RecordingEventName => {
+            const recordedEventName = (event: Event): FieldRecordingEventName => {
               if (inputType === "file") {
                 return "file";
               }
@@ -1958,6 +1983,29 @@ export async function run(
 
             element.addEventListener("input", record);
             element.addEventListener("change", record);
+          }
+          for (const element of Array.from(document.querySelectorAll('button[name], input[type="button"][name], input[type="reset"][name], a[name], [role="button"][name]'))) {
+            const tagName = element.tagName.toLowerCase();
+            const name = element.getAttribute("name");
+            if (name === null || name.length === 0) {
+              continue;
+            }
+
+            const controlType = tagName === "button" || tagName === "input"
+              ? (element.getAttribute("type") ?? "submit").toLowerCase()
+              : "";
+            if (controlType === "submit") {
+              continue;
+            }
+
+            const selector = `${tagName}[name="${name}"]`;
+            element.addEventListener("click", () => {
+              recordingWindow.__formctlRecordingEvents?.push({
+                event: "click",
+                selector,
+                value: "[redacted]",
+              });
+            });
           }
           recordingWindow.__formctlManualReady = true;
         });

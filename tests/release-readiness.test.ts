@@ -117,7 +117,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Use `--manual` when login, navigation, or form setup needs a human-visible browser before saving selectors.");
     expect(readme).toContain("Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.");
     expect(readme).toContain("Manual recording stores redacted `recording.events` entries for changed fields and file inputs.");
-    expect(readme).toContain("Manual recording labels text input as `input`, select controls as `select`, and file inputs as `file` so the YAML is easier to review.");
+    expect(readme).toContain("Manual recording labels text input as `input`, select controls as `select`, file inputs as `file`, and named non-submit button clicks as `click` so the YAML is easier to review.");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
@@ -380,7 +380,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Launch a headed Playwright browser.");
     expect(task).toContain("- [x] Let the user complete the form manually with `record --manual` before saving selectors.");
     expect(task).toContain("- [x] Capture final submit target and a baseline screenshot.");
-    expect(task).toContain("- [x] Capture redacted field interaction and file-input events during manual completion.");
+    expect(task).toContain("- [x] Capture redacted field interaction, file-input, and named click events during manual completion.");
     expect(task).toContain("- [x] Include workflow name, target URL, fields, selectors, submit action, and screenshots.");
     expect(task).toContain("- [x] Add workflow safety settings when backed by runtime behavior.");
     expect(task).toContain("- [x] Store recorded workflows as readable YAML under `.formctl/workflows/<name>.yml`.");

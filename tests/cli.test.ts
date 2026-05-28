@@ -1123,8 +1123,8 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change/select/file events, and known field selectors.",
-          fix: "Use recording.mode: manual and events with event input/change/select/file, field, selector matching a workflow field, and redacted values.",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
+          fix: "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
         },
       ],
     });
@@ -1183,8 +1183,67 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change/select/file events, and known field selectors.",
-          fix: "Use recording.mode: manual and events with event input/change/select/file, field, selector matching a workflow field, and redacted values.",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
+          fix: "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
+        },
+      ],
+    });
+  });
+
+  test("validate --json exits 1 when click recording metadata uses an unbounded selector", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-recording-wide-click-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: click",
+        "      selector: body",
+        "      value: \"[redacted]\"",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "validate",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      checks: [
+        { name: "readable-yaml", status: "ok" },
+        { name: "workflow-name", status: "ok" },
+        { name: "target-url", status: "ok" },
+        { name: "fields", status: "ok" },
+        { name: "field-names", status: "ok" },
+        { name: "field-name-safety", status: "ok" },
+        { name: "field-types", status: "ok" },
+        { name: "submit-selector", status: "ok" },
+        { name: "safety-metadata", status: "ok" },
+        {
+          name: "recording-metadata",
+          status: "error",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
+          fix: "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
         },
       ],
     });
@@ -1590,6 +1649,7 @@ describe("formctl CLI", () => {
                 <option value="ops">Ops</option>
               </select>
             </label>
+            <button type="button" name="open-details">Open details</button>
             <button type="submit">Submit expense</button>
           </form>
           <script>
@@ -1598,6 +1658,8 @@ describe("formctl CLI", () => {
                 return;
               }
               clearInterval(recordWhenReady);
+              const openDetails = document.querySelector('button[name="open-details"]');
+              openDetails.click();
               const amount = document.querySelector('input[name="amount"]');
               amount.value = "120000";
               amount.dispatchEvent(new Event("input", { bubbles: true }));
@@ -1642,6 +1704,11 @@ describe("formctl CLI", () => {
       expect(workflow.recording).toEqual({
         mode: "manual",
         events: [
+          {
+            event: "click",
+            selector: 'button[name="open-details"]',
+            value: "[redacted]",
+          },
           {
             event: "input",
             field: "amount",

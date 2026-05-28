@@ -1927,6 +1927,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Continue Task 6.1 by defining bounded `click` and explicit navigation wait metadata with validation first, keeping replay behavior conservative until the metadata contract is tested.
 
+### 2026-05-29: Record Bounded Click Metadata
+
+**Date:** 2026-05-29
+
+**Experiment:** Extend manual recording to store redacted `click` events for named non-submit controls while leaving submit replay unchanged.
+
+**Hypothesis:** Many real internal tools have a safe setup click, such as opening details or moving within a local widget, before fields are filled. Capturing that as metadata makes the workflow easier to review without making `formctl` replay arbitrary clicks yet.
+
+**Result:** Passed. `record --manual` now records named non-submit button, reset input, link, and role-button clicks as `{ event: "click", selector, value: "[redacted]" }`. Validation accepts click events without field names only when they use a named selector, still requires redacted click values, and submit replay skips non-field events when computing field order.
+
+**Why This Was Highest Value:** Task 6.1 had already stabilized field event names. The next reliability gap was bounded non-field metadata; recording only named non-submit controls keeps the contract reviewable and avoids turning a setup click into automatic submit behavior.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "captures redacted field interaction events"` because a named `type="button"` click was missing from `recording.events`. A second RED was observed with `npx vitest run tests/cli.test.ts -t "unbounded selector"` because a hand-written `click` event with selector `body` still passed validation. GREEN passed after adding click listeners, click-event validation, and named selector validation. Verification passed with `npx vitest run tests/cli.test.ts -t "unbounded selector|recording metadata|captures redacted field interaction events"`, `npx vitest run tests/release-readiness.test.ts -t "README|TASK|changelog"`, `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The first build failed with `TS2345` because the browser-side field event type accidentally included `click`; splitting field-event and click-event types fixed it. `npm run publish:check -- --json` is now blocked with npm `E401` / `npm_auth_unknown`, so package content is still verified but publishing requires refreshed npm authentication.
+
+**Suggested Next Task:** Finish Task 6.1 by defining explicit navigation wait metadata and validation, still without replaying waits until a fixture proves the behavior is needed.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

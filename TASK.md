@@ -117,7 +117,7 @@ formctl doctor
 
 - [x] Launch a headed Playwright browser.
 - [x] Let the user complete the form manually with `record --manual` before saving selectors.
-- [x] Capture redacted field interaction and file-input events during manual completion.
+- [x] Capture redacted field interaction, file-input, and named click events during manual completion.
 - [x] Capture final submit target and a baseline screenshot.
 - [x] Save `.formctl/workflows/<workflow-name>.yml`.
 - [x] Verify: Re-running `formctl inspect <workflow-name>` shows captured fields and selectors.
@@ -355,7 +355,8 @@ npx formctl doctor
 **Goal:** Move beyond form structure plus redacted field metadata when real workflows need reviewable interaction steps.
 
 - [x] Define the first supported field event types: input, change, select, and file upload.
-- [ ] Define bounded non-field event types: click and explicit navigation wait.
+- [x] Define bounded non-field click metadata for named non-submit controls.
+- [ ] Define bounded explicit navigation wait metadata.
 - [x] Keep the current named-field workflow as the default path; event history must be optional and reviewable in YAML.
 - [x] Redact values and file names in recorded events, and reject unredacted event metadata during validation.
 - [x] Verify: A fixture with multiple recorded controls replays deterministically without leaking values.
