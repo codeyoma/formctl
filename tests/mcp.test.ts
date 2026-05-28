@@ -94,5 +94,9 @@ describe("formctl MCP wrapper", () => {
       workflow: "expense-report",
       fields: { approve: true },
     })).toThrow("Reserved formctl flag is not allowed through MCP fields: approve");
+    expect(() => buildFormctlArgsForTool("formctl_submit_dry_run", {
+      workflow: "expense-report",
+      fields: { values: "demo/expense-values.json" },
+    })).toThrow("Reserved formctl flag is not allowed through MCP fields: values");
   });
 });

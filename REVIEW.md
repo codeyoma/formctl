@@ -927,6 +927,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to npm publish if auth is available or first external outreach if not.
 
+### 2026-05-28: Reject Unsafe Workflow Field Names
+
+**Date:** 2026-05-28
+
+**Experiment:** Validate workflow field names against the CLI flag surface before browser-backed submit work starts.
+
+**Hypothesis:** Field names that collide with submit control flags or cannot be expressed as safe CLI flags should fail as `workflow_invalid` instead of being ignored, misread, or only working through values files.
+
+**Result:** Passed. `submit --dry-run --json` now rejects reserved names like `dry-run` and unsafe names like `receipt.file` with a `field-name-safety` validation check, `submitted: false`, and no `.formctl/runs` directory.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "unsafe field names"`: the test failed with `Unexpected end of JSON input` because the current path did not emit validation JSON before browser work. Focused GREEN passed with the same command after adding field-name safety validation. A second RED was observed with `npm test -- --run tests/mcp.test.ts -t "submit dry-run tool"` because MCP field input still allowed `values` to become a reserved `--values` flag; focused GREEN passed after reserving `values` there too. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npm run formctl -- validate expense-report --json`, and `npm pack --dry-run --json`. `npm run publish:check -- --json` still returns `npm_auth_required`; GitHub issue #1 remains open and valid for launch outreach.
+
+**Decision:** Workflow field names are part of the CLI contract, not raw HTML labels. Keep them constrained to safe flags and reserve formctl control flags.
+
+**Next Step:** Return to npm publish if auth is available or first external outreach if not.
+
 ### Template
 
 **Date:** YYYY-MM-DD

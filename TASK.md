@@ -187,6 +187,7 @@ formctl doctor
 - [x] Return machine-readable `workflow_unreadable` errors for inspect and submit JSON.
 - [x] Return machine-readable `workflow_invalid` errors for inspect and submit JSON.
 - [x] Reject duplicate workflow field names before browser work.
+- [x] Reject reserved or unsafe workflow field names before browser work.
 - [x] Reject unsupported workflow field types before browser work.
 - [x] Let the MCP dry-run tool pass a checked-in values file through `valuesFile`.
 - [x] Verify: `npm run test:agent` proves a shell script can branch on output status and exit code.

@@ -601,6 +601,7 @@ describe("formctl CLI", () => {
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
         { name: "field-names", status: "ok" },
+        { name: "field-name-safety", status: "ok" },
         { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         { name: "safety-metadata", status: "ok" },
@@ -897,6 +898,67 @@ describe("formctl CLI", () => {
     expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
   });
 
+  test("submit --dry-run --json rejects unsafe field names before browser work", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsafe-field-name-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://127.0.0.1:9/expense",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: dry-run",
+        "    selector: input[name=\"dry-run\"]",
+        "    type: text",
+        "  - name: receipt.file",
+        "    selector: input[name=\"receipt.file\"]",
+        "    type: file",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl([
+      "submit",
+      "expense-report",
+      "--dry-run",
+      "preview",
+      "--receipt.file",
+      "receipt.txt",
+      "--json",
+      "--headless",
+    ], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: field-name-safety",
+        fix: "Run formctl validate expense-report --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "field-name-safety",
+          status: "error",
+          message: "Workflow field names must be safe CLI flags. Unsafe or reserved field name(s): dry-run, receipt.file.",
+          fix: "Use names that start with a letter and contain only letters, numbers, underscores, or dashes, excluding formctl control flags.",
+        },
+      ],
+    });
+    expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+  });
+
   test("validate --json exits 1 when safety metadata is missing", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
@@ -931,6 +993,7 @@ describe("formctl CLI", () => {
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
         { name: "field-names", status: "ok" },
+        { name: "field-name-safety", status: "ok" },
         { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         {
@@ -989,6 +1052,7 @@ describe("formctl CLI", () => {
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
         { name: "field-names", status: "ok" },
+        { name: "field-name-safety", status: "ok" },
         { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         { name: "safety-metadata", status: "ok" },

@@ -18,6 +18,7 @@ const DEFAULT_WORKFLOW_SAFETY = {
 } as const;
 const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.";
+const WORKFLOW_FIELD_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const SUPPORTED_FIELD_TYPE_LIST = [
   "text",
   "email",
@@ -33,6 +34,15 @@ const SUPPORTED_FIELD_TYPE_LIST = [
   "search",
 ] as const;
 const SUPPORTED_FIELD_TYPES = new Set<string>(SUPPORTED_FIELD_TYPE_LIST);
+const SUBMIT_CONTROL_OPTIONS = new Set([
+  "approve",
+  "dry-run",
+  "headed",
+  "headless",
+  "help",
+  "json",
+  "values",
+]);
 
 const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
 
@@ -385,6 +395,19 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       return duplicates;
     }, [])
     : [];
+  const unsafeFieldNames = Array.isArray(fields)
+    ? fields.flatMap((field) => {
+      if (!isObject(field) || !isNonEmptyString(field.name)) {
+        return [];
+      }
+
+      if (WORKFLOW_FIELD_NAME_PATTERN.test(field.name) && !SUBMIT_CONTROL_OPTIONS.has(field.name)) {
+        return [];
+      }
+
+      return [field.name];
+    })
+    : [];
   const unsupportedFieldTypes = Array.isArray(fields)
     ? fields.flatMap((field) => {
       if (!isObject(field) || !isNonEmptyString(field.type)) {
@@ -425,6 +448,14 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
         duplicateFieldNames.length === 0,
         `Workflow field names must be unique. Duplicate field name(s): ${duplicateFieldNames.join(", ")}.`,
         "Use unique field names so CLI flags and values files map to exactly one form field.",
+      ),
+    ] : []),
+    ...(Array.isArray(fields) && fields.length > 0 ? [
+      buildValidationCheck(
+        "field-name-safety",
+        unsafeFieldNames.length === 0,
+        `Workflow field names must be safe CLI flags. Unsafe or reserved field name(s): ${unsafeFieldNames.join(", ")}.`,
+        "Use names that start with a letter and contain only letters, numbers, underscores, or dashes, excluding formctl control flags.",
       ),
     ] : []),
     ...(Array.isArray(fields) && fields.length > 0 ? [
@@ -593,16 +624,6 @@ function parseOptions(args: string[]): Map<string, string | true> {
 
   return options;
 }
-
-const SUBMIT_CONTROL_OPTIONS = new Set([
-  "approve",
-  "dry-run",
-  "headed",
-  "headless",
-  "help",
-  "json",
-  "values",
-]);
 
 function readSubmitFieldValues(
   options: Map<string, string | true>,

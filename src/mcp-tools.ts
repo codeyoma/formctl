@@ -96,6 +96,7 @@ const RESERVED_FIELD_NAMES = new Set([
   "headed",
   "help",
   "json",
+  "values",
 ]);
 
 function asRecord(input: unknown): Record<string, unknown> {
