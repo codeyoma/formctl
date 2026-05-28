@@ -355,10 +355,10 @@ npx formctl doctor
 **Goal:** Move beyond form structure plus redacted field metadata when real workflows need reviewable interaction steps.
 
 - [ ] Define the first supported event types: input, change, select, file upload, click, and explicit navigation wait.
-- [ ] Keep the current named-field workflow as the default path; event history must be optional and reviewable in YAML.
-- [ ] Redact values and file names in recorded events, and reject unredacted event metadata during validation.
+- [x] Keep the current named-field workflow as the default path; event history must be optional and reviewable in YAML.
+- [x] Redact values and file names in recorded events, and reject unredacted event metadata during validation.
 - [x] Verify: A fixture with multiple recorded controls replays deterministically without leaking values.
-- [ ] Record event-history tradeoffs in `REVIEW.md`.
+- [x] Record event-history tradeoffs in `REVIEW.md`.
 
 ### Task 6.2: Add Explicit Session Handoff
 

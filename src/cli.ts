@@ -407,15 +407,26 @@ function hasCurrentSafetyMetadata(value: unknown): boolean {
     && value.fileInputs === DEFAULT_WORKFLOW_SAFETY.fileInputs;
 }
 
-function hasValidRecordingMetadata(value: unknown): boolean {
+function hasValidRecordingMetadata(value: unknown, fields: unknown): boolean {
   if (!isObject(value) || value.mode !== "manual" || !Array.isArray(value.events)) {
     return false;
   }
+
+  const fieldSelectors = Array.isArray(fields)
+    ? new Map(fields.flatMap((field) => {
+      if (!isObject(field) || !isNonEmptyString(field.name) || !isNonEmptyString(field.selector)) {
+        return [];
+      }
+
+      return [[field.name, field.selector]];
+    }))
+    : new Map<string, string>();
 
   return value.events.every((event) => isObject(event)
     && (event.event === "input" || event.event === "change")
     && isNonEmptyString(event.field)
     && isNonEmptyString(event.selector)
+    && fieldSelectors.get(event.field) === event.selector
     && (event.value === "[redacted]" || event.value === "[file]"));
 }
 
@@ -529,9 +540,9 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
     ...(workflowObject.recording === undefined ? [] : [
       buildValidationCheck(
         "recording-metadata",
-        hasValidRecordingMetadata(workflowObject.recording),
-        "Recording metadata must use manual mode and redacted input/change events.",
-        "Use recording.mode: manual and events with event input/change, field, selector, and value [redacted] or [file].",
+        hasValidRecordingMetadata(workflowObject.recording, fields),
+        "Recording metadata must use manual mode, redacted input/change events, and known field selectors.",
+        "Use recording.mode: manual and events with event input/change, field, selector matching a workflow field, and value [redacted] or [file].",
       ),
     ]),
   ];

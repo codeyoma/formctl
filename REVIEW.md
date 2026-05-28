@@ -1891,6 +1891,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Continue Task 6.1 by defining bounded `click` and explicit wait recording metadata, with validation before replay behavior.
 
+### 2026-05-29: Validate Recording Events Against Workflow Fields
+
+**Date:** 2026-05-29
+
+**Experiment:** Tighten `recording.events` validation now that manual event order affects submit replay.
+
+**Hypothesis:** A workflow should fail validation when a recording event references a field or selector outside `fields`, because stale or hand-edited event metadata could otherwise influence replay order without matching the reviewable field contract.
+
+**Result:** Passed. `validate` now requires each `recording.events` entry to use `manual` mode, an `input` or `change` event, redacted values, and a field/selector pair that exactly matches a workflow field.
+
+**Why This Was Highest Value:** Task 6.1 is active and `recording.events` now drives runtime ordering. Validating against known fields keeps event history optional and reviewable instead of becoming a hidden side channel in workflow YAML.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "unknown fields"` because an event for `total` passed validation even though the workflow only had `amount`. GREEN passed after `hasValidRecordingMetadata` checked event field/selector pairs against the workflow fields. Broader verification passed with `npx vitest run tests/cli.test.ts -t "recording metadata"`, `npx vitest run tests/release-readiness.test.ts -t "README|TASK"`, `npm run build`, `npm test`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npx tsc --noEmit`, and `npm pack --dry-run --json`.
+
+**What Failed:** The previous validator checked redaction and event shape, but not whether event metadata was still connected to the workflow fields that submit can actually replay. `npm run publish:check -- --json` remains blocked with `npm_publish_otp_required`, which is expected without a human OTP or publish-capable granular token.
+
+**Suggested Next Task:** Define the first bounded non-field event metadata, starting with click and explicit navigation wait, and add validation before adding replay behavior.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

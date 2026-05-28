@@ -1123,8 +1123,68 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode and redacted input/change events.",
-          fix: "Use recording.mode: manual and events with event input/change, field, selector, and value [redacted] or [file].",
+          message: "Recording metadata must use manual mode, redacted input/change events, and known field selectors.",
+          fix: "Use recording.mode: manual and events with event input/change, field, selector matching a workflow field, and value [redacted] or [file].",
+        },
+      ],
+    });
+  });
+
+  test("validate --json exits 1 when recording metadata references unknown fields", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-recording-unknown-field-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: input",
+        "      field: total",
+        "      selector: input[name=\"total\"]",
+        "      value: \"[redacted]\"",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "validate",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      checks: [
+        { name: "readable-yaml", status: "ok" },
+        { name: "workflow-name", status: "ok" },
+        { name: "target-url", status: "ok" },
+        { name: "fields", status: "ok" },
+        { name: "field-names", status: "ok" },
+        { name: "field-name-safety", status: "ok" },
+        { name: "field-types", status: "ok" },
+        { name: "submit-selector", status: "ok" },
+        { name: "safety-metadata", status: "ok" },
+        {
+          name: "recording-metadata",
+          status: "error",
+          message: "Recording metadata must use manual mode, redacted input/change events, and known field selectors.",
+          fix: "Use recording.mode: manual and events with event input/change, field, selector matching a workflow field, and value [redacted] or [file].",
         },
       ],
     });

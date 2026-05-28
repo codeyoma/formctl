@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reject `recording.events` entries that reference fields or selectors outside the workflow field list.
 - Cancel `record --manual` without saving when the confirmation input closes before Enter.
 - Replay manually recorded workflow fields in first-recorded event order when `recording.events` metadata is present.
 - Require a real Enter keypress before `submit --resume-after-interaction` rechecks CAPTCHA or MFA safe stops.

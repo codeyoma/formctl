@@ -124,6 +124,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.");
     expect(readme).toContain("Unreadable workflow YAML returns a `readable-yaml` check with `message` and `fix` fields.");
     expect(readme).toContain("Validation rejects unredacted `recording.events` metadata when present.");
+    expect(readme).toContain("Validation also rejects `recording.events` entries that do not match a known workflow field and selector.");
     expect(readme).toContain("Invalid workflow names return `invalid_workflow_name` in JSON mode.");
     expect(readme).toContain("Missing workflows return `workflow_not_found` in JSON mode.");
     expect(readme).toContain("Unreadable workflows return `workflow_unreadable` in JSON mode for inspect and submit.");
