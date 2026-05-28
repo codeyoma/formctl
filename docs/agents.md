@@ -37,7 +37,7 @@ formctl inspect expense-report --json
 formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run --json --headless
 ```
 
-6. Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.
+6. Inspect `.formctl/runs/<run-id>/summary.json`, `field-diff.json`, screenshots, and `audit.jsonl` before approval.
 
 7. Never pass `--approve` unless the user or policy explicitly authorizes submission.
 
@@ -105,8 +105,8 @@ MCP setup guide: docs/MCP.md
 
 ## Artifact Rules
 
-- Dry-run artifacts include `summary.json`, `dry-run.png`, and `audit.jsonl`.
-- Approved submit artifacts include `summary.json`, `post-submit.png`, and `audit.jsonl`.
+- Dry-run artifacts include `summary.json`, `field-diff.json`, `dry-run.png`, and `audit.jsonl`.
+- Approved submit artifacts include `summary.json`, `field-diff.json`, `post-submit.png`, and `audit.jsonl`.
 - Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
 - Agents should report artifact paths instead of embedding screenshots or file contents in chat.
 

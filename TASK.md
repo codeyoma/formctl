@@ -137,6 +137,7 @@ formctl doctor
 - [x] Stop before the final submit action.
 - [x] Save artifacts under `.formctl/runs/<timestamp>/`.
 - [x] Include screenshot, JSON summary, and resolved field values with secrets redacted.
+- [x] Include a pre-submit `field-diff.json` artifact for review.
 - [x] Verify: Dry-run never triggers the final submit action in the local demo app.
 - [x] Record false positives or confusing output in `REVIEW.md`.
 

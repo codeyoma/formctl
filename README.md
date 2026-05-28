@@ -135,12 +135,14 @@ npm run formctl -- submit compliance-attestation --employeeEmail auditor@example
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`
+- `field-diff.json`
 - `audit.jsonl`
 - `dry-run.png` for previews
 - `post-submit.png` for approved submissions
 - `failure.json` and `failure.png` for selector mismatches
 
-Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.
+Field diffs list the resolved values that will be set before submission, with file inputs redacted as `[file]`.
+Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.
 
 Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.
 Workflow names may contain only letters, numbers, dots, underscores, and dashes.

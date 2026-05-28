@@ -122,6 +122,19 @@ type FailureArtifacts = {
   audit: string;
 };
 
+type FieldDiff = {
+  status: "field-diff";
+  workflow: string;
+  submitted: boolean;
+  fields: Array<{
+    name: string;
+    selector: string;
+    type: string;
+    action: "set";
+    value: string;
+  }>;
+};
+
 type SelectorFailurePayload = {
   status: "error";
   workflow: string;
@@ -720,6 +733,28 @@ function writeSelectorFailure(
 
 function appendAuditEvent(auditPath: string, event: AuditEvent): void {
   appendFileSync(auditPath, `${JSON.stringify(event)}\n`);
+}
+
+function buildFieldDiff(workflow: Workflow, filledFields: Record<string, string>, submitted: boolean): FieldDiff {
+  return {
+    status: "field-diff",
+    workflow: workflow.name,
+    submitted,
+    fields: workflow.fields.flatMap((field) => {
+      const value = filledFields[field.name];
+      if (value === undefined) {
+        return [];
+      }
+
+      return [{
+        name: field.name,
+        selector: field.selector,
+        type: field.type,
+        action: "set" as const,
+        value,
+      }];
+    }),
+  };
 }
 
 async function readApprovalLine(stdin: ApprovalInput): Promise<string> {
@@ -1334,6 +1369,11 @@ export async function run(
 
       mkdirSync(runDirectory, { recursive: true });
       const auditPath = path.join(runDirectory, "audit.jsonl");
+      const fieldDiffArtifact = `${relativeRunDirectory}/field-diff.json`;
+      writeFileSync(
+        path.join(runDirectory, "field-diff.json"),
+        `${JSON.stringify(buildFieldDiff(workflow, filledFields, !isDryRun), null, 2)}\n`,
+      );
       let dryRunScreenshotArtifact: string | undefined;
       auditEvents.push({
         event: "fields_resolved",
@@ -1358,6 +1398,7 @@ export async function run(
         if (!approved) {
           const artifacts = {
             screenshot: dryRunScreenshotArtifact,
+            diff: fieldDiffArtifact,
             audit: `${relativeRunDirectory}/audit.jsonl`,
           };
           auditEvents.push({
@@ -1383,6 +1424,7 @@ export async function run(
       const artifacts = {
         screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
         ...(dryRunScreenshotArtifact === undefined ? {} : { dryRunScreenshot: dryRunScreenshotArtifact }),
+        diff: fieldDiffArtifact,
         summary: `${relativeRunDirectory}/summary.json`,
         audit: `${relativeRunDirectory}/audit.jsonl`,
       };

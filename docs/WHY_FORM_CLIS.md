@@ -23,7 +23,7 @@ For known forms, those questions should be answered by a CLI contract, not by a 
 
 1. Start from an existing workflow file, or record one only if it does not exist.
 2. Run `submit --dry-run --json`.
-3. Inspect `summary.json`, screenshots, and `audit.jsonl`.
+3. Inspect `summary.json`, `field-diff.json`, screenshots, and `audit.jsonl`.
 4. Treat exit code `5` as an approval gate.
 5. Do not pass `--approve` unless the user or policy explicitly authorizes submission.
 
@@ -40,6 +40,7 @@ Dry-run output gives the agent a stable branch point without clicking submit:
   "requiresApproval": false,
   "artifacts": {
     "summary": ".formctl/runs/2026-05-26T05-59-00-000Z/summary.json",
+    "diff": ".formctl/runs/2026-05-26T05-59-00-000Z/field-diff.json",
     "screenshot": ".formctl/runs/2026-05-26T05-59-00-000Z/dry-run.png",
     "auditLog": ".formctl/runs/2026-05-26T05-59-00-000Z/audit.jsonl"
   },

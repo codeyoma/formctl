@@ -1575,6 +1575,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** A human should run `npm adduser` or `npm login`, rerun `npm run publish:check -- --json`, then publish or continue outreach if publish remains blocked.
 
+### 2026-05-28: Add Pre-Submit Field Diff Artifacts
+
+**Date:** 2026-05-28
+
+**Experiment:** Write a `field-diff.json` artifact for successful dry-run and approved submit runs.
+
+**Hypothesis:** The product promise says users should review a diff before submission, and a structured field diff is the smallest useful version that does not depend on image diffing or selector healing.
+
+**Result:** Passed. Successful runs now write `.formctl/runs/<run-id>/field-diff.json`, include it in `summary.json`, JSON stdout, and audit artifact paths, and redact file inputs as `[file]`.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "field diff"` because `parsed.artifacts.diff` was missing. GREEN passed after adding `buildFieldDiff` and writing the artifact before screenshot/submit completion. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety"` and then with `npm test -- --run tests/release-readiness.test.ts -t "trust and comparison|agent angle"`. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:replay`, `npm run test:agent`, `npm run test:package`, `npm pack --dry-run --json`, and a real demo smoke: `npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless`, which returned `artifacts.diff` and wrote a field diff containing `amount: "120000"` and `receipt: "[file]"`.
+
+**What Failed:** Before this, users got screenshots, summary fields, and audit logs, but not a dedicated diff artifact that could be reviewed or linked independently before approval.
+
+**Decision:** Keep the first diff as a field-level JSON artifact. Pixel screenshot diffing can wait until users ask for visual regression-style comparison.
+
+**Next Step:** Continue launch outreach or npm authentication; the core dry-run artifact set now includes screenshot, summary, audit, and field diff.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

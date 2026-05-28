@@ -1259,6 +1259,7 @@ describe("formctl CLI", () => {
       const runId = runDirectories[0] ?? "";
       const summaryPath = path.join(runDirectory, "summary.json");
       const screenshotPath = path.join(runDirectory, "dry-run.png");
+      const diffPath = path.join(runDirectory, "field-diff.json");
       const auditPath = path.join(runDirectory, "audit.jsonl");
 
       expect(result.status).toBe(0);
@@ -1268,6 +1269,7 @@ describe("formctl CLI", () => {
       expect(runDirectories).toHaveLength(1);
       expect(existsSync(summaryPath)).toBe(true);
       expect(existsSync(screenshotPath)).toBe(true);
+      expect(existsSync(diffPath)).toBe(true);
       expect(existsSync(auditPath)).toBe(true);
       expect(JSON.parse(readFileSync(summaryPath, "utf8"))).toEqual({
         status: "dry-run",
@@ -1279,6 +1281,7 @@ describe("formctl CLI", () => {
         },
         artifacts: {
           screenshot: `.formctl/runs/${runId}/dry-run.png`,
+          diff: `.formctl/runs/${runId}/field-diff.json`,
           summary: `.formctl/runs/${runId}/summary.json`,
           audit: `.formctl/runs/${runId}/audit.jsonl`,
         },
@@ -1350,6 +1353,85 @@ describe("formctl CLI", () => {
         },
       });
       expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  test("submit --dry-run writes a reviewable field diff artifact", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <input name="receipt" type="file" />
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-field-diff-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(path.join(workspace, "receipt.txt"), "receipt fixture\n");
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "  - name: receipt",
+        "    selector: input[name=\"receipt\"]",
+        "    type: file",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--receipt",
+        "receipt.txt",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const parsed = JSON.parse(result.stdout);
+      const diffPath = path.join(workspace, parsed.artifacts.diff);
+
+      expect(result.status).toBe(0);
+      expect(fixture.postCount()).toBe(0);
+      expect(parsed.artifacts.diff).toBe(`.formctl/runs/${parsed.runId}/field-diff.json`);
+      expect(JSON.parse(readFileSync(diffPath, "utf8"))).toEqual({
+        status: "field-diff",
+        workflow: "expense-report",
+        submitted: false,
+        fields: [
+          {
+            name: "amount",
+            selector: 'input[name="amount"]',
+            type: "number",
+            action: "set",
+            value: "120000",
+          },
+          {
+            name: "receipt",
+            selector: 'input[name="receipt"]',
+            type: "file",
+            action: "set",
+            value: "[file]",
+          },
+        ],
+      });
     } finally {
       await fixture.close();
     }
@@ -1564,6 +1646,7 @@ describe("formctl CLI", () => {
           submitted: false,
           artifacts: {
             screenshot: `.formctl/runs/${runId}/dry-run.png`,
+            diff: `.formctl/runs/${runId}/field-diff.json`,
             summary: `.formctl/runs/${runId}/summary.json`,
             audit: `.formctl/runs/${runId}/audit.jsonl`,
           },
@@ -1837,6 +1920,7 @@ describe("formctl CLI", () => {
       expect(parsed.runId).toMatch(/^\d+-dry-run$/);
       expect(parsed.artifacts).toEqual({
         screenshot: `.formctl/runs/${parsed.runId}/dry-run.png`,
+        diff: `.formctl/runs/${parsed.runId}/field-diff.json`,
         summary: `.formctl/runs/${parsed.runId}/summary.json`,
         audit: `.formctl/runs/${parsed.runId}/audit.jsonl`,
       });
@@ -2021,6 +2105,7 @@ describe("formctl CLI", () => {
       expect(fixture.postCount()).toBe(1);
       expect(runDirectories).toHaveLength(1);
       expect(existsSync(path.join(runDirectory, "dry-run.png"))).toBe(true);
+      expect(existsSync(path.join(runDirectory, "field-diff.json"))).toBe(true);
       expect(existsSync(path.join(runDirectory, "post-submit.png"))).toBe(true);
       expect(JSON.parse(readFileSync(summaryPath, "utf8"))).toEqual({
         status: "submitted",
@@ -2033,6 +2118,7 @@ describe("formctl CLI", () => {
         artifacts: {
           screenshot: `.formctl/runs/${runId}/post-submit.png`,
           dryRunScreenshot: `.formctl/runs/${runId}/dry-run.png`,
+          diff: `.formctl/runs/${runId}/field-diff.json`,
           summary: `.formctl/runs/${runId}/summary.json`,
           audit: `.formctl/runs/${runId}/audit.jsonl`,
         },
@@ -2090,6 +2176,7 @@ describe("formctl CLI", () => {
       const runId = runDirectories[0] ?? "";
       const summaryPath = path.join(runDirectory, "summary.json");
       const screenshotPath = path.join(runDirectory, "post-submit.png");
+      const diffPath = path.join(runDirectory, "field-diff.json");
       const auditPath = path.join(runDirectory, "audit.jsonl");
 
       expect(result.status).toBe(0);
@@ -2099,6 +2186,7 @@ describe("formctl CLI", () => {
       expect(runDirectories).toHaveLength(1);
       expect(existsSync(summaryPath)).toBe(true);
       expect(existsSync(screenshotPath)).toBe(true);
+      expect(existsSync(diffPath)).toBe(true);
       expect(existsSync(auditPath)).toBe(true);
       expect(JSON.parse(readFileSync(summaryPath, "utf8"))).toEqual({
         status: "submitted",
@@ -2110,6 +2198,7 @@ describe("formctl CLI", () => {
         },
         artifacts: {
           screenshot: `.formctl/runs/${runId}/post-submit.png`,
+          diff: `.formctl/runs/${runId}/field-diff.json`,
           summary: `.formctl/runs/${runId}/summary.json`,
           audit: `.formctl/runs/${runId}/audit.jsonl`,
         },

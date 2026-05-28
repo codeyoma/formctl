@@ -13,10 +13,12 @@ formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run 
 Dry-run artifacts are written under `.formctl/runs/<run-id>/`:
 
 - `summary.json`
+- `field-diff.json`
 - `audit.jsonl`
 - `dry-run.png`
 
 Use these artifacts to review the target page, field values, and selector checks before deciding whether a real submission is allowed.
+Use `field-diff.json` to review the exact resolved field values before approval.
 
 ## Approval gate
 

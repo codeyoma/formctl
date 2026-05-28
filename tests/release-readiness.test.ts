@@ -133,9 +133,11 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Invalid workflows return `workflow_invalid` in JSON mode for inspect and submit.");
     expect(readme).toContain("![formctl demo](docs/assets/demo.svg)");
     expect(readme).toContain("audit.jsonl");
+    expect(readme).toContain("field-diff.json");
     expect(readme).toContain("failure.json");
     expect(readme).toContain("failure.png");
-    expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, and final result.");
+    expect(readme).toContain("Field diffs list the resolved values that will be set before submission, with file inputs redacted as `[file]`.");
+    expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.");
     expect(readme).toContain("Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.");
     expect(readme).toContain("Workflow names may contain only letters, numbers, dots, underscores, and dashes.");
     expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
@@ -628,6 +630,8 @@ describe("release readiness docs", () => {
     expect(trust).toContain("Selector breakage");
     expect(trust).toContain("Secret handling");
     expect(trust).toContain("What formctl does not do");
+    expect(trust).toContain("field-diff.json");
+    expect(trust).toContain("Use `field-diff.json` to review the exact resolved field values before approval.");
     expect(trust).toContain("does not store credentials");
     expect(trust).toContain("does not bypass authentication");
     expect(trust).toContain("does not solve CAPTCHA");
@@ -653,7 +657,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Copilot CLI");
     expect(agents).toContain("Always run `submit --dry-run --json` before any approved submit.");
     expect(agents).toContain("Never pass `--approve` unless the user or policy explicitly authorizes submission.");
-    expect(agents).toContain("Inspect `.formctl/runs/<run-id>/summary.json`, screenshots, and `audit.jsonl` before approval.");
+    expect(agents).toContain("Inspect `.formctl/runs/<run-id>/summary.json`, `field-diff.json`, screenshots, and `audit.jsonl` before approval.");
     expect(agents).toContain("Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `artifacts`.");
     expect(agents).toContain("Run `formctl doctor --json` before browser-backed work.");
     expect(agents).toContain("Run `formctl workflows --json` to discover available workflow names.");
@@ -680,6 +684,8 @@ describe("release readiness docs", () => {
     expect(agents).toContain('"installCommand": "npx playwright install chromium"');
     expect(agents).toContain("Treat exit code `5` as an approval gate, not a retryable failure.");
     expect(agents).toContain("Do not print secrets, file contents, cookies, or private page data.");
+    expect(agents).toContain("Dry-run artifacts include `summary.json`, `field-diff.json`, `dry-run.png`, and `audit.jsonl`.");
+    expect(agents).toContain("Approved submit artifacts include `summary.json`, `field-diff.json`, `post-submit.png`, and `audit.jsonl`.");
     expect(agents).toContain("Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
   });
 
@@ -726,7 +732,9 @@ describe("release readiness docs", () => {
     expect(article).toContain("Browser agents are good at exploration");
     expect(article).toContain("formctl is for the moment after exploration");
     expect(article).toContain("`submit --dry-run --json`");
+    expect(article).toContain("Inspect `summary.json`, `field-diff.json`, screenshots, and `audit.jsonl`.");
     expect(article).toContain("\"status\": \"dry-run\"");
+    expect(article).toContain("\"diff\": \".formctl/runs/2026-05-26T05-59-00-000Z/field-diff.json\"");
     expect(article).toContain("\"requiresApproval\": true");
     expect(article).toContain("\"exitCode\": 5");
     expect(article).toContain("\"code\": \"selector_mismatch\"");
