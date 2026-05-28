@@ -2186,6 +2186,134 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit --approve replays manual recording fields in event order", async () => {
+    let submittedValues: URLSearchParams | undefined;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        let body = "";
+        request.setEncoding("utf8");
+        request.on("data", (chunk) => {
+          body += chunk;
+        });
+        request.on("end", () => {
+          submittedValues = new URLSearchParams(body);
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          response.end("<!doctype html><html><body>Submitted</body></html>");
+        });
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/submit" aria-label="Escalation routing">
+              <select name="department">
+                <option value="">Choose department</option>
+                <option value="sales">Sales</option>
+              </select>
+              <input name="managerEmail" type="email" />
+              <input name="replayOrder" type="hidden" />
+              <button type="submit">Route escalation</button>
+            </form>
+            <script>
+              const seen = [];
+              const order = document.querySelector('input[name="replayOrder"]');
+              const mark = (name) => {
+                if (seen.includes(name)) {
+                  return;
+                }
+                seen.push(name);
+                order.value = seen.join(">");
+              };
+              document.querySelector('select[name="department"]').addEventListener("change", () => mark("department"));
+              document.querySelector('input[name="managerEmail"]').addEventListener("input", () => mark("managerEmail"));
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Manual recording replay fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-recording-replay-order-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "escalation-routing.yml"),
+      [
+        "name: escalation-routing",
+        `url: http://127.0.0.1:${address.port}/routing`,
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: change",
+        "      field: department",
+        "      selector: select[name=\"department\"]",
+        "      value: \"[redacted]\"",
+        "    - event: input",
+        "      field: managerEmail",
+        "      selector: input[name=\"managerEmail\"]",
+        "      value: \"[redacted]\"",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: managerEmail",
+        "    selector: input[name=\"managerEmail\"]",
+        "    type: email",
+        "  - name: department",
+        "    selector: select[name=\"department\"]",
+        "    type: select",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "escalation-routing",
+        "--managerEmail",
+        "sales-manager@example.com",
+        "--department",
+        "sales",
+        "--approve",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        status: "submitted",
+        workflow: "escalation-routing",
+        submitted: true,
+        fields: {
+          managerEmail: "sales-manager@example.com",
+          department: "sales",
+        },
+      });
+      expect(submittedValues?.get("department")).toBe("sales");
+      expect(submittedValues?.get("managerEmail")).toBe("sales-manager@example.com");
+      expect(submittedValues?.get("replayOrder")).toBe("department>managerEmail");
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
   test("submit --dry-run supports textarea and date fields", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

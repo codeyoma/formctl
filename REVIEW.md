@@ -1855,6 +1855,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Run the full release gate, then move to either outreach posting metrics or a deterministic multi-control replay fixture from Task 6.1.
 
+### 2026-05-29: Replay Manual Recording Fields In Event Order
+
+**Date:** 2026-05-29
+
+**Experiment:** Use redacted `recording.events` metadata to replay fields in the order a human first interacted with them, even if the YAML `fields` array is ordered differently.
+
+**Hypothesis:** A workflow with dependent controls should preserve the human-recorded field order during `submit`; otherwise a later select/change can override or invalidate values filled earlier.
+
+**Result:** Passed. `submit` now orders replay by the first `recording.events[*].field` occurrence when manual recording metadata is present, then appends any fields that were not in the event history. The event metadata still stores only field names, selectors, event types, and `[redacted]`/`[file]` markers.
+
+**Why This Was Highest Value:** Task 6.1 is the next reliability step after CAPTCHA/MFA boundaries. Event history is only valuable if it changes replay behavior for real forms with dependent controls, and this keeps the existing named-field workflow while making recorded order deterministic.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "manual recording fields in event order"` because approved submit sent `replayOrder=managerEmail>department` from the YAML field order. GREEN passed after adding `orderFieldsForReplay`, producing `replayOrder=department>managerEmail`. Broader verification passed with `npx vitest run tests/release-readiness.test.ts -t "README"`, `npm run build`, `npm test`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npx tsc --noEmit`, and `npm pack --dry-run --json`.
+
+**What Failed:** The initial implementation had no bug in selector matching or field value parsing; the missing piece was that submit ignored the already-recorded event order. `npm run publish:check -- --json` remains blocked with `npm_publish_otp_required`, which is expected without a human OTP or publish-capable granular token.
+
+**Suggested Next Task:** Define and validate the next bounded event types for Task 6.1, especially click and explicit navigation wait, without turning `formctl` into open-ended browser automation.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

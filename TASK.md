@@ -357,7 +357,7 @@ npx formctl doctor
 - [ ] Define the first supported event types: input, change, select, file upload, click, and explicit navigation wait.
 - [ ] Keep the current named-field workflow as the default path; event history must be optional and reviewable in YAML.
 - [ ] Redact values and file names in recorded events, and reject unredacted event metadata during validation.
-- [ ] Verify: A fixture with multiple recorded controls replays deterministically without leaking values.
+- [x] Verify: A fixture with multiple recorded controls replays deterministically without leaking values.
 - [ ] Record event-history tradeoffs in `REVIEW.md`.
 
 ### Task 6.2: Add Explicit Session Handoff

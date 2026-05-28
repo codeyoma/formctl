@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Replay manually recorded workflow fields in first-recorded event order when `recording.events` metadata is present.
 - Require a real Enter keypress before `submit --resume-after-interaction` rechecks CAPTCHA or MFA safe stops.
 
 ## 0.1.1 - 2026-05-29

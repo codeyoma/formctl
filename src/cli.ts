@@ -918,6 +918,33 @@ function buildFieldDiff(workflow: Workflow, filledFields: Record<string, string>
   };
 }
 
+function orderFieldsForReplay(workflow: Workflow): WorkflowField[] {
+  if (workflow.recording === undefined) {
+    return workflow.fields;
+  }
+
+  const fieldsByName = new Map(workflow.fields.map((field) => [field.name, field]));
+  const orderedFields: WorkflowField[] = [];
+  const seenFields = new Set<string>();
+  for (const event of workflow.recording.events) {
+    const field = fieldsByName.get(event.field);
+    if (field === undefined || seenFields.has(field.name)) {
+      continue;
+    }
+
+    orderedFields.push(field);
+    seenFields.add(field.name);
+  }
+
+  for (const field of workflow.fields) {
+    if (!seenFields.has(field.name)) {
+      orderedFields.push(field);
+    }
+  }
+
+  return orderedFields;
+}
+
 async function readApprovalLine(stdin: ApprovalInput): Promise<string | undefined> {
   stdin.setEncoding?.("utf8");
 
@@ -1651,7 +1678,7 @@ export async function run(
         return 3;
       }
 
-      for (const field of workflow.fields) {
+      for (const field of orderFieldsForReplay(workflow)) {
         const value = fieldValuesResult.values.get(field.name);
         if (value === undefined) {
           continue;
