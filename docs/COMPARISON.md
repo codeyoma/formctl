@@ -4,7 +4,7 @@
 
 | Approach | Best for | Main weakness | dry-run | approval | audit | selector drift |
 | --- | --- | --- | --- | --- | --- | --- |
-| formctl | Repeating known browser form submissions as CLI commands | Early MVP; not full event-history recording yet | Built in | Built in | Built in | Fails before fill or submit |
+| formctl | Repeating known browser form submissions as CLI commands | Early MVP; not full event-history recording yet | Built in | Built in | Built in | Preflights field and step selectors; gates final submit |
 | Raw Playwright scripts | Custom browser automation owned by engineers | Safety contract and artifact shape are custom per script | Usually custom | Usually custom | Usually custom | Depends on script author |
 | Browser agents | Exploring unknown pages and handling open-ended tasks | Reproducibility can be weak across repeated submissions | Usually prompt-driven | Usually prompt-driven | Usually transcript-based | May continue unless constrained |
 | RPA | Enterprise workflow automation across many desktop and web apps | Heavy setup and operational overhead for simple developer workflows | Product-specific | Product-specific | Product-specific | Product-specific |
@@ -17,7 +17,7 @@ API-less internal tools, admin screens, government sites, and SaaS settings page
 - explicit approval before side effects
 - deterministic JSON output for agents
 - screenshots and audit logs for review
-- selector drift detection before filling fields
+- selector drift detection before field filling for recorded fields and workflow steps
 - readable workflow files that can be reviewed in git
 
 `formctl` makes that trust layer the default for form workflows.

@@ -53,7 +53,7 @@ For headed local submits, `--resume-after-interaction` pauses after a login, MFA
 
 ## Selector breakage
 
-Recorded selectors must match exactly one element before `formctl` fills any fields or submits the form.
+Recorded field selectors and workflow step selectors must match exactly one element before `formctl` fills any fields or submits the form. For workflows without reviewed `after-fields` steps, the submit selector is also checked before field filling. For workflows with reviewed `after-fields` steps, the final submit selector is checked after those steps reveal it and still before the real submit click.
 
 If a selector is missing or ambiguous, `formctl` stops with exit code `3` and writes:
 

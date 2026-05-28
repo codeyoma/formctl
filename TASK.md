@@ -425,11 +425,12 @@ npx formctl doctor
 - [x] Report setup-click selector drift with a machine-readable error role before field filling.
 - [x] Add structured before-fields click steps with per-step screenshot artifacts.
 - [x] Add a checked-in demo workflow that proves setup-click replay in package/demo smoke tests.
-- [ ] Add workflow steps for known navigation, modal opening, intermediate confirmation, and final form submission.
-- [ ] Add per-step selector checks, screenshots, JSON output, and audit events.
-- [ ] Preserve dry-run stopping before the final submit action.
-- [ ] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.
-- [ ] Record where raw Playwright or browser agents remain a better fit in `REVIEW.md`.
+- [x] Add structured after-fields confirmation click steps for known review controls.
+- [x] Add per-step selector checks, screenshots, JSON output, and audit events.
+- [x] Preserve dry-run stopping before the final submit action.
+- [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.
+- [x] Record where raw Playwright or browser agents remain a better fit in `REVIEW.md`.
+- [ ] Add workflow steps for known navigation and multi-page final form submission handoff.
 
 ---
 

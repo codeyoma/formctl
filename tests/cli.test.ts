@@ -1354,10 +1354,51 @@ describe("formctl CLI", () => {
         {
           name: "workflow-steps",
           status: "error",
-          message: "Workflow steps must be named before-fields click steps with bounded selectors.",
-          fix: "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields.",
+          message: "Workflow steps must be named before-fields or after-fields click steps with bounded selectors.",
+          fix: "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields or after-fields.",
         },
       ],
+    });
+  });
+
+  test("validate --json accepts bounded before-fields and after-fields workflow steps", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-step-after-fields-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-modal.yml"),
+      [
+        "name: approval-modal",
+        "url: http://localhost:3000/approval",
+        "steps:",
+        "  - name: open modal",
+        "    action: click",
+        "    selector: button[name=\"open-approval\"]",
+        "    when: before-fields",
+        "  - name: review details",
+        "    action: click",
+        "    selector: button[name=\"review-details\"]",
+        "    when: after-fields",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "approval-modal", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      status: "ok",
+      workflow: "approval-modal",
+      checks: expect.arrayContaining([
+        { name: "workflow-steps", status: "ok" },
+      ]),
     });
   });
 
@@ -2994,6 +3035,258 @@ describe("formctl CLI", () => {
       expect(auditLog).toContain('"event":"workflow_step"');
       expect(auditLog).toContain('"stepName":"open approval modal"');
       expect(auditLog).toContain('"event":"step_screenshot_saved"');
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
+  test("submit replays structured after-field click steps before final submit", async () => {
+    let postCount = 0;
+    let submittedBody = "";
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        postCount += 1;
+        request.setEncoding("utf8");
+        request.on("data", (chunk) => {
+          submittedBody += chunk;
+        });
+        request.on("end", () => {
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          response.end("<!doctype html><html><body>Submitted</body></html>");
+        });
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/submit" aria-label="Approval">
+              <input name="amount" type="number" />
+              <button type="button" name="review-details" disabled>Review details</button>
+              <div id="submit-root"></div>
+            </form>
+            <script>
+              const amountInput = document.querySelector('input[name="amount"]');
+              const reviewButton = document.querySelector('button[name="review-details"]');
+              amountInput.addEventListener("input", () => {
+                reviewButton.disabled = amountInput.value.length === 0;
+              });
+              reviewButton.addEventListener("click", () => {
+                document.querySelector("#submit-root").innerHTML = '<button type="submit" name="final-submit">Submit reviewed request</button>';
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("After-field step fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-after-field-step-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-modal.yml"),
+      [
+        "name: approval-modal",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "steps:",
+        "  - name: review entered details",
+        "    action: click",
+        "    selector: button[name=\"review-details\"]",
+        "    when: after-fields",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const dryRun = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(dryRun.status).toBe(0);
+      expect(dryRun.stderr).toBe("");
+      const dryRunJson = JSON.parse(dryRun.stdout);
+      expect(dryRunJson).toMatchObject({
+        status: "dry-run",
+        submitted: false,
+        fields: {
+          amount: "4500",
+        },
+        artifacts: {
+          steps: [
+            {
+              name: "review entered details",
+              screenshot: `.formctl/runs/${dryRunJson.runId}/step-01-review-entered-details.png`,
+            },
+          ],
+        },
+      });
+      expect(postCount).toBe(0);
+      expect(existsSync(path.join(workspace, dryRunJson.artifacts.steps[0].screenshot))).toBe(true);
+      const auditLog = readFileSync(path.join(workspace, dryRunJson.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"event":"workflow_step"');
+      expect(auditLog).toContain('"stepName":"review entered details"');
+      expect(auditLog).toContain('"event":"step_screenshot_saved"');
+
+      const approved = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--amount",
+        "4500",
+        "--approve",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(approved.status).toBe(0);
+      expect(approved.stderr).toBe("");
+      expect(JSON.parse(approved.stdout)).toMatchObject({
+        status: "submitted",
+        submitted: true,
+      });
+      expect(postCount).toBe(1);
+      expect(submittedBody).toContain("amount=4500");
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
+  test("submit reports after-field step selector drift before field filling", async () => {
+    let mutationCount = 0;
+    let submitCount = 0;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST" && request.url === "/mutation") {
+        mutationCount += 1;
+        response.writeHead(204);
+        response.end();
+        return;
+      }
+
+      if (request.method === "POST") {
+        submitCount += 1;
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        response.end("<!doctype html><html><body>Submitted</body></html>");
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form method="post" action="/submit" aria-label="Approval">
+              <input name="amount" type="number" />
+              <div id="submit-root"></div>
+            </form>
+            <script>
+              document.querySelector('input[name="amount"]').addEventListener("input", () => {
+                fetch("/mutation", { method: "POST", body: "field-filled" }).catch(() => {});
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("After-field step drift fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-after-field-step-drift-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-modal.yml"),
+      [
+        "name: approval-modal",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "steps:",
+        "  - name: review entered details",
+        "    action: click",
+        "    selector: button[name=\"review-details\"]",
+        "    when: after-fields",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(result.status).toBe(3);
+      expect(result.stderr).toBe("");
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toMatchObject({
+        status: "error",
+        workflow: "approval-modal",
+        exitCode: 3,
+        submitted: false,
+        error: {
+          code: "selector_mismatch",
+          role: "workflow-step",
+          selector: "button[name=\"review-details\"]",
+          expectedMatches: 1,
+          actualMatches: 0,
+        },
+      });
+      expect(mutationCount).toBe(0);
+      expect(submitCount).toBe(0);
+      const auditLog = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"role":"workflow-step"');
+      expect(auditLog).toContain('"stepName":"review entered details"');
+      expect(auditLog).toContain('"actualMatches":0');
     } finally {
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {

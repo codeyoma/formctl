@@ -2071,6 +2071,26 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add a post-field confirmation design note and failing fixture before implementing it, explicitly deciding how to preserve review artifacts and selector-drift guarantees when a later step must happen after field filling.
 
+### 2026-05-29: Structured After-Fields Confirmation Steps
+
+**Date:** 2026-05-29
+
+**Experiment:** Add a bounded `when: after-fields` workflow step for known review or confirmation controls that must be clicked after field values are filled and before the final submit control exists.
+
+**Hypothesis:** `formctl` can support a common multi-step form shape without becoming open-ended browser automation if after-field steps are still named, non-submit clicks with bounded selectors, selector/type preflight happens before field filling, and dry-run continues to stop before the final submit click.
+
+**Result:** Passed. Workflow validation now accepts structured `before-fields` and `after-fields` click steps. Submit replays `before-fields` steps before field checks, preflights `after-fields` selectors before field filling, fills fields, replays the reviewed `after-fields` steps, captures `workflow_step` and `step_screenshot_saved` artifacts, then checks the final submit selector before dry-run screenshot or approved submit. JSON selector failures for structured step drift include `role: "workflow-step"`.
+
+**Why This Was Highest Value:** Task 6.7 had reached the point where setup clicks were reliable, but many real internal tools require a review button after values are entered. This is the smallest useful slice that adds intermediate confirmation while preserving preview-first approval and a pre-mutation selector drift guarantee for the new step selector.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "after-field|after-fields"` because `after-fields` steps were rejected as invalid workflows. GREEN passed after splitting step replay by timing and preflighting after-field selectors. Focused verification passed with `npx vitest run tests/cli.test.ts -t "after-field|after-fields|workflow steps use an unbounded selector"` and `npx vitest run tests/release-readiness.test.ts -t "README explains|multi-step"`. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The old blanket docs claim that every missing selector fails before any filling was too broad for workflows where the final submit appears only after a reviewed post-field step. I updated the contract: field and workflow-step selectors are preflighted before filling; final submit is still checked before a real submit click, and dry-run still never clicks it. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 44 package entries.
+
+**Where Raw Playwright Or Browser Agents Still Fit:** Use raw Playwright or a browser agent for dynamic branching, arbitrary navigation, custom assertions, conditional waits, or pages where the review control does not exist until after exploration. Promote only the stable known path back into `formctl` steps once it can be reviewed as YAML.
+
+**Suggested Next Task:** Add a checked-in demo workflow that exercises `after-fields` confirmation in the package/demo replay path, or keep Task 6.7 moving by designing bounded navigation steps separately from final submit approval.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

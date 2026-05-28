@@ -64,7 +64,7 @@ Unapproved submit is not a runtime error. It is the approval gate:
 }
 ```
 
-Selector drift stops before filling fields or submitting:
+Selector drift gives agents a structured failure path before submission:
 
 ```json
 {

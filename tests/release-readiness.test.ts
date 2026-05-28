@@ -119,7 +119,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.");
     expect(readme).toContain("Manual recording stores redacted `recording.events` entries for changed fields and file inputs.");
     expect(readme).toContain("Manual recording labels text input as `input`, select controls as `select`, file inputs as `file`, named non-submit button clicks as `click`, and page navigation as `wait` so the YAML is easier to review.");
-    expect(readme).toContain("Reviewed `steps` entries can describe named `before-fields` setup clicks that need per-step screenshots.");
+    expect(readme).toContain("Reviewed `steps` entries can describe named `before-fields` setup clicks or preflighted `after-fields` review clicks that need per-step screenshots.");
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
@@ -141,7 +141,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.");
     expect(readme).toContain("Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.");
     expect(readme).toContain("Workflow names may contain only letters, numbers, dots, underscores, and dashes.");
-    expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
+    expect(readme).toContain("Field selectors and workflow step selectors fail before filling fields or submitting.");
+    expect(readme).toContain("For workflows with reviewed `after-fields` steps, the final submit selector is checked after those steps and still before the real submit click.");
     expect(readme).toContain("Login, CAPTCHA, and MFA walls fail before filling fields or submitting.");
     expect(readme).toContain("6 interaction required");
     expect(readme).toContain("Login, CAPTCHA, and MFA walls return `interaction_required`, `captcha_required`, or `mfa_required` in JSON mode with failure artifacts.");
@@ -166,7 +167,10 @@ describe("release readiness docs", () => {
     expect(guide).toContain("bounded setup click replay");
     expect(guide).toContain("steps:");
     expect(guide).toContain("when: before-fields");
+    expect(guide).toContain("when: after-fields");
     expect(guide).toContain("step_screenshot_saved");
+    expect(guide).toContain('`role: "workflow-step"`');
+    expect(guide).toContain("Use an `after-fields` step when a known review button is already selectable before field filling");
     expect(guide).toContain("Only leading `click` events");
     expect(guide).toContain("`submit` replays fields");
     expect(guide).toContain("does not replay arbitrary clicks or waits");
@@ -179,11 +183,15 @@ describe("release readiness docs", () => {
     expect(guide).toContain("Use raw Playwright or a browser agent");
     expect(task).toContain("- [x] Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(task).toContain("- [x] Add structured before-fields click steps with per-step screenshot artifacts.");
+    expect(task).toContain("- [x] Add structured after-fields confirmation click steps for known review controls.");
+    expect(task).toContain("- [x] Preserve dry-run stopping before the final submit action.");
+    expect(task).toContain("- [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
     expect(changelog).toContain("Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(changelog).toContain("Add structured before-fields click steps with per-step screenshot artifacts.");
+    expect(changelog).toContain("Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });

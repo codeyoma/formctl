@@ -107,11 +107,13 @@ type WorkflowWaitRecordingEvent = {
 
 type WorkflowRecordingEvent = WorkflowFieldRecordingEvent | WorkflowClickRecordingEvent | WorkflowWaitRecordingEvent;
 
+type WorkflowStepTiming = "before-fields" | "after-fields";
+
 type WorkflowStep = {
   name: string;
   action: "click";
   selector: string;
-  when: "before-fields";
+  when: WorkflowStepTiming;
 };
 
 type Workflow = {
@@ -176,7 +178,7 @@ type FailureArtifacts = {
   audit: string;
 };
 
-type SelectorFailureRole = "setup-click" | "field" | "submit";
+type SelectorFailureRole = "setup-click" | "workflow-step" | "field" | "submit";
 
 type FieldDiff = {
   status: "field-diff";
@@ -501,7 +503,7 @@ function hasValidWorkflowSteps(value: unknown): boolean {
     && step.action === "click"
     && isNonEmptyString(step.selector)
     && RECORDING_CLICK_SELECTOR_PATTERN.test(step.selector)
-    && step.when === "before-fields");
+    && (step.when === "before-fields" || step.when === "after-fields"));
 }
 
 function validateWorkflow(workflowName: string, workflow: unknown): ValidationCheck[] {
@@ -615,8 +617,8 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       buildValidationCheck(
         "workflow-steps",
         hasValidWorkflowSteps(workflowObject.steps),
-        "Workflow steps must be named before-fields click steps with bounded selectors.",
-        "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields.",
+        "Workflow steps must be named before-fields or after-fields click steps with bounded selectors.",
+        "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields or after-fields.",
       ),
     ]),
     ...(workflowObject.recording === undefined ? [] : [
@@ -1053,14 +1055,20 @@ type SetupClickReplayStep = {
   stepIndex?: number;
 };
 
-function setupClicksForReplay(workflow: Workflow): SetupClickReplayStep[] {
+function setupClicksForReplay(workflow: Workflow, when: WorkflowStepTiming = "before-fields"): SetupClickReplayStep[] {
   if (workflow.steps !== undefined) {
-    return workflow.steps.map((step, index) => ({
-      name: step.name,
-      selector: step.selector,
-      source: "workflow-step",
-      stepIndex: index,
-    }));
+    return workflow.steps.flatMap((step, index) => (step.when === when
+      ? [{
+          name: step.name,
+          selector: step.selector,
+          source: "workflow-step" as const,
+          stepIndex: index,
+        }]
+      : []));
+  }
+
+  if (when !== "before-fields") {
+    return [];
   }
 
   const replayEvents: SetupClickReplayStep[] = [];
@@ -1076,6 +1084,81 @@ function setupClicksForReplay(workflow: Workflow): SetupClickReplayStep[] {
   }
 
   return replayEvents;
+}
+
+async function validateClickReplayStep(
+  page: Page,
+  workflow: Workflow,
+  clickEvent: SetupClickReplayStep,
+  auditEvents: AuditEvent[],
+): Promise<SelectorFailurePayload | undefined> {
+  const auditRole = clickEvent.source === "workflow-step" ? "workflow-step" : "setup-click";
+  const matchCount = await page.locator(clickEvent.selector).count();
+  auditEvents.push({
+    event: "selector_check",
+    role: auditRole,
+    selector: clickEvent.selector,
+    ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
+    expectedMatches: 1,
+    actualMatches: matchCount,
+    result: matchCount === 1 ? "ok" : "mismatch",
+  });
+  if (matchCount !== 1) {
+    return buildSelectorMismatchPayload(
+      workflow.name,
+      clickEvent.selector,
+      matchCount,
+      auditRole,
+    );
+  }
+
+  const actualType = await readSetupClickControlType(page, clickEvent.selector);
+  auditEvents.push({
+    event: "setup_click_type_check",
+    role: auditRole,
+    selector: clickEvent.selector,
+    ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
+    expectedType: "non-submit",
+    actualType,
+    result: actualType === "non-submit" ? "ok" : "mismatch",
+  });
+  if (actualType !== "non-submit") {
+    return buildFieldTypeMismatchPayload(
+      workflow.name,
+      clickEvent.selector,
+      "non-submit",
+      actualType,
+      auditRole,
+    );
+  }
+
+  return undefined;
+}
+
+async function validateSubmitSelector(
+  page: Page,
+  workflow: Workflow,
+  auditEvents: AuditEvent[],
+): Promise<SelectorFailurePayload | undefined> {
+  const submitMatchCount = await page.locator(workflow.submit.selector).count();
+  auditEvents.push({
+    event: "selector_check",
+    role: "submit",
+    selector: workflow.submit.selector,
+    expectedMatches: 1,
+    actualMatches: submitMatchCount,
+    result: submitMatchCount === 1 ? "ok" : "mismatch",
+  });
+  if (submitMatchCount !== 1) {
+    return buildSelectorMismatchPayload(
+      workflow.name,
+      workflow.submit.selector,
+      submitMatchCount,
+      "submit",
+    );
+  }
+
+  return undefined;
 }
 
 function slugifyArtifactName(value: string): string {
@@ -1664,75 +1747,25 @@ export async function run(
         return 6;
       }
 
-      for (const [index, clickEvent] of setupClicksForReplay(workflow).entries()) {
+      const writeSelectorReplayFailure = async (failurePayload: SelectorFailurePayload): Promise<3> => {
+        const failure = await writeSelectorMismatchFailureArtifacts(
+          page,
+          process.cwd(),
+          failurePayload,
+          auditEvents,
+        );
+        writeSelectorFailure(
+          wantsJson ? stdout : stderr,
+          failurePayload,
+          wantsJson,
+          failure.runId,
+          failure.artifacts,
+        );
+        return 3;
+      };
+
+      const replayClickStep = async (clickEvent: SetupClickReplayStep, index: number): Promise<void> => {
         const auditRole = clickEvent.source === "workflow-step" ? "workflow-step" : "setup-click";
-        const matchCount = await page.locator(clickEvent.selector).count();
-        auditEvents.push({
-          event: "selector_check",
-          role: auditRole,
-          selector: clickEvent.selector,
-          ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
-          expectedMatches: 1,
-          actualMatches: matchCount,
-          result: matchCount === 1 ? "ok" : "mismatch",
-        });
-        if (matchCount !== 1) {
-          const failurePayload = buildSelectorMismatchPayload(
-            workflow.name,
-            clickEvent.selector,
-            matchCount,
-            "setup-click",
-          );
-          const failure = await writeSelectorMismatchFailureArtifacts(
-            page,
-            process.cwd(),
-            failurePayload,
-            auditEvents,
-          );
-          writeSelectorFailure(
-            wantsJson ? stdout : stderr,
-            failurePayload,
-            wantsJson,
-            failure.runId,
-            failure.artifacts,
-          );
-          return 3;
-        }
-
-        const actualType = await readSetupClickControlType(page, clickEvent.selector);
-        auditEvents.push({
-          event: "setup_click_type_check",
-          role: auditRole,
-          selector: clickEvent.selector,
-          ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
-          expectedType: "non-submit",
-          actualType,
-          result: actualType === "non-submit" ? "ok" : "mismatch",
-        });
-        if (actualType !== "non-submit") {
-          const failurePayload = buildFieldTypeMismatchPayload(
-            workflow.name,
-            clickEvent.selector,
-            "non-submit",
-            actualType,
-            "setup-click",
-          );
-          const failure = await writeSelectorMismatchFailureArtifacts(
-            page,
-            process.cwd(),
-            failurePayload,
-            auditEvents,
-          );
-          writeSelectorFailure(
-            wantsJson ? stdout : stderr,
-            failurePayload,
-            wantsJson,
-            failure.runId,
-            failure.artifacts,
-          );
-          return 3;
-        }
-
         await page.locator(clickEvent.selector).click();
         auditEvents.push({
           event: clickEvent.source === "workflow-step" ? "workflow_step" : "setup_click",
@@ -1757,6 +1790,24 @@ export async function run(
             stepName: clickEvent.name,
             path: stepScreenshotArtifact,
           });
+        }
+      };
+
+      const beforeFieldClicks = setupClicksForReplay(workflow, "before-fields");
+      const afterFieldClicks = setupClicksForReplay(workflow, "after-fields");
+      for (const [index, clickEvent] of beforeFieldClicks.entries()) {
+        const failurePayload = await validateClickReplayStep(page, workflow, clickEvent, auditEvents);
+        if (failurePayload !== undefined) {
+          return await writeSelectorReplayFailure(failurePayload);
+        }
+
+        await replayClickStep(clickEvent, index);
+      }
+
+      for (const clickEvent of afterFieldClicks) {
+        const failurePayload = await validateClickReplayStep(page, workflow, clickEvent, auditEvents);
+        if (failurePayload !== undefined) {
+          return await writeSelectorReplayFailure(failurePayload);
         }
       }
 
@@ -1900,35 +1951,11 @@ export async function run(
         }
       }
 
-      const submitMatchCount = await page.locator(workflow.submit.selector).count();
-      auditEvents.push({
-        event: "selector_check",
-        role: "submit",
-        selector: workflow.submit.selector,
-        expectedMatches: 1,
-        actualMatches: submitMatchCount,
-        result: submitMatchCount === 1 ? "ok" : "mismatch",
-      });
-      if (submitMatchCount !== 1) {
-        const failurePayload = buildSelectorMismatchPayload(
-          workflow.name,
-          workflow.submit.selector,
-          submitMatchCount,
-        );
-        const failure = await writeSelectorMismatchFailureArtifacts(
-          page,
-          process.cwd(),
-          failurePayload,
-          auditEvents,
-        );
-        writeSelectorFailure(
-          wantsJson ? stdout : stderr,
-          failurePayload,
-          wantsJson,
-          failure.runId,
-          failure.artifacts,
-        );
-        return 3;
+      if (afterFieldClicks.length === 0) {
+        const failurePayload = await validateSubmitSelector(page, workflow, auditEvents);
+        if (failurePayload !== undefined) {
+          return await writeSelectorReplayFailure(failurePayload);
+        }
       }
 
       for (const field of orderFieldsForReplay(workflow)) {
@@ -1959,6 +1986,17 @@ export async function run(
 
         await page.locator(field.selector).fill(value);
         filledFields[field.name] = value;
+      }
+
+      for (const [index, clickEvent] of afterFieldClicks.entries()) {
+        await replayClickStep(clickEvent, index);
+      }
+
+      if (afterFieldClicks.length > 0) {
+        const failurePayload = await validateSubmitSelector(page, workflow, auditEvents);
+        if (failurePayload !== undefined) {
+          return await writeSelectorReplayFailure(failurePayload);
+        }
       }
 
       mkdirSync(runDirectory, { recursive: true });

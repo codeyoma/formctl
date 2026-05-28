@@ -114,9 +114,9 @@ Use `--manual` when login, navigation, or form setup needs a human-visible brows
 Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.
 Manual recording stores redacted `recording.events` entries for changed fields and file inputs.
 Manual recording labels text input as `input`, select controls as `select`, file inputs as `file`, named non-submit button clicks as `click`, and page navigation as `wait` so the YAML is easier to review.
-Reviewed `steps` entries can describe named `before-fields` setup clicks that need per-step screenshots.
+Reviewed `steps` entries can describe named `before-fields` setup clicks or preflighted `after-fields` review clicks that need per-step screenshots.
 When present, `submit` uses the first recorded event for each field to replay fields in the same order the human recorded them.
-See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: leading bounded named `click` events can open known setup UI before field checks, later clicks and `wait` events remain review metadata, and side effects still require dry-run/approval.
+See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: bounded named setup clicks can open known UI before field checks, preflighted `after-fields` clicks can reveal a final submit control after fields are filled, `wait` events remain review metadata, and side effects still require dry-run/approval.
 If terminal input closes before Enter, `record --manual` cancels without writing a workflow file.
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
 `record` also saves a baseline screenshot next to the workflow file.
@@ -151,8 +151,10 @@ Workflow files are stored at:
 - Dry-run never clicks the recorded submit selector.
 - Real submission requires `--approve` or an interactive terminal confirmation.
 - Recorded selectors must match exactly one element.
-- Missing or ambiguous selectors fail before filling fields or submitting.
-  Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.
+- Field selectors and workflow step selectors fail before filling fields or submitting.
+  For workflows without `after-fields` steps, the submit selector also fails before field filling.
+  For workflows with reviewed `after-fields` steps, the final submit selector is checked after those steps and still before the real submit click.
+  Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl`.
 - Login, CAPTCHA, and MFA walls fail before filling fields or submitting.
   Interaction-required failures write `failure.json`, `failure.png`, and `audit.jsonl` with `interaction_required`, `captcha_required`, or `mfa_required`.
 - File inputs are redacted as `[file]` in summaries.
