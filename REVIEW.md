@@ -1945,6 +1945,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Finish Task 6.1 by defining explicit navigation wait metadata and validation, still without replaying waits until a fixture proves the behavior is needed.
 
+### 2026-05-29: Record Explicit Navigation Wait Metadata
+
+**Date:** 2026-05-29
+
+**Experiment:** Finish Task 6.1 by recording page navigation during `record --manual` as bounded wait metadata.
+
+**Hypothesis:** If a human manually opens the next page or step before saving a workflow, the YAML should show that a navigation wait happened without storing destination URLs, tokens, or arbitrary browser state.
+
+**Result:** Passed. Manual recording now stores navigation as `{ event: "wait", waitFor: "navigation", value: "[redacted]" }`. Recording events are kept in the Node process instead of the page window, so they survive full-page navigation. Validation accepts only `waitFor: navigation`, rejects URL-bearing wait metadata, and submit field ordering ignores non-field wait events.
+
+**Why This Was Highest Value:** It completes the bounded event-history contract in Task 6.1 without expanding replay behavior. This makes recorded workflows more reviewable for known multi-page setup flows while preserving the safe default that only named fields are replayed.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "explicit navigation wait events"` because full-page navigation left `recording.events` empty. A second RED was observed with `npx vitest run tests/cli.test.ts -t "wait recording metadata stores a URL"` because URL-bearing wait metadata passed validation. GREEN passed after moving manual events to a Node-side array, recording main-frame navigation as redacted wait metadata, and rejecting URL-bearing wait events. Verification passed with `npx vitest run tests/cli.test.ts -t "explicit navigation wait events|wait recording metadata stores a URL|recording metadata"`, `npx vitest run tests/release-readiness.test.ts -t "README|TASK|changelog"`, `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The initial design stored manual events in `window.__formctlRecordingEvents`, which cannot survive full document navigation. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown`, while pack dry-run still succeeds with 43 entries.
+
+**Suggested Next Task:** Move from Task 6.1 into Task 6.4 by adding a narrow multi-step fixture or docs example that shows how the new recorded click/wait metadata helps reviewers without yet replaying arbitrary browser steps.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

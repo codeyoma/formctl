@@ -1123,8 +1123,8 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
-          fix: "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click/wait events, known field selectors, and bounded navigation waits.",
+          fix: "Use recording.mode: manual with redacted field events, named click selectors, or waitFor: navigation wait events.",
         },
       ],
     });
@@ -1183,8 +1183,8 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
-          fix: "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click/wait events, known field selectors, and bounded navigation waits.",
+          fix: "Use recording.mode: manual with redacted field events, named click selectors, or waitFor: navigation wait events.",
         },
       ],
     });
@@ -1242,8 +1242,68 @@ describe("formctl CLI", () => {
         {
           name: "recording-metadata",
           status: "error",
-          message: "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
-          fix: "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click/wait events, known field selectors, and bounded navigation waits.",
+          fix: "Use recording.mode: manual with redacted field events, named click selectors, or waitFor: navigation wait events.",
+        },
+      ],
+    });
+  });
+
+  test("validate --json exits 1 when wait recording metadata stores a URL", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-recording-wait-url-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://localhost:3000/expense",
+        "recording:",
+        "  mode: manual",
+        "  events:",
+        "    - event: wait",
+        "      waitFor: navigation",
+        "      url: http://internal.example/expense/details?token=secret",
+        "      value: \"[redacted]\"",
+        "safety:",
+        "  dryRunFirst: true",
+        "  approvalRequired: true",
+        "  selectorDrift: fail",
+        "  fileInputs: redacted",
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "expense-report", "--json"], workspace);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "error",
+      command: "validate",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      checks: [
+        { name: "readable-yaml", status: "ok" },
+        { name: "workflow-name", status: "ok" },
+        { name: "target-url", status: "ok" },
+        { name: "fields", status: "ok" },
+        { name: "field-names", status: "ok" },
+        { name: "field-name-safety", status: "ok" },
+        { name: "field-types", status: "ok" },
+        { name: "submit-selector", status: "ok" },
+        { name: "safety-metadata", status: "ok" },
+        {
+          name: "recording-metadata",
+          status: "error",
+          message: "Recording metadata must use manual mode, redacted input/change/select/file/click/wait events, known field selectors, and bounded navigation waits.",
+          fix: "Use recording.mode: manual with redacted field events, named click selectors, or waitFor: navigation wait events.",
         },
       ],
     });
@@ -1726,6 +1786,86 @@ describe("formctl CLI", () => {
             field: "receipt",
             selector: 'input[name="receipt"]',
             value: "[file]",
+          },
+        ],
+      });
+      const validation = await run(
+        [process.execPath, cliPath, "validate", "expense-report", "--json"],
+        createWritableCapture().stream,
+        createWritableCapture().stream,
+      );
+      expect(validation).toBe(0);
+    } finally {
+      process.chdir(previousCwd);
+      await fixture.close();
+    }
+  });
+
+  test("record --manual captures explicit navigation wait events", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form aria-label="Expense report">
+            <label>
+              Amount
+              <input name="amount" type="number" />
+            </label>
+            <a name="open-details" href="/expense/details">Open details</a>
+            <button type="submit">Submit expense</button>
+          </form>
+          <script>
+            const recordWhenReady = setInterval(() => {
+              if (!window.__formctlManualReady || location.pathname !== "/expense") {
+                return;
+              }
+              clearInterval(recordWhenReady);
+              document.querySelector('a[name="open-details"]').click();
+            }, 20);
+          </script>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-manual-record-navigation-"));
+    const stdout = createWritableCapture();
+    const stderr = createWritableCapture();
+    const previousCwd = process.cwd();
+
+    try {
+      const { run } = await import("../src/cli.js");
+
+      process.chdir(workspace);
+      const status = await run(
+        [
+          process.execPath,
+          cliPath,
+          "record",
+          "expense-report",
+          fixture.url,
+          "--manual",
+          "--headless",
+        ],
+        stdout.stream,
+        stderr.stream,
+        createDelayedInteractiveInput("\n", 1500),
+      );
+      const workflowPath = path.join(workspace, ".formctl", "workflows", "expense-report.yml");
+      const workflow = parse(readFileSync(workflowPath, "utf8"));
+
+      expect(status).toBe(0);
+      expect(stderr.text()).toBe("");
+      expect(workflow.recording).toEqual({
+        mode: "manual",
+        events: [
+          {
+            event: "click",
+            selector: 'a[name="open-details"]',
+            value: "[redacted]",
+          },
+          {
+            event: "wait",
+            waitFor: "navigation",
+            value: "[redacted]",
           },
         ],
       });

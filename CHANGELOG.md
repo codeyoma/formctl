@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Record page navigation during manual recording as redacted `waitFor: navigation` metadata.
 - Record named non-submit button clicks as redacted manual `click` events.
 - Record manual select controls and file uploads as semantic `select` and `file` events.
 - Reject `recording.events` entries that reference fields or selectors outside the workflow field list.

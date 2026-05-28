@@ -99,7 +99,13 @@ type WorkflowClickRecordingEvent = {
   value: "[redacted]";
 };
 
-type WorkflowRecordingEvent = WorkflowFieldRecordingEvent | WorkflowClickRecordingEvent;
+type WorkflowWaitRecordingEvent = {
+  event: "wait";
+  waitFor: "navigation";
+  value: "[redacted]";
+};
+
+type WorkflowRecordingEvent = WorkflowFieldRecordingEvent | WorkflowClickRecordingEvent | WorkflowWaitRecordingEvent;
 
 type Workflow = {
   name: string;
@@ -432,7 +438,19 @@ function hasValidRecordingMetadata(value: unknown, fields: unknown): boolean {
     : new Map<string, string>();
 
   return value.events.every((event) => {
-    if (!isObject(event) || !isNonEmptyString(event.selector)) {
+    if (!isObject(event)) {
+      return false;
+    }
+
+    if (event.event === "wait") {
+      return event.field === undefined
+        && event.selector === undefined
+        && event.url === undefined
+        && event.waitFor === "navigation"
+        && event.value === "[redacted]";
+    }
+
+    if (!isNonEmptyString(event.selector)) {
       return false;
     }
 
@@ -573,8 +591,8 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       buildValidationCheck(
         "recording-metadata",
         hasValidRecordingMetadata(workflowObject.recording, fields),
-        "Recording metadata must use manual mode, redacted input/change/select/file/click events, known field selectors, and named click selectors.",
-        "Use recording.mode: manual and redacted input/change/select/file events for fields, or redacted click events with a named selector.",
+        "Recording metadata must use manual mode, redacted input/change/select/file/click/wait events, known field selectors, and bounded navigation waits.",
+        "Use recording.mode: manual with redacted field events, named click selectors, or waitFor: navigation wait events.",
       ),
     ]),
   ];
@@ -1933,6 +1951,22 @@ export async function run(
       await page.goto(url, { waitUntil: "domcontentloaded" });
       let recordingEvents: WorkflowRecordingEvent[] | undefined;
       if (flags.has("--manual")) {
+        const manualRecordingEvents: WorkflowRecordingEvent[] = [];
+        let manualRecordingReady = false;
+        await page.exposeFunction("__formctlRecordEvent", (event: WorkflowRecordingEvent) => {
+          manualRecordingEvents.push(event);
+        });
+        page.on("framenavigated", (frame) => {
+          if (!manualRecordingReady || frame !== page.mainFrame()) {
+            return;
+          }
+
+          manualRecordingEvents.push({
+            event: "wait",
+            waitFor: "navigation",
+            value: "[redacted]",
+          });
+        });
         await page.evaluate(() => {
           type FieldRecordingEventName = "input" | "change" | "select" | "file";
           type RecordingEvent = {
@@ -1946,12 +1980,11 @@ export async function run(
             value: "[redacted]";
           };
           type RecordingWindow = Window & {
-            __formctlRecordingEvents?: RecordingEvent[];
+            __formctlRecordEvent?: (event: RecordingEvent) => void;
             __formctlManualReady?: boolean;
           };
 
           const recordingWindow = window as RecordingWindow;
-          recordingWindow.__formctlRecordingEvents = [];
           for (const element of Array.from(document.querySelectorAll("input, textarea, select"))) {
             const tagName = element.tagName.toLowerCase();
             const field = element.getAttribute("name");
@@ -1973,7 +2006,7 @@ export async function run(
               return event.type === "change" ? "change" : "input";
             };
             const record = (event: Event) => {
-              recordingWindow.__formctlRecordingEvents?.push({
+              recordingWindow.__formctlRecordEvent?.({
                 event: recordedEventName(event),
                 field,
                 selector,
@@ -2000,7 +2033,7 @@ export async function run(
 
             const selector = `${tagName}[name="${name}"]`;
             element.addEventListener("click", () => {
-              recordingWindow.__formctlRecordingEvents?.push({
+              recordingWindow.__formctlRecordEvent?.({
                 event: "click",
                 selector,
                 value: "[redacted]",
@@ -2009,15 +2042,14 @@ export async function run(
           }
           recordingWindow.__formctlManualReady = true;
         });
+        manualRecordingReady = true;
         stdout.write("Manual record: complete the form in the browser, then press Enter here to save.\n");
         const manualRecordInput = await readApprovalLine(stdin);
         if (manualRecordInput === undefined) {
           stderr.write("Manual record canceled: no confirmation received.\n");
           return 1;
         }
-        recordingEvents = await page.evaluate(() => {
-          return (window as Window & { __formctlRecordingEvents?: WorkflowRecordingEvent[] }).__formctlRecordingEvents ?? [];
-        });
+        recordingEvents = manualRecordingEvents;
       }
 
       const fields = await page.locator("input, textarea, select").evaluateAll((elements) => elements.flatMap((element) => {
