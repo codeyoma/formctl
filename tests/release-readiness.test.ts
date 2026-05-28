@@ -325,6 +325,8 @@ describe("release readiness docs", () => {
     expect(launch).toContain("npm run test:replay");
     expect(launch).toContain("npm run test:agent");
     expect(launch).toContain("npm run test:package");
+    expect(launch).toContain("npm run publish:check -- --json");
+    expect(launch).toContain("Treat `npm_auth_required` as an external auth blocker, not a package-readiness failure.");
     expect(launch).toContain("npm run build");
     expect(launch).toContain("npx tsc --noEmit");
     expect(launch).toContain("npm run demo");

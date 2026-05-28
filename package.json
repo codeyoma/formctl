@@ -39,6 +39,7 @@
     "test:replay": "vitest run tests/demo-replay.test.ts",
     "test:agent": "node scripts/agent-branch-smoke.mjs",
     "test:package": "node scripts/package-smoke.mjs",
+    "publish:check": "node scripts/publish-check.mjs",
     "growth:snapshot": "node scripts/growth-snapshot.mjs",
     "build": "tsc -p tsconfig.build.json",
     "prepack": "npm run build",

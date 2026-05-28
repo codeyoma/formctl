@@ -253,6 +253,7 @@ formctl doctor
 
 - [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `npm view formctl` currently returns `E404`, but `npm whoami` returns `ENEEDAUTH`; publish is blocked until npm auth is configured.
 - [x] Ensure `npx formctl --help` works.
+- [x] Add `npm run publish:check` so npm auth blockers are separated from package-readiness failures.
 - [x] Add install docs:
 
 ```bash

@@ -8,6 +8,8 @@ Public repo: https://github.com/codeyoma/formctl
 - [ ] Run `npm run test:replay`.
 - [ ] Run `npm run test:agent`.
 - [ ] Run `npm run test:package`.
+- [ ] Run `npm run publish:check -- --json`.
+- [ ] Treat `npm_auth_required` as an external auth blocker, not a package-readiness failure.
 - [ ] Run `npm run build`.
 - [ ] Run `npx tsc --noEmit`.
 - [ ] Run `npm run demo`.

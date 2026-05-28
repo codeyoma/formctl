@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, test } from "vitest";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -92,5 +92,49 @@ describe("npm package readiness", () => {
 
     expect(cliSource.startsWith("#!/usr/bin/env node\n")).toBe(true);
     expect(existsSync(path.join(projectRoot, "tsconfig.json"))).toBe(true);
+  });
+
+  test("publish check reports npm authentication as an external blocker", async () => {
+    const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
+    const publishCheckPath = path.join(projectRoot, "scripts", "publish-check.mjs");
+    const publishCheckSource = readFileSync(publishCheckPath, "utf8");
+    const publishCheck = await import(pathToFileURL(publishCheckPath).href);
+
+    expect(packageJson.scripts["publish:check"]).toBe("node scripts/publish-check.mjs");
+    expect(publishCheckSource).toContain("npm whoami");
+    expect(publishCheckSource).toContain("npm view formctl version --json");
+    expect(publishCheckSource).toContain("npm pack --dry-run --json");
+
+    expect(publishCheck.describeNpmAuth({
+      status: 1,
+      stdout: "",
+      stderr: "npm error code ENEEDAUTH\nnpm error need auth This command requires you to be logged in.\n",
+    })).toEqual({
+      name: "npm-auth",
+      status: "blocked",
+      code: "npm_auth_required",
+      message: "npm whoami returned ENEEDAUTH",
+      fix: "Run npm adduser or npm login, then rerun npm run publish:check.",
+    });
+
+    expect(publishCheck.describePackageName({
+      status: 1,
+      stdout: "",
+      stderr: "npm error code E404\nnpm error 404 Not Found - GET https://registry.npmjs.org/formctl\n",
+    })).toEqual({
+      name: "package-name",
+      status: "ok",
+      code: "package_name_available",
+      message: "formctl is not published on npm yet.",
+    });
+
+    expect(publishCheck.createPublishReport([
+      { name: "npm-auth", status: "blocked" },
+      { name: "package-name", status: "ok" },
+    ])).toMatchObject({
+      status: "blocked",
+      package: "formctl",
+      nextAction: "Fix blocked checks before running npm publish.",
+    });
   });
 });

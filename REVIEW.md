@@ -1557,6 +1557,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Keep the next cycle focused on launch outreach or npm authentication unless another first-run safety issue appears.
 
+### 2026-05-28: Add npm Publish Preflight
+
+**Date:** 2026-05-28
+
+**Experiment:** Add `npm run publish:check` so release work can distinguish npm authentication blockers from package-readiness failures.
+
+**Hypothesis:** Heartbeat-driven release work will stall less often if `ENEEDAUTH`, package-name availability, and pack dry-run status are reported in one machine-readable preflight.
+
+**Result:** Passed. `npm run publish:check -- --json` now exits `1` with `status: "blocked"` when npm auth is missing, reports `npm_auth_required`, confirms `formctl` is not published yet, and still proves `npm pack --dry-run` succeeds.
+
+**Evidence:** RED was observed with `npm test -- --run tests/package-readiness.test.ts -t "publish check"` because `scripts/publish-check.mjs` was missing. GREEN passed after adding the script and package command. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "launch checklist"` because `docs/LAUNCH.md` did not mention the preflight. Broader verification passed with `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `npm run test:package`, `npm pack --dry-run --json`, `npm test`, and `git diff --check`. A real `npm run publish:check -- --json` smoke returned `npm_auth_required`, `package_name_available`, and a successful `pack-dry-run` check.
+
+**What Failed:** Before this, repeated publish-oriented checks had to infer from raw `npm whoami` output that publish was externally blocked, not failing due to code or packaging.
+
+**Decision:** Keep publish preflight as a repo maintenance script, not a user-facing `formctl` command.
+
+**Next Step:** A human should run `npm adduser` or `npm login`, rerun `npm run publish:check -- --json`, then publish or continue outreach if publish remains blocked.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
