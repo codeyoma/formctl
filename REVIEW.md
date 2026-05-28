@@ -1713,6 +1713,26 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add explicit local session handoff with a fixture that succeeds only when a pre-created session is provided.
 
+### 2026-05-28: Prepare npm 0.1.1 And Expose 2FA Publish Blocker
+
+**Date:** 2026-05-28
+
+**Experiment:** Turn the current post-0.1.0 product surface into an npm-ready `0.1.1` package and attempt the actual publish path.
+
+**Hypothesis:** Since `formctl` is not visible on npm, distribution is the highest-value adoption task; if publish is blocked, the repo should report the exact external blocker before future attempts.
+
+**Result:** Blocked by npm account publish protection. `npm publish --dry-run` succeeded for `formctl@0.1.1`, but real `npm publish` failed with `E403` because npm requires two-factor authentication or a granular access token with 2FA bypass. `npm run publish:check -- --json` now reports `npm_publish_2fa_required`.
+
+**Evidence:** `npm view formctl version --json` returned `E404`, proving the heartbeat assumption that npm was already published was stale. `npm run publish:check -- --json` initially reported npm auth OK and package name available. `npm publish --dry-run` succeeded and showed a 43-file tarball. Real `npm publish` failed with `E403` and the two-factor/granular-token message. RED was observed with `npm test -- --run tests/package-readiness.test.ts -t "publish check"` because `publish:check` did not inspect `npm profile get tfa --json`; GREEN passed after adding a `publish-protection` check. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npm test -- --run tests/package-readiness.test.ts tests/release-readiness.test.ts`, `npm pack --dry-run --json`, and `npm publish --dry-run`.
+
+**What Changed:** Prepared package metadata for `0.1.1`, moved the accumulated changelog into a pending `0.1.1` section, updated release-readiness tests, and made `publish:check` fail early when npm publish protection is missing.
+
+**Why This Was Highest Value:** A 100k-star CLI must be installable with `npm install -g formctl` or `npx formctl`; discovering the registry blocker is more urgent than another feature.
+
+**Surprise:** `npm whoami` was enough to prove authentication, but not enough to prove publish permission. The registry allowed dry-run packaging but blocked the actual publish at the 2FA policy gate.
+
+**Suggested Next Task:** Enable npm 2FA for writes or create a granular automation token with publish bypass, rerun `npm run publish:check -- --json`, then run `npm publish` for `formctl@0.1.1`.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

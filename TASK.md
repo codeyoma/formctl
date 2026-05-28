@@ -257,7 +257,7 @@ formctl doctor
 
 **Goal:** Make installation trivial.
 
-- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `npm view formctl` currently returns `E404`; `npm run publish:check -- --json` confirms npm auth is available and the package name is still unpublished.
+- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `formctl@0.1.1` is prepared, but `npm publish` is blocked by `npm_publish_2fa_required`; enable npm 2FA for writes or use a granular automation token with publish bypass.
 - [x] Ensure `npx formctl --help` works.
 - [x] Add `npm run publish:check` so npm auth blockers are separated from package-readiness failures.
 - [x] Add install docs:

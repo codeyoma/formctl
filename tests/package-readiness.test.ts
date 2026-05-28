@@ -102,6 +102,7 @@ describe("npm package readiness", () => {
 
     expect(packageJson.scripts["publish:check"]).toBe("node scripts/publish-check.mjs");
     expect(publishCheckSource).toContain("npm whoami");
+    expect(publishCheckSource).toContain("npm profile get tfa --json");
     expect(publishCheckSource).toContain("npm view formctl version --json");
     expect(publishCheckSource).toContain("npm pack --dry-run --json");
 
@@ -126,6 +127,18 @@ describe("npm package readiness", () => {
       status: "ok",
       code: "package_name_available",
       message: "formctl is not published on npm yet.",
+    });
+
+    expect(publishCheck.describePublishProtection({
+      status: 0,
+      stdout: JSON.stringify({ tfa: false, name: "codeyoma" }),
+      stderr: "",
+    })).toEqual({
+      name: "publish-protection",
+      status: "blocked",
+      code: "npm_publish_2fa_required",
+      message: "npm profile does not have two-factor authentication enabled for publishing.",
+      fix: "Enable npm 2FA for writes or use a granular automation token that can publish with 2FA bypass, then rerun npm run publish:check.",
     });
 
     expect(publishCheck.createPublishReport([

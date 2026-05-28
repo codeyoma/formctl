@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const packageName = "formctl";
 const npmAuthCommand = "npm whoami";
+const publishProtectionCommand = "npm profile get tfa --json";
 const packageNameCommand = "npm view formctl version --json";
 const packDryRunCommand = "npm pack --dry-run --json";
 
@@ -85,6 +86,35 @@ export function describePackageName(result) {
   };
 }
 
+export function describePublishProtection(result) {
+  if (result.status !== 0) {
+    return {
+      name: "publish-protection",
+      status: "blocked",
+      code: "npm_publish_protection_unknown",
+      message: trimmedError(result),
+      fix: "Verify npm account publish protection before running npm publish.",
+    };
+  }
+
+  const profile = JSON.parse(result.stdout);
+  if (profile.tfa === false) {
+    return {
+      name: "publish-protection",
+      status: "blocked",
+      code: "npm_publish_2fa_required",
+      message: "npm profile does not have two-factor authentication enabled for publishing.",
+      fix: "Enable npm 2FA for writes or use a granular automation token that can publish with 2FA bypass, then rerun npm run publish:check.",
+    };
+  }
+
+  return {
+    name: "publish-protection",
+    status: "ok",
+    message: "npm publish protection is configured.",
+  };
+}
+
 export function describePackDryRun(result) {
   if (result.status !== 0) {
     return {
@@ -135,6 +165,7 @@ function printTextReport(report) {
 function printReport({ json }) {
   const report = createPublishReport([
     describeNpmAuth(runCommandLine(npmAuthCommand)),
+    describePublishProtection(runCommandLine(publishProtectionCommand)),
     describePackageName(runCommandLine(packageNameCommand)),
     describePackDryRun(runCommandLine(packDryRunCommand)),
   ]);

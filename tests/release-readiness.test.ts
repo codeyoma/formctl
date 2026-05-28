@@ -53,7 +53,7 @@ describe("release readiness docs", () => {
   test("package metadata is ready for a public GitHub repository", () => {
     const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 
-    expect(packageJson.version).toBe("0.1.0");
+    expect(packageJson.version).toBe("0.1.1");
     expect(packageJson.private).toBe(false);
     expect(packageJson.description).toBe("Turn browser-recorded web forms into safe, repeatable CLI commands.");
     expect(packageJson.license).toBe("MIT");
