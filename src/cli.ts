@@ -1023,7 +1023,14 @@ async function detectInteractionRequired(page: Page): Promise<InteractionRequire
     const hasMfaText = visibleText.includes("multi-factor")
       || visibleText.includes("two-factor")
       || visibleText.includes("one-time code")
-      || visibleText.includes("verification code");
+      || visibleText.includes("verification code")
+      || visibleText.includes("security code")
+      || visibleText.includes("authentication code")
+      || visibleText.includes("authenticator code")
+      || visibleText.includes("2fa code");
+    const hasHumanVerificationText = visibleText.includes("verify you are human")
+      || visibleText.includes("are you human")
+      || visibleText.includes("human verification");
     const hasCaptcha = Array.from(document.querySelectorAll("iframe, input, div, section")).some((element) => {
       const signature = [
         element.getAttribute("id"),
@@ -1041,7 +1048,7 @@ async function detectInteractionRequired(page: Page): Promise<InteractionRequire
         || signature.includes("turnstile");
     });
 
-    if (hasCaptcha) {
+    if (hasCaptcha || hasHumanVerificationText) {
       return {
         code: "captcha_required",
         detected: "captcha_challenge",

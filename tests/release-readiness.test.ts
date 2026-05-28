@@ -516,7 +516,7 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("Shipped MCP workflow discovery and validation tools for agent clients.");
     expect(growthLog).toContain("gh repo view codeyoma/formctl");
     expect(growthLog).toContain("npm view formctl");
-    expect(growthLog).toContain("npm publish blocked until npm auth is configured");
+    expect(growthLog).toContain("npm publish is blocked until npm browser/one-time-password authentication is completed");
     expect(growthLog).toContain("Post one example-led outreach message");
     expect(growthLog).toContain("Weekly Review Template");
     expect(growthLog).toContain("Positioning Change");

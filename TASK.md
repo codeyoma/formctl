@@ -257,7 +257,7 @@ formctl doctor
 
 **Goal:** Make installation trivial.
 
-- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `formctl@0.1.1` is prepared, but `npm publish` is blocked by `npm_publish_2fa_required`; enable npm 2FA for writes or use a granular automation token with publish bypass.
+- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `formctl@0.1.1` is prepared, and `npm run publish:check -- --json` passes, but real `npm publish` still stops with npm `EOTP` browser/one-time-password authentication. Complete the npm auth challenge or use a granular publish token, then rerun `npm publish`.
 - [x] Ensure `npx formctl --help` works.
 - [x] Add `npm run publish:check` so npm auth blockers are separated from package-readiness failures.
 - [x] Add install docs:
@@ -375,12 +375,13 @@ npx formctl doctor
 
 **Goal:** Fail clearly or pause for a human instead of bypassing anti-abuse or authentication controls.
 
-- [ ] Detect common CAPTCHA, MFA, and credential prompt states and return `interaction_required`, `captcha_required`, or `mfa_required`.
+- [x] Detect common CAPTCHA, MFA, and credential prompt states and return `interaction_required`, `captcha_required`, or `mfa_required`.
 - [x] For headed local runs, allow an explicit manual pause/resume before selector checks.
 - [x] Document that `formctl` does not solve CAPTCHA, store passwords, or replay MFA secrets.
 - [x] Verify: A login-wall fixture blocks JSON submit and resumes only after manual user action.
-- [ ] Verify: Challenge fixtures block headless submit with typed JSON errors and resume only after manual user action.
-- [ ] Record site-policy and trust limitations in `REVIEW.md`.
+- [x] Verify: Challenge fixtures block headless submit with typed JSON errors.
+- [ ] Verify: CAPTCHA/MFA challenge fixtures resume only after manual user action.
+- [x] Record site-policy and trust limitations in `REVIEW.md`.
 
 ### Task 6.4: Evaluate Hosted Execution Separately
 

@@ -1783,6 +1783,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Add explicit CAPTCHA and MFA fixture coverage for Task 6.3 so those typed safe stops are proven the same way as the login-wall path.
 
+### 2026-05-29: Broaden CAPTCHA And MFA Safe-Stop Fixtures
+
+**Date:** 2026-05-29
+
+**Experiment:** Add explicit headless challenge fixtures for common CAPTCHA-like and MFA-like pages that do not contain the exact strings already covered by the first login-wall detector.
+
+**Hypothesis:** A page that says "Verify you are human" or asks for a "Security code" should stop with exit code `6` and typed JSON (`captcha_required` or `mfa_required`) before selector checks, field filling, or submission.
+
+**Result:** Passed. `submit --dry-run --json` now classifies human-verification pages as `captcha_required` and security-code prompts as `mfa_required`. Both paths write `failure.json`, `failure.png`, and `audit.jsonl`, avoid selector-mismatch output, and do not submit.
+
+**Why This Was Highest Value:** Task 6.3 still had unproven CAPTCHA/MFA boundaries. Misclassifying these screens as selector drift would give agents the wrong repair path and weaken the product's trust story for API-less internal tools.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "security-code|human-verification"` because both fixtures returned selector-mismatch exit code `3` instead of interaction-required exit code `6`. GREEN passed after extending the detector's conservative text signatures. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm test`, `npm run build`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `npm pack --dry-run --json`, and `npm run publish:check -- --json`.
+
+**What Failed:** A real `npm publish` attempt still failed with `EOTP`: npm required browser/one-time-password authentication even though `npm run publish:check -- --json` reported `status: "ok"`. The package remains unpublished until a human completes the npm auth challenge or provides a publish-capable granular token.
+
+**Suggested Next Task:** Harden the npm publish preflight or release docs around `EOTP`, then either complete npm publish or add CAPTCHA/MFA manual-resume fixture coverage.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

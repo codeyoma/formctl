@@ -16,7 +16,7 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 **Shipped:** Shipped MCP workflow discovery and validation tools for agent clients.
 
-**Notes:** Repository remains public at https://github.com/codeyoma/formctl. npm package name still returns `E404`; npm publish is still blocked until npm auth is configured. Open issue #1 tracks the first outreach channels and remains active.
+**Notes:** Repository remains public at https://github.com/codeyoma/formctl. npm package name still returns `E404`; npm publish is still blocked until npm browser/one-time-password authentication is completed. Open issue #1 tracks the first outreach channels and remains active.
 
 ## Snapshot: 2026-05-28
 
@@ -26,7 +26,7 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 **Shipped:** Added `npm run growth:snapshot` so weekly growth metrics can be captured as JSON or a markdown table row before updating this log.
 
-**Notes:** Repository metrics were captured from `gh api repos/codeyoma/formctl`; npm still reports `E404`, so package publication remains blocked on npm authentication rather than package name availability.
+**Notes:** Repository metrics were captured from `gh api repos/codeyoma/formctl`; npm still reports `E404`, so package publication remains blocked on npm browser/one-time-password authentication rather than package name availability.
 
 ## Source commands
 
@@ -47,7 +47,7 @@ npm view formctl version --json
 
 Use the snapshot command first; the raw `gh` and `npm` commands are kept here for auditability if the script output needs to be checked by hand.
 
-The npm package name still appears available, but npm publish blocked until npm auth is configured.
+The npm package name still appears available, but npm publish is blocked until npm browser/one-time-password authentication is completed.
 
 ## Weekly Review Template
 

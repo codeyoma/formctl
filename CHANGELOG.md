@@ -44,6 +44,7 @@
 - Detect common login, CAPTCHA, and MFA walls as interaction-required safe stops before filling fields or submitting.
 - Add `record` and `submit --storage-state <path>` for local authenticated-session handoff without storing credentials in workflow YAML.
 - Add `submit --resume-after-interaction` for local interactive pause/resume after login, CAPTCHA, or MFA safe-stop detection.
+- Broaden CAPTCHA/MFA safe-stop detection for human-verification and security-code challenge screens.
 
 ## 0.1.0 - 2026-05-26
 
