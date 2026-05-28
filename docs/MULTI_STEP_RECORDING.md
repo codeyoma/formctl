@@ -3,12 +3,18 @@
 Manual recording can capture bounded setup context before a form is saved. This is useful for internal tools where a human opens a modal, moves to a known step, or navigates to the final form page before committing the workflow YAML.
 
 Today `submit` supports bounded setup click replay for named non-submit controls at the start of `recording.events`, then replays fields in the first-recorded field order. It does not replay arbitrary clicks or waits. That boundary keeps dry-run and approval behavior predictable while allowing common modal-opening setup flows.
+Reviewed workflows can also declare structured `before-fields` click steps when a known setup action needs its own audit and screenshot artifact.
 
 ## Example
 
 ```yaml
 name: procurement-approval
 targetUrl: http://localhost:4317/procurement-approval
+steps:
+  - name: open approval modal
+    action: click
+    selector: button[name="open-details"]
+    when: before-fields
 recording:
   mode: manual
   events:
@@ -30,6 +36,9 @@ recording:
 
 What this means:
 
+- `steps` can declare reviewed setup clicks that run before field selector checks.
+- A `before-fields` step must be a named non-submit click with a bounded selector.
+- Structured steps emit `workflow_step` and `step_screenshot_saved` audit events, and `submit --json` includes their screenshot artifacts under `artifacts.steps`.
 - `click` documents a named non-submit control the human used during setup.
 - Only leading `click` events before the first field or wait event are replayed as setup.
 - `submit` checks that each setup click selector resolves to exactly one non-submit control, clicks it, and writes `selector_check` plus `setup_click` audit events.
@@ -50,6 +59,7 @@ Use raw Playwright or a browser agent when the workflow needs custom assertions,
 
 Validation rejects recording metadata that is not bounded and redacted:
 
+- structured steps must use `name`, `action: click`, a named selector, and `when: before-fields`
 - recording mode must be `manual`
 - event values must be `[redacted]` or `[file]`
 - field events must match a known workflow field and selector

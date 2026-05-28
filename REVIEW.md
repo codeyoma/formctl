@@ -2053,6 +2053,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add the next bounded multi-step slice: a structured workflow step model for one intermediate confirmation step, preserving dry-run before final submit and adding per-step screenshots/audit events.
 
+### 2026-05-29: Structured Before-Fields Step Artifacts
+
+**Date:** 2026-05-29
+
+**Experiment:** Add the first explicit `steps` workflow model for reviewed before-field setup clicks, including per-step screenshots and audit events.
+
+**Hypothesis:** A structured step model is the safest next multi-step slice because it makes known setup actions reviewable in YAML and artifacts without adding arbitrary browser automation or weakening the final submit approval gate.
+
+**Result:** Passed. Workflows can now declare `steps` entries with `name`, `action: click`, a bounded named selector, and `when: before-fields`. `submit` replays those steps before field selector checks, records `workflow_step` and `step_screenshot_saved` audit events, exposes `artifacts.steps` in JSON and `summary.json`, and still falls back to leading recording clicks for older workflows without `steps`. `inspect --json` now returns `steps` when present. The checked-in `procurement-approval` workflow uses the new step model, and demo replay verifies the step screenshot artifact.
+
+**Why This Was Highest Value:** Task 6.7 needed a path from ad hoc recording metadata toward reviewable known-form steps. This establishes the structured model and artifact contract before tackling harder post-field confirmation or navigation steps.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "structured before-field click steps"` because the new `steps` block was ignored and the modal fields were missing. RED was observed with `npx vitest run tests/cli.test.ts -t "workflow steps use an unbounded selector"` because invalid step selectors passed validation. RED was observed with `npx vitest run tests/demo-replay.test.ts` because the checked-in demo still emitted `setup_click` instead of `workflow_step`. RED was observed with `npx vitest run tests/cli.test.ts -t "inspect --json returns workflow steps"` because inspect omitted `steps`. Focused GREEN passed for CLI, release-readiness, and demo replay. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The safe scope is narrower than full intermediate confirmation. Post-field steps can conflict with the existing "selector drift before field mutation" trust contract, so this change deliberately supports only `before-fields` setup steps. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 44 package entries.
+
+**Suggested Next Task:** Add a post-field confirmation design note and failing fixture before implementing it, explicitly deciding how to preserve review artifacts and selector-drift guarantees when a later step must happen after field filling.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

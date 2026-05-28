@@ -107,6 +107,13 @@ type WorkflowWaitRecordingEvent = {
 
 type WorkflowRecordingEvent = WorkflowFieldRecordingEvent | WorkflowClickRecordingEvent | WorkflowWaitRecordingEvent;
 
+type WorkflowStep = {
+  name: string;
+  action: "click";
+  selector: string;
+  when: "before-fields";
+};
+
 type Workflow = {
   name: string;
   url: string;
@@ -117,6 +124,7 @@ type Workflow = {
     mode: "manual";
     events: WorkflowRecordingEvent[];
   };
+  steps?: WorkflowStep[];
   safety?: typeof DEFAULT_WORKFLOW_SAFETY;
   fields: WorkflowField[];
   submit: {
@@ -483,6 +491,19 @@ function hasValidRecordingMetadata(value: unknown, fields: unknown): boolean {
   });
 }
 
+function hasValidWorkflowSteps(value: unknown): boolean {
+  if (!Array.isArray(value) || value.length === 0) {
+    return false;
+  }
+
+  return value.every((step) => isObject(step)
+    && isNonEmptyString(step.name)
+    && step.action === "click"
+    && isNonEmptyString(step.selector)
+    && RECORDING_CLICK_SELECTOR_PATTERN.test(step.selector)
+    && step.when === "before-fields");
+}
+
 function validateWorkflow(workflowName: string, workflow: unknown): ValidationCheck[] {
   const workflowObject = isObject(workflow) ? workflow : {};
   const fields = workflowObject.fields;
@@ -590,6 +611,14 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       "Workflow safety metadata must match the enforced dry-run, approval, selector drift, and file redaction contract.",
       "Add safety.dryRunFirst: true, safety.approvalRequired: true, safety.selectorDrift: fail, and safety.fileInputs: redacted.",
     ),
+    ...(workflowObject.steps === undefined ? [] : [
+      buildValidationCheck(
+        "workflow-steps",
+        hasValidWorkflowSteps(workflowObject.steps),
+        "Workflow steps must be named before-fields click steps with bounded selectors.",
+        "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields.",
+      ),
+    ]),
     ...(workflowObject.recording === undefined ? [] : [
       buildValidationCheck(
         "recording-metadata",
@@ -1017,17 +1046,41 @@ function orderFieldsForReplay(workflow: Workflow): WorkflowField[] {
   return orderedFields;
 }
 
-function setupClicksForReplay(workflow: Workflow): WorkflowClickRecordingEvent[] {
-  const replayEvents: WorkflowClickRecordingEvent[] = [];
+type SetupClickReplayStep = {
+  name?: string;
+  selector: string;
+  source: "workflow-step" | "recording";
+  stepIndex?: number;
+};
+
+function setupClicksForReplay(workflow: Workflow): SetupClickReplayStep[] {
+  if (workflow.steps !== undefined) {
+    return workflow.steps.map((step, index) => ({
+      name: step.name,
+      selector: step.selector,
+      source: "workflow-step",
+      stepIndex: index,
+    }));
+  }
+
+  const replayEvents: SetupClickReplayStep[] = [];
   for (const event of workflow.recording?.events ?? []) {
     if (event.event !== "click") {
       break;
     }
 
-    replayEvents.push(event);
+    replayEvents.push({
+      selector: event.selector,
+      source: "recording",
+    });
   }
 
   return replayEvents;
+}
+
+function slugifyArtifactName(value: string): string {
+  const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+  return slug.length === 0 ? "step" : slug;
 }
 
 async function readSetupClickControlType(page: Page, selector: string): Promise<"non-submit" | "submit"> {
@@ -1332,6 +1385,7 @@ export async function run(
         workflow: workflow.name,
         url: workflow.url,
         ...(workflow.screenshots === undefined ? {} : { screenshots: workflow.screenshots }),
+        ...(workflow.steps === undefined ? {} : { steps: workflow.steps }),
         ...(workflow.recording === undefined ? {} : { recording: workflow.recording }),
         ...(workflow.safety === undefined ? {} : { safety: workflow.safety }),
         fields: workflow.fields,
@@ -1526,6 +1580,7 @@ export async function run(
     const runDirectory = path.join(process.cwd(), ".formctl", "runs", runId);
     const relativeRunDirectory = `.formctl/runs/${runId}`;
     const filledFields: Record<string, string> = {};
+    const stepArtifacts: Array<{ name: string; screenshot: string }> = [];
     const auditEvents: AuditEvent[] = [];
 
     try {
@@ -1609,12 +1664,14 @@ export async function run(
         return 6;
       }
 
-      for (const clickEvent of setupClicksForReplay(workflow)) {
+      for (const [index, clickEvent] of setupClicksForReplay(workflow).entries()) {
+        const auditRole = clickEvent.source === "workflow-step" ? "workflow-step" : "setup-click";
         const matchCount = await page.locator(clickEvent.selector).count();
         auditEvents.push({
           event: "selector_check",
-          role: "setup-click",
+          role: auditRole,
           selector: clickEvent.selector,
+          ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
           expectedMatches: 1,
           actualMatches: matchCount,
           result: matchCount === 1 ? "ok" : "mismatch",
@@ -1645,8 +1702,9 @@ export async function run(
         const actualType = await readSetupClickControlType(page, clickEvent.selector);
         auditEvents.push({
           event: "setup_click_type_check",
-          role: "setup-click",
+          role: auditRole,
           selector: clickEvent.selector,
+          ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
           expectedType: "non-submit",
           actualType,
           result: actualType === "non-submit" ? "ok" : "mismatch",
@@ -1677,10 +1735,29 @@ export async function run(
 
         await page.locator(clickEvent.selector).click();
         auditEvents.push({
-          event: "setup_click",
+          event: clickEvent.source === "workflow-step" ? "workflow_step" : "setup_click",
+          role: auditRole,
           selector: clickEvent.selector,
+          ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
           result: "clicked",
         });
+        if (clickEvent.source === "workflow-step" && clickEvent.name !== undefined) {
+          mkdirSync(runDirectory, { recursive: true });
+          const stepNumber = String((clickEvent.stepIndex ?? index) + 1).padStart(2, "0");
+          const stepScreenshotFileName = `step-${stepNumber}-${slugifyArtifactName(clickEvent.name)}.png`;
+          const stepScreenshotArtifact = `${relativeRunDirectory}/${stepScreenshotFileName}`;
+          await page.screenshot({ path: path.join(runDirectory, stepScreenshotFileName), fullPage: true });
+          stepArtifacts.push({
+            name: clickEvent.name,
+            screenshot: stepScreenshotArtifact,
+          });
+          auditEvents.push({
+            event: "step_screenshot_saved",
+            role: "workflow-step",
+            stepName: clickEvent.name,
+            path: stepScreenshotArtifact,
+          });
+        }
       }
 
       for (const field of workflow.fields) {
@@ -1940,6 +2017,7 @@ export async function run(
       const summaryPath = path.join(runDirectory, "summary.json");
       const artifacts = {
         screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
+        ...(stepArtifacts.length === 0 ? {} : { steps: stepArtifacts }),
         ...(dryRunScreenshotArtifact === undefined ? {} : { dryRunScreenshot: dryRunScreenshotArtifact }),
         diff: fieldDiffArtifact,
         summary: `${relativeRunDirectory}/summary.json`,

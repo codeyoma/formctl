@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add structured before-fields click steps with per-step screenshot artifacts.
 - Report setup-click selector drift with a machine-readable error role before field filling.
 - Constrain setup click replay to leading click events before field input begins.
 - Add a checked-in procurement approval demo workflow that proves bounded setup click replay.

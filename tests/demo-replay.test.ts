@@ -18,6 +18,7 @@ type ReplayCase = {
   args: string[];
   expectedFields: Record<string, string>;
   expectedAuditEvents?: string[];
+  expectedStepArtifacts?: string[];
 };
 
 const replayCases: ReplayCase[] = [
@@ -114,7 +115,8 @@ const replayCases: ReplayCase[] = [
       justification: "Quarterly laptop refresh",
       urgent: "true",
     },
-    expectedAuditEvents: ["setup_click"],
+    expectedAuditEvents: ["workflow_step", "step_screenshot_saved"],
+    expectedStepArtifacts: ["open approval modal"],
   },
   {
     name: "crm-update",
@@ -284,6 +286,15 @@ describe("demo fixture replay", () => {
           const auditLog = readFileSync(path.join(workspace, dryRunJson.artifacts.audit), "utf8");
           for (const eventName of fixture.expectedAuditEvents) {
             expect(auditLog).toContain(`"event":"${eventName}"`);
+          }
+        }
+        if (fixture.expectedStepArtifacts !== undefined) {
+          expect(dryRunJson.artifacts.steps).toEqual(fixture.expectedStepArtifacts.map((stepName, index) => ({
+            name: stepName,
+            screenshot: `.formctl/runs/${dryRunJson.runId}/step-${String(index + 1).padStart(2, "0")}-${stepName.replaceAll(" ", "-")}.png`,
+          })));
+          for (const stepArtifact of dryRunJson.artifacts.steps) {
+            expect(existsSync(path.join(workspace, stepArtifact.screenshot))).toBe(true);
           }
         }
         expect(server.postCount(fixture.submitRoute)).toBe(0);

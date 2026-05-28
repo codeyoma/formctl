@@ -1,5 +1,10 @@
 name: procurement-approval
 url: http://127.0.0.1:4173/procurement-approval
+steps:
+  - name: open approval modal
+    action: click
+    selector: button[name="open-approval"]
+    when: before-fields
 recording:
   mode: manual
   events:
