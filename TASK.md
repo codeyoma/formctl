@@ -376,8 +376,9 @@ npx formctl doctor
 **Goal:** Fail clearly or pause for a human instead of bypassing anti-abuse or authentication controls.
 
 - [ ] Detect common CAPTCHA, MFA, and credential prompt states and return `interaction_required`, `captcha_required`, or `mfa_required`.
-- [ ] For headed local runs, allow an explicit manual pause/resume before selector checks.
-- [ ] Document that `formctl` does not solve CAPTCHA, store passwords, or replay MFA secrets.
+- [x] For headed local runs, allow an explicit manual pause/resume before selector checks.
+- [x] Document that `formctl` does not solve CAPTCHA, store passwords, or replay MFA secrets.
+- [x] Verify: A login-wall fixture blocks JSON submit and resumes only after manual user action.
 - [ ] Verify: Challenge fixtures block headless submit with typed JSON errors and resume only after manual user action.
 - [ ] Record site-policy and trust limitations in `REVIEW.md`.
 

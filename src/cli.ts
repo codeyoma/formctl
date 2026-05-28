@@ -41,6 +41,7 @@ const SUBMIT_CONTROL_OPTIONS = new Set([
   "headless",
   "help",
   "json",
+  "resume-after-interaction",
   "storage-state",
   "values",
 ]);
@@ -70,6 +71,8 @@ Flags:
   --headless    Run without a visible browser
   --storage-state PATH
                 Use a local Playwright storageState JSON file for record or submit
+  --resume-after-interaction
+                For submit: pause after login, MFA, or CAPTCHA detection, then recheck
   --values PATH Load submit field values from a JSON object file
   --manual      For record: wait for Enter after you complete the form in the browser
 `;
@@ -1411,7 +1414,31 @@ export async function run(
       );
       const page = await context.newPage();
       await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
-      const interactionRequired = await detectInteractionRequired(page);
+      let interactionRequired = await detectInteractionRequired(page);
+      if (interactionRequired !== undefined) {
+        const canResumeAfterInteraction = flags.has("--resume-after-interaction") && !wantsJson && stdin.isTTY === true;
+        if (canResumeAfterInteraction) {
+          auditEvents.push({
+            event: "interaction_required",
+            code: interactionRequired.code,
+            detected: interactionRequired.detected,
+            result: "paused",
+          });
+          stdout.write(`${interactionRequired.message}\n`);
+          stdout.write("Press Enter to resume formctl after completing the browser step.\n");
+          await readApprovalLine(stdin);
+          await page.waitForTimeout(100);
+          interactionRequired = await detectInteractionRequired(page);
+          auditEvents.push({
+            event: "interaction_resume_checked",
+            result: interactionRequired === undefined ? "ok" : "blocked",
+            ...(interactionRequired === undefined ? {} : {
+              code: interactionRequired.code,
+              detected: interactionRequired.detected,
+            }),
+          });
+        }
+      }
       if (interactionRequired !== undefined) {
         const failurePayload = buildInteractionRequiredPayload(workflow.name, interactionRequired);
         auditEvents.push({

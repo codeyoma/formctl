@@ -1767,6 +1767,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Move to Task 6.3 by adding a headed manual pause/resume safe-stop path for CAPTCHA/MFA/login boundaries, keeping headless runs blocked by typed JSON failures.
 
+### 2026-05-29: Add Manual Resume After Interaction Safe Stops
+
+**Date:** 2026-05-29
+
+**Experiment:** Add a local interactive resume path after login, CAPTCHA, or MFA safe-stop detection without changing JSON automation behavior.
+
+**Hypothesis:** `formctl submit --resume-after-interaction` should let a human complete the browser step, press Enter, and then continue selector checks and dry-run filling, while `submit --json` still returns the typed interaction-required safe stop.
+
+**Result:** Passed. `submit` now accepts `--resume-after-interaction`, pauses after an interaction-required detection when stdin is interactive and JSON mode is not requested, waits for Enter, lets the page settle briefly, then rechecks before selector validation. README, agent guidance, TRUST, TASK, and CHANGELOG now document that this is for local interactive runs and does not solve CAPTCHA or replay MFA secrets.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "resume after manual interaction"`: first as an unknown submit flag, then as exit code `6` because the immediate recheck could race the page update. GREEN passed after adding the submit control flag, pause/recheck flow, and a short post-Enter settle before re-detecting. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "README explains|agent safety|trust and comparison"`. Broader verification passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts`, `npx tsc --noEmit`, `git diff --check`, `npm test`, `npm run build`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The first implementation rechecked too quickly after Enter and kept returning exit code `6`; adding a small browser settle wait made the test deterministic. `npm run publish:check -- --json` still reports `npm_publish_2fa_required`, so npm publishing remains blocked outside the repo.
+
+**Next Step:** Add explicit CAPTCHA and MFA fixture coverage for Task 6.3 so those typed safe stops are proven the same way as the login-wall path.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

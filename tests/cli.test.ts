@@ -134,6 +134,7 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("Use record only when you need to create a new workflow.");
     expect(result.stdout).toContain("--headed");
     expect(result.stdout).toContain("--headless");
+    expect(result.stdout).toContain("--resume-after-interaction");
     expect(result.stdout).toContain("--manual");
     expect(result.stdout).toContain("--version");
   });
@@ -2883,6 +2884,104 @@ describe("formctl CLI", () => {
       expect(fixture.postCount()).toBe(0);
     } finally {
       await fixture.close();
+    }
+  });
+
+  test("submit --dry-run can resume after manual interaction before selector checks", async () => {
+    let postCount = 0;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        postCount += 1;
+      }
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form id="login" method="post" action="/login" aria-label="Sign in">
+              <label>Email <input name="email" type="email" autocomplete="username" /></label>
+              <label>Password <input name="password" type="password" autocomplete="current-password" /></label>
+              <button type="submit">Sign in</button>
+            </form>
+            <script>
+              setTimeout(() => {
+                document.body.innerHTML = '<form method="post" action="/submit" aria-label="Expense report"><label>Amount <input name="amount" type="number" /></label><button type="submit">Submit expense</button></form>';
+              }, 50);
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Manual resume fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-manual-resume-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: http://127.0.0.1:${address.port}/expense`,
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+    const stdout = createWritableCapture();
+    const stderr = createWritableCapture();
+    const previousCwd = process.cwd();
+
+    try {
+      const { run } = await import("../src/cli.js");
+
+      process.chdir(workspace);
+      const status = await run(
+        [
+          process.execPath,
+          cliPath,
+          "submit",
+          "expense-report",
+          "--amount",
+          "120000",
+          "--dry-run",
+          "--resume-after-interaction",
+          "--headless",
+        ],
+        stdout.stream,
+        stderr.stream,
+        createDelayedInteractiveInput("\n", 120),
+      );
+
+      expect(status).toBe(0);
+      expect(stderr.text()).toBe("");
+      expect(stdout.text()).toContain("Manual interaction required: page appears to require login before form replay.");
+      expect(stdout.text()).toContain("Press Enter to resume formctl after completing the browser step.");
+      expect(stdout.text()).toContain("Dry-run complete: expense-report");
+      const runs = readdirSync(path.join(workspace, ".formctl", "runs"));
+      const summary = JSON.parse(readFileSync(path.join(workspace, ".formctl", "runs", runs[0], "summary.json"), "utf8"));
+      expect(summary.fields).toEqual({ amount: "120000" });
+      expect(postCount).toBe(0);
+    } finally {
+      process.chdir(previousCwd);
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
     }
   });
 

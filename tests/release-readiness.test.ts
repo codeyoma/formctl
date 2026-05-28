@@ -107,6 +107,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.");
     expect(readme).toContain("Use `--storage-state <path>` to replay a protected form with a local Playwright storageState JSON file after the user has already logged in.");
     expect(readme).toContain("Storage state files can contain cookies and must stay local; do not commit or paste them into agent chat.");
+    expect(readme).toContain("Use `--resume-after-interaction` only in a local interactive submit run after completing login, MFA, or CAPTCHA in the browser.");
     expect(readme).toContain("Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.");
     expect(readme).toContain("## Create A New Workflow");
     expect(readme).toContain("Use `record` only when you need to create a workflow that does not exist yet.");
@@ -634,9 +635,11 @@ describe("release readiness docs", () => {
     expect(trust).toContain("does not store credentials");
     expect(trust).toContain("does not bypass authentication");
     expect(trust).toContain("does not solve CAPTCHA");
+    expect(trust).toContain("does not replay MFA secrets");
     expect(trust).toContain("does not silently heal selectors");
     expect(trust).toContain("When recording or replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.");
     expect(trust).toContain("Storage state files can contain cookies or session tokens; keep them local, exclude them from git, and do not print them in agent output.");
+    expect(trust).toContain("For headed local submits, `--resume-after-interaction` pauses after a login, MFA, or CAPTCHA detection and rechecks the page only after the user presses Enter.");
     expect(comparison).toContain("# Comparison");
     expect(comparison).toContain("formctl");
     expect(comparison).toContain("Raw Playwright scripts");
@@ -668,6 +671,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Use `--storage-state <path>` only with a user-provided local Playwright storageState file for authenticated forms.");
     expect(agents).toContain("For protected forms, require the user to complete login, MFA, or setup before recording or replaying with `--storage-state`.");
     expect(agents).toContain("Never create, print, commit, or paste storage state files because they can contain cookies or session tokens.");
+    expect(agents).toContain("Use `--resume-after-interaction` only in a local interactive submit run; JSON automation must still treat interaction-required pages as safe stops.");
     expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.");
     expect(agents).toContain("Treat `workflow_invalid` items in workflow discovery as repair tasks and inspect their failed checks.");

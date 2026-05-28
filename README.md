@@ -67,6 +67,7 @@ The demo workflows are already checked in under `.formctl/workflows/`. Run `npm 
 Use `--values <path>` when field flags would be hard to quote. Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.
 Use `--storage-state <path>` to replay a protected form with a local Playwright storageState JSON file after the user has already logged in.
 Storage state files can contain cookies and must stay local; do not commit or paste them into agent chat.
+Use `--resume-after-interaction` only in a local interactive submit run after completing login, MFA, or CAPTCHA in the browser.
 
 Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.
 

@@ -49,6 +49,7 @@ If the loaded page appears to require login, CAPTCHA, or MFA, `formctl` stops be
 `formctl` does not bypass these controls. Complete the required step in a headed browser or provide a valid local session before retrying.
 When recording or replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.
 Storage state files can contain cookies or session tokens; keep them local, exclude them from git, and do not print them in agent output.
+For headed local submits, `--resume-after-interaction` pauses after a login, MFA, or CAPTCHA detection and rechecks the page only after the user presses Enter.
 
 ## Selector breakage
 
@@ -73,6 +74,7 @@ File inputs are summarized as `[file]` in JSON and audit output. Do not paste sc
 - `formctl` does not store credentials.
 - `formctl` does not bypass authentication, MFA, permissions, robots restrictions, or site terms.
 - `formctl` does not solve CAPTCHA.
+- `formctl` does not replay MFA secrets.
 - `formctl` does not silently heal selectors after page drift.
 - `formctl` does not encrypt local artifacts.
 - `formctl` does not guarantee that a third-party site allows automation.
