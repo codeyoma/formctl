@@ -56,8 +56,10 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 - `exitCode: 0` means the dry-run or approved submit completed.
 - `exitCode: 3` means selector mismatch. Stop and inspect artifacts.
 - `exitCode: 5` means approval is required.
+- `exitCode: 6` means the page requires manual interaction, CAPTCHA, or MFA. Stop and ask the user to complete the required browser step.
 
 Treat exit code `5` as an approval gate, not a retryable failure.
+Treat `interaction_required`, `captcha_required`, and `mfa_required` as safe stops, not selector drift.
 When `validate --json` returns `status: "error"`, report the failed check names plus their `message` and `fix` fields.
 For `readable-yaml` failures, report the YAML parse message and fix before retrying.
 Treat a `recording-metadata` validation failure as a possible sensitive-data leak.
@@ -108,6 +110,7 @@ MCP setup guide: docs/MCP.md
 - Dry-run artifacts include `summary.json`, `field-diff.json`, `dry-run.png`, and `audit.jsonl`.
 - Approved submit artifacts include `summary.json`, `field-diff.json`, `post-submit.png`, and `audit.jsonl`.
 - Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
+- Interaction-required failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
 - Agents should report artifact paths instead of embedding screenshots or file contents in chat.
 
 ## Secret Handling

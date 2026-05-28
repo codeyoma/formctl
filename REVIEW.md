@@ -1693,6 +1693,26 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Continue launch outreach or npm authentication; the workflow validation surface now catches another pre-browser repair case.
 
+### 2026-05-28: Stop Safely On Login Walls
+
+**Date:** 2026-05-28
+
+**Experiment:** Detect common login, CAPTCHA, and MFA walls after navigation and before selector checks, field filling, or submission.
+
+**Hypothesis:** Protected internal tools often redirect to authentication screens. Those should fail as interaction-required safe stops, not as misleading selector drift or generic dry-run failures.
+
+**Result:** Passed. A page with a password input now returns exit code `6` with `interaction_required`, writes `failure.json`, `failure.png`, and `audit.jsonl`, and does not fill fields or submit.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "login wall"`: the command returned selector mismatch exit code `3` instead of interaction-required exit code `6`. The first implementation attempt returned `dry_run_failed` because Playwright evaluated a tsx-transformed function containing `__name`; switching the detector to a browser-evaluated string fixed it. Focused GREEN passed with the same command. Documentation GREEN passed with `npm test -- --run tests/cli.test.ts tests/release-readiness.test.ts -t "login wall|README explains|agent safety"`. Broader verification passed with `npx tsc --noEmit`, `npm test`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run build`, `npm run test:package`, `npm run formctl -- validate expense-report --json`, and `npm pack --dry-run --json`. `npm view formctl version --json` still returns `E404`; `npm run publish:check -- --json` now reports npm auth OK and the package name still available.
+
+**What Changed:** Added a pre-selector browser check for password, MFA, and CAPTCHA signals, documented exit code `6`, updated agent and trust docs, and recorded the Phase 6.2 login-wall subtask as complete.
+
+**Why This Was Highest Value:** It fixes a correctness and trust issue in a common real-world path for API-less internal tools: hitting an auth wall after navigation.
+
+**Decision:** Keep the first version conservative. It only stops before mutation and does not attempt credential capture, MFA replay, CAPTCHA solving, or automatic bypass.
+
+**Suggested Next Task:** Add explicit local session handoff with a fixture that succeeds only when a pre-created session is provided.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

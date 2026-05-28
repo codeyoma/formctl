@@ -257,7 +257,7 @@ formctl doctor
 
 **Goal:** Make installation trivial.
 
-- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `npm view formctl` currently returns `E404`, but `npm whoami` returns `ENEEDAUTH`; publish is blocked until npm auth is configured.
+- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `npm view formctl` currently returns `E404`; `npm run publish:check -- --json` confirms npm auth is available and the package name is still unpublished.
 - [x] Ensure `npx formctl --help` works.
 - [x] Add `npm run publish:check` so npm auth blockers are separated from package-readiness failures.
 - [x] Add install docs:
@@ -346,6 +346,82 @@ npx formctl doctor
 
 ---
 
+## Phase 6: Feature Updates From Scope Review
+
+> Validated on 2026-05-28 against the current README scope, trust docs, comparison docs, and CLI behavior. The review is directionally correct: `formctl` is strongest today for local, known form submissions with dry-run artifacts and approval gates. Do not turn these items into unsafe automation shortcuts.
+
+### Task 6.1: Add Bounded Event-History Recording
+
+**Goal:** Move beyond form structure plus redacted field metadata when real workflows need reviewable interaction steps.
+
+- [ ] Define the first supported event types: input, change, select, file upload, click, and explicit navigation wait.
+- [ ] Keep the current named-field workflow as the default path; event history must be optional and reviewable in YAML.
+- [ ] Redact values and file names in recorded events, and reject unredacted event metadata during validation.
+- [ ] Verify: A fixture with multiple recorded controls replays deterministically without leaking values.
+- [ ] Record event-history tradeoffs in `REVIEW.md`.
+
+### Task 6.2: Add Explicit Session Handoff
+
+**Goal:** Improve login and setup flows without storing credentials in `formctl`.
+
+- [ ] Support an explicit local session handoff, such as Playwright `storageState` or a documented browser-profile path, for `record` and `submit`.
+- [ ] Document manual login and MFA setup before recording or replaying protected forms.
+- [x] Return a typed JSON failure when a run reaches a login wall instead of continuing ambiguously.
+- [ ] Verify: A fixture that requires a pre-created session succeeds with the session handoff and fails safely without it.
+- [ ] Record auth and session risks in `REVIEW.md`.
+
+### Task 6.3: Handle CAPTCHA And MFA Boundaries Safely
+
+**Goal:** Fail clearly or pause for a human instead of bypassing anti-abuse or authentication controls.
+
+- [ ] Detect common CAPTCHA, MFA, and credential prompt states and return `interaction_required`, `captcha_required`, or `mfa_required`.
+- [ ] For headed local runs, allow an explicit manual pause/resume before selector checks.
+- [ ] Document that `formctl` does not solve CAPTCHA, store passwords, or replay MFA secrets.
+- [ ] Verify: Challenge fixtures block headless submit with typed JSON errors and resume only after manual user action.
+- [ ] Record site-policy and trust limitations in `REVIEW.md`.
+
+### Task 6.4: Evaluate Hosted Execution Separately
+
+**Goal:** Decide whether hosted browser execution belongs in the product after local trust is proven.
+
+- [ ] Write a hosted-execution threat model covering browsers, artifacts, approvals, secrets, tenant isolation, and retention.
+- [ ] Prototype hosted dry-run before considering hosted approved submit.
+- [ ] Require explicit approval handoff and private artifact access before any hosted side effect.
+- [ ] Verify: Hosted dry-run cannot submit and artifacts are visible only to the authorized user.
+- [ ] Record demand evidence before building scheduling, shared runs, or team governance.
+
+### Task 6.5: Add Reviewable Selector Repair
+
+**Goal:** Help users recover from page drift without silently healing selectors during submission.
+
+- [ ] Generate suggested selector replacements when selector mismatch artifacts provide enough evidence.
+- [ ] Require user review and workflow YAML update before replaying with a repaired selector.
+- [ ] Keep `submit` failing before filling or submitting when the current selector contract is broken.
+- [ ] Verify: A drift fixture produces a suggested repair but still exits `3` until the workflow is updated.
+- [ ] Record false positives in `REVIEW.md`.
+
+### Task 6.6: Add Local Artifact Privacy Controls
+
+**Goal:** Reduce risk from local screenshots, summaries, diffs, and audit logs.
+
+- [ ] Add configurable cleanup for old `.formctl/runs` directories.
+- [ ] Add opt-in protected artifact storage for sensitive local runs.
+- [ ] Keep agents reporting artifact paths rather than embedding artifact contents in chat.
+- [ ] Verify: Protected artifacts are not readable without the configured key or passphrase, and cleanup removes expired runs.
+- [ ] Record usability tradeoffs in `REVIEW.md`.
+
+### Task 6.7: Support Bounded Multi-Step Known Forms
+
+**Goal:** Expand beyond simple form pages without becoming open-ended browser automation.
+
+- [ ] Add workflow steps for known navigation, modal opening, intermediate confirmation, and final form submission.
+- [ ] Add per-step selector checks, screenshots, JSON output, and audit events.
+- [ ] Preserve dry-run stopping before the final submit action.
+- [ ] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.
+- [ ] Record where raw Playwright or browser agents remain a better fit in `REVIEW.md`.
+
+---
+
 ## Initial Backlog Ranking
 
 1. Local demo app and 60-second demo path.
@@ -362,6 +438,13 @@ npx formctl doctor
 12. Agent usage docs.
 13. MCP wrapper.
 14. Homebrew formula.
+15. Bounded event-history recording.
+16. Explicit session handoff without credential storage.
+17. CAPTCHA/MFA safe-stop and manual-resume handling.
+18. Hosted execution evaluation.
+19. Reviewable selector repair.
+20. Local artifact privacy controls.
+21. Bounded multi-step known-form support.
 
 ---
 
@@ -371,6 +454,7 @@ npx formctl doctor
 - Enterprise team management.
 - Full RPA designer UI.
 - Automatic CAPTCHA bypass.
+- MFA automation or credential capture.
 - Credential vault.
 - Smart selector healing that silently changes behavior.
 - Automating real government or banking sites in examples.

@@ -75,7 +75,7 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 - `audit.jsonl`
 - `dry-run.png` for previews
 - `post-submit.png` for approved submissions
-- `failure.json` and `failure.png` for selector mismatches
+- `failure.json` and `failure.png` for selector mismatches and interaction-required safe stops
 
 Field diffs list the resolved values that will be set before submission, with file inputs redacted as `[file]`.
 Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.
@@ -141,6 +141,8 @@ Workflow files are stored at:
 - Recorded selectors must match exactly one element.
 - Missing or ambiguous selectors fail before filling fields or submitting.
   Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.
+- Login, CAPTCHA, and MFA walls fail before filling fields or submitting.
+  Interaction-required failures write `failure.json`, `failure.png`, and `audit.jsonl` with `interaction_required`, `captcha_required`, or `mfa_required`.
 - File inputs are redacted as `[file]` in summaries.
 - Audit logs are written for successful dry-run, approved, and selector-mismatch failed runs.
 - JSON output is available for agent and automation callers.
@@ -154,10 +156,12 @@ Workflow files are stored at:
 3 selector mismatch
 4 dry-run failed
 5 approval required
+6 interaction required
 10 unexpected runtime error
 ```
 
 Dry-run browser runtime failures return `dry_run_failed` in JSON mode with `failure.json` and `audit.jsonl` artifacts.
+Login, CAPTCHA, and MFA walls return `interaction_required`, `captcha_required`, or `mfa_required` in JSON mode with failure artifacts.
 
 ## Agent Usage
 
@@ -203,4 +207,4 @@ Approval-required JSON looks like:
 
 ## Current Scope
 
-This is an early MVP. It currently records named form fields and a submit selector from a live page. It does not yet implement full event-history recording, credential storage, CAPTCHA handling, hosted execution, or selector healing.
+This is an early MVP. It currently records named form fields and a submit selector from a live page. It detects common login, CAPTCHA, and MFA walls as safe stops, but does not bypass them. It does not yet implement full event-history recording, credential storage, hosted execution, or selector healing.

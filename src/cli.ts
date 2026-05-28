@@ -178,6 +178,31 @@ type SelectorFailurePayload = {
   );
 };
 
+type InteractionRequiredCode = "interaction_required" | "captcha_required" | "mfa_required";
+
+type InteractionRequiredDetection = {
+  code: InteractionRequiredCode;
+  detected: string;
+  message: string;
+  fix: string;
+};
+
+type InteractionRequiredPayload = {
+  status: "error";
+  workflow: string;
+  exitCode: 6;
+  submitted: false;
+  requiresApproval: false;
+  error: {
+    code: InteractionRequiredCode;
+    detected: string;
+    message: string;
+    fix: string;
+  };
+};
+
+type BrowserFailurePayload = SelectorFailurePayload | InteractionRequiredPayload;
+
 type DoctorCheck = {
   name: string;
   status: "ok" | "error";
@@ -804,9 +829,23 @@ function buildFieldDescriptionMismatchPayload(
   };
 }
 
+function buildInteractionRequiredPayload(
+  workflowName: string,
+  detection: InteractionRequiredDetection,
+): InteractionRequiredPayload {
+  return {
+    status: "error",
+    workflow: workflowName,
+    exitCode: 6,
+    submitted: false,
+    requiresApproval: false,
+    error: detection,
+  };
+}
+
 function writeSelectorFailure(
   output: NodeJS.WritableStream,
-  failurePayload: SelectorFailurePayload,
+  failurePayload: BrowserFailurePayload,
   wantsJson: boolean,
   runId?: string,
   artifacts?: FailureArtifacts,
@@ -944,10 +983,74 @@ async function readElementDescription(page: Page, selector: string): Promise<str
   });
 }
 
+async function detectInteractionRequired(page: Page): Promise<InteractionRequiredDetection | undefined> {
+  return page.evaluate<InteractionRequiredDetection | undefined>(`(() => {
+    const normalize = (value) => (value ?? "").toLowerCase();
+    const inputElements = Array.from(document.querySelectorAll("input"));
+    const visibleText = normalize(document.body?.innerText);
+    const hasPasswordInput = inputElements.some((input) => input.type === "password"
+      || normalize(input.autocomplete) === "current-password");
+    const hasMfaInput = inputElements.some((input) => normalize(input.autocomplete) === "one-time-code"
+      || normalize(input.name).includes("otp")
+      || normalize(input.id).includes("otp")
+      || normalize(input.name).includes("mfa")
+      || normalize(input.id).includes("mfa"));
+    const hasMfaText = visibleText.includes("multi-factor")
+      || visibleText.includes("two-factor")
+      || visibleText.includes("one-time code")
+      || visibleText.includes("verification code");
+    const hasCaptcha = Array.from(document.querySelectorAll("iframe, input, div, section")).some((element) => {
+      const signature = [
+        element.getAttribute("id"),
+        element.getAttribute("class"),
+        element.getAttribute("name"),
+        element.getAttribute("title"),
+        element.getAttribute("src"),
+        element.getAttribute("data-testid"),
+        element.textContent,
+      ].map(normalize).join(" ");
+
+      return signature.includes("captcha")
+        || signature.includes("recaptcha")
+        || signature.includes("hcaptcha")
+        || signature.includes("turnstile");
+    });
+
+    if (hasCaptcha) {
+      return {
+        code: "captcha_required",
+        detected: "captcha_challenge",
+        message: "Manual interaction required: page appears to require CAPTCHA before form replay.",
+        fix: "Complete the challenge in a headed browser, then retry submit.",
+      };
+    }
+
+    if (hasMfaInput || hasMfaText) {
+      return {
+        code: "mfa_required",
+        detected: "mfa_prompt",
+        message: "Manual interaction required: page appears to require MFA before form replay.",
+        fix: "Complete MFA in a headed browser or provide a valid local session, then retry submit.",
+      };
+    }
+
+    if (hasPasswordInput) {
+      return {
+        code: "interaction_required",
+        detected: "password_input",
+        message: "Manual interaction required: page appears to require login before form replay.",
+        fix: "Log in with a headed browser or record after authentication, then retry submit.",
+      };
+    }
+
+    return undefined;
+  })()`);
+}
+
 async function writeSelectorMismatchFailureArtifacts(
   page: Page,
   workingDirectory: string,
-  failurePayload: SelectorFailurePayload,
+  failurePayload: BrowserFailurePayload,
   auditEvents: AuditEvent[],
 ): Promise<{ runId: string; artifacts: FailureArtifacts }> {
   const runId = `${Date.now()}-failed`;
@@ -1262,6 +1365,30 @@ export async function run(
       });
       const page = await browser.newPage();
       await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
+      const interactionRequired = await detectInteractionRequired(page);
+      if (interactionRequired !== undefined) {
+        const failurePayload = buildInteractionRequiredPayload(workflow.name, interactionRequired);
+        auditEvents.push({
+          event: "interaction_required",
+          code: interactionRequired.code,
+          detected: interactionRequired.detected,
+          result: "blocked",
+        });
+        const failure = await writeSelectorMismatchFailureArtifacts(
+          page,
+          process.cwd(),
+          failurePayload,
+          auditEvents,
+        );
+        writeSelectorFailure(
+          wantsJson ? stdout : stderr,
+          failurePayload,
+          wantsJson,
+          failure.runId,
+          failure.artifacts,
+        );
+        return 6;
+      }
 
       for (const field of workflow.fields) {
         const matchCount = await page.locator(field.selector).count();

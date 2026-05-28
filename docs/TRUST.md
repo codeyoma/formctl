@@ -38,6 +38,16 @@ Each dry-run, approved submit, and selector mismatch writes `audit.jsonl` inside
 
 Audit logs are local files. Review them before sharing because screenshots and page metadata can still contain private business context.
 
+## Interaction-required safe stops
+
+If the loaded page appears to require login, CAPTCHA, or MFA, `formctl` stops before filling fields or submitting. In JSON mode it returns `interaction_required`, `captcha_required`, or `mfa_required` with exit code `6` and writes:
+
+- `failure.json`
+- `failure.png`
+- `audit.jsonl`
+
+`formctl` does not bypass these controls. Complete the required step in a headed browser or provide a valid local session before retrying.
+
 ## Selector breakage
 
 Recorded selectors must match exactly one element before `formctl` fills any fields or submits the form.

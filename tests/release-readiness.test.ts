@@ -133,6 +133,9 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.");
     expect(readme).toContain("Workflow names may contain only letters, numbers, dots, underscores, and dashes.");
     expect(readme).toContain("Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl` without filling or submitting the form.");
+    expect(readme).toContain("Login, CAPTCHA, and MFA walls fail before filling fields or submitting.");
+    expect(readme).toContain("6 interaction required");
+    expect(readme).toContain("Login, CAPTCHA, and MFA walls return `interaction_required`, `captcha_required`, or `mfa_required` in JSON mode with failure artifacts.");
     expect(readme).toContain("[Agent safety guide](docs/agents.md)");
     expect(readme).toContain("Exit codes");
     expect(readme).toContain("5 approval required");
@@ -675,10 +678,12 @@ describe("release readiness docs", () => {
     expect(agents).toContain('"playwright-chromium"');
     expect(agents).toContain('"installCommand": "npx playwright install chromium"');
     expect(agents).toContain("Treat exit code `5` as an approval gate, not a retryable failure.");
+    expect(agents).toContain("Treat `interaction_required`, `captcha_required`, and `mfa_required` as safe stops, not selector drift.");
     expect(agents).toContain("Do not print secrets, file contents, cookies, or private page data.");
     expect(agents).toContain("Dry-run artifacts include `summary.json`, `field-diff.json`, `dry-run.png`, and `audit.jsonl`.");
     expect(agents).toContain("Approved submit artifacts include `summary.json`, `field-diff.json`, `post-submit.png`, and `audit.jsonl`.");
     expect(agents).toContain("Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
+    expect(agents).toContain("Interaction-required failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
   });
 
   test("MCP setup guide is copy-pasteable before and after npm publish", () => {
