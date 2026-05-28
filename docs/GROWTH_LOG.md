@@ -32,7 +32,7 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 | Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Comments | Workflow Leads | Next Action |
 | --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
-| 2026-05-29 | npm publish | https://www.npmjs.com/package/formctl | 0 | 0 | 1 | 0 | Published latest `0.1.1` | Not measured | 0 | 0 | Post one example-led outreach message |
+| 2026-05-29 | npm publish | https://www.npmjs.com/package/formctl | 0 | 0 | 1 | 0 | Unavailable: npm downloads API failed | Not measured | 0 | 0 | Post one example-led outreach message |
 
 **Shipped:** Published `formctl@0.1.1` to npm and verified the installed package from a temporary directory.
 
@@ -53,11 +53,12 @@ gh api repos/codeyoma/formctl --jq '{stars: .stargazers_count, forks: .forks_cou
 gh api graphql -F owner=codeyoma -F name=formctl -f 'query=query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { discussions(first: 1) { totalCount } } }'
 gh issue list --repo codeyoma/formctl --state open --json number,title --jq 'length'
 npm view formctl version --json
+curl -sS https://api.npmjs.org/downloads/point/last-week/formctl
 ```
 
 Use the snapshot command first; the raw `gh` and `npm` commands are kept here for auditability if the script output needs to be checked by hand.
 
-The npm package is published as latest `0.1.1`.
+The npm package is published as latest `0.1.1`. npm's downloads API may lag immediately after first publish; record `Unavailable: npm downloads API failed` until it returns a `downloads` number.
 
 ## Weekly Review Template
 

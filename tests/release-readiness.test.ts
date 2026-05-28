@@ -542,6 +542,7 @@ describe("release readiness docs", () => {
     expect(snapshotScript).toContain("gh api graphql");
     expect(snapshotScript).toContain("discussions(first: 1)");
     expect(snapshotScript).toContain("npm view formctl version --json");
+    expect(snapshotScript).toContain("api.npmjs.org/downloads/point/last-week/formctl");
     expect(snapshotScript).toContain("--markdown");
     expect(snapshotScript).toContain("--timezone");
     expect(snapshotScript).toContain("--demo-views");
@@ -550,6 +551,21 @@ describe("release readiness docs", () => {
     expect(snapshotScript).toContain("--posted-url");
     expect(snapshotScript).toContain("--comments");
     expect(snapshot.formatDateForTimeZone(new Date("2026-05-27T20:02:54.310Z"), "Asia/Seoul")).toBe("2026-05-28");
+    expect(snapshot.describeNpmDownloads({
+      status: 0,
+      stdout: JSON.stringify({ downloads: 42, package: "formctl" }),
+      stderr: "",
+    })).toBe(42);
+    expect(snapshot.describeNpmDownloads({
+      status: 1,
+      stdout: "",
+      stderr: "curl: (22) The requested URL returned error: 404",
+    })).toBe("Unavailable: npm downloads API failed");
+    expect(snapshot.describeNpmDownloads({
+      status: 0,
+      stdout: "not json",
+      stderr: "",
+    })).toBe("Unavailable: npm downloads API failed");
     expect(snapshot.createSnapshot({
       date: "2026-05-28",
       channel: "Reddit r/commandline",

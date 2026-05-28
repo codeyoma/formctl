@@ -1819,6 +1819,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add CAPTCHA/MFA manual-resume fixture coverage, or post the prepared launch copy now that GitHub and npm distribution are both live.
 
+### 2026-05-29: Record Real npm Download Metrics In Growth Snapshots
+
+**Date:** 2026-05-29
+
+**Experiment:** Make `npm run growth:snapshot` record npm download metrics instead of only reporting the published package version.
+
+**Hypothesis:** Once `formctl` is published, the growth loop needs a real npm downloads column. Version visibility proves installability, but it does not measure adoption.
+
+**Result:** Passed. `growth:snapshot` now queries npm's downloads API and returns the download count when available. If npm's downloads API has not indexed the new package yet, it records `Unavailable: npm downloads API failed` instead of pretending that `Published: 0.1.1` is a download metric.
+
+**Why This Was Highest Value:** The repo is now live on npm and GitHub, so the weekly 10k-star loop depends on trustworthy adoption metrics. Mislabeling version status as downloads would make outreach experiments harder to evaluate.
+
+**Evidence:** RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "growth snapshot"` because `scripts/growth-snapshot.mjs` did not call `api.npmjs.org/downloads/point/last-week/formctl` or expose a download parser. GREEN passed after adding `describeNpmDownloads` and using it in snapshot output. Real smoke checks passed with `npm run growth:snapshot -- --json --timezone Asia/Seoul`, `npm run growth:snapshot -- --markdown --timezone Asia/Seoul`, and `curl -sS https://api.npmjs.org/downloads/point/last-week/formctl`.
+
+**What Failed:** npm's downloads API currently returns `{"error":"package formctl not found"}` even though `npm view formctl version --json` returns `0.1.1`; this looks like registry download-stat indexing lag after first publish. The snapshot now records that as unavailable rather than stale or misleading data.
+
+**Suggested Next Task:** Add CAPTCHA/MFA manual-resume fixture coverage, or post the prepared launch copy and record the first channel-specific growth snapshot.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

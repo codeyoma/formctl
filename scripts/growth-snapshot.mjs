@@ -6,6 +6,7 @@ const githubCommand = "gh api repos/codeyoma/formctl";
 const githubDiscussionsCommand = "gh api graphql";
 const discussionsQuery = "query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { discussions(first: 1) { totalCount } } }";
 const npmCommand = "npm view formctl version --json";
+const npmDownloadsCommand = "curl -sS https://api.npmjs.org/downloads/point/last-week/formctl";
 const defaultNextAction = "Post one example-led outreach message";
 
 function run(command, args) {
@@ -140,6 +141,23 @@ function describeNpmStatus(result) {
   return `Unknown: ${result.stderr.trim() || "npm view failed"}`;
 }
 
+export function describeNpmDownloads(result) {
+  if (result.status !== 0) {
+    return "Unavailable: npm downloads API failed";
+  }
+
+  try {
+    const payload = JSON.parse(result.stdout);
+    if (typeof payload.downloads === "number") {
+      return payload.downloads;
+    }
+  } catch {
+    return "Unavailable: npm downloads API failed";
+  }
+
+  return "Unavailable: npm downloads API failed";
+}
+
 export function formatMarkdownRow(snapshot) {
   return `| ${snapshot.date} | ${snapshot.channel} | ${snapshot.postedUrl} | ${snapshot.stars} | ${snapshot.forks} | ${snapshot.openIssues} | ${snapshot.discussions} | ${snapshot.npmDownloads} | ${snapshot.demoViews} | ${snapshot.comments} | ${snapshot.workflowLeads} | ${snapshot.nextAction} |`;
 }
@@ -169,13 +187,18 @@ function printSnapshot(options) {
   }
 
   const npmResult = runCommandLine(npmCommand);
+  const npmDownloadsResult = runCommandLine(npmDownloadsCommand);
+  const npmStatus = describeNpmStatus(npmResult);
+  const npmDownloads = describeNpmDownloads(npmDownloadsResult);
   const snapshot = createSnapshot({
     date: options.date,
     channel: options.channel,
     postedUrl: options.postedUrl,
     github: parseGithubRepo(githubResult.stdout),
     discussions: fetchGithubDiscussions(),
-    npmDownloads: describeNpmStatus(npmResult),
+    npmDownloads: npmDownloads === "Unavailable: npm downloads API failed" && npmStatus.startsWith("Not published:")
+      ? npmStatus
+      : npmDownloads,
     demoViews: options.demoViews,
     comments: options.comments,
     workflowLeads: options.workflowLeads,
