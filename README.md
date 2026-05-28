@@ -9,13 +9,13 @@ Run a saved workflow. Preview first. Approve only when ready.
 [Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Example before/after posts](docs/EXAMPLE_POSTS.md) · [Growth log](docs/GROWTH_LOG.md) · [Trust and security notes](docs/TRUST.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
 
 ```bash
-formctl submit expense-report --amount 120000 --receipt ./receipt.txt --dry-run
-formctl submit expense-report --amount 120000 --receipt ./receipt.txt --approve
+formctl submit expense-report --values values.json --dry-run --json
+formctl submit expense-report --values values.json --approve --json
 ```
 
 ![formctl demo](docs/assets/demo.svg)
 
-[Watch the 40-second demo video](docs/assets/demo.mp4)
+[Watch the real local demo video](docs/assets/demo.mp4)
 
 ## Trust Artifacts
 
@@ -44,93 +44,29 @@ npx playwright install chromium
 
 ## Two-Minute Local Demo
 
-Install dependencies:
+Run the demo locally:
 
 ```bash
 npm install
-```
-
-Start the local demo form in one terminal:
-
-```bash
 npm run demo
 ```
 
-The demo workflows are already checked in under `.formctl/workflows/`.
-
-List available workflows:
+In a second terminal:
 
 ```bash
 npm run formctl -- workflows --json
-```
-
-Workflow discovery reports recording mode and event count when metadata exists.
-Workflow discovery reports unreadable workflow files as `workflow_unreadable` items instead of failing the whole list.
-Workflow discovery reports schema-invalid workflow files as `workflow_invalid` items with failed checks.
-
-Validate workflow YAML before review or sharing:
-
-```bash
 npm run formctl -- validate expense-report --json
-```
-
-Preview a submission without sending the form:
-
-```bash
-npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --dry-run --json --headless
-```
-
-Use `--values <path>` to load submit field values from a JSON object file when flags would be hard to quote.
-Unknown keys in a `--values` file are rejected as `field_values_invalid` before opening the browser.
-Unknown submit field flags are rejected as `field_values_invalid` before opening the browser.
-
-```bash
 npm run formctl -- submit expense-report --values demo/expense-values.json --dry-run --json --headless
+npm run formctl -- submit expense-report --values demo/expense-values.json --approve --json --headless
 ```
 
-Submit only after explicit approval:
+That is the main loop: discover, validate, dry-run, approve.
 
-```bash
-npm run formctl -- submit expense-report --amount 120000 --receipt demo/receipt.txt --approve --json --headless
-```
+The demo workflows are already checked in under `.formctl/workflows/`. Run `npm run formctl -- inspect <workflow-name> --json` to see required fields for `expense-report`, `admin-invite`, `support-refund`, `vendor-onboarding`, `procurement-approval`, `crm-update`, and `compliance-attestation`.
+
+Use `--values <path>` when field flags would be hard to quote. Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.
 
 Interactive submit shows the `dry-run.png` screenshot path before asking you to type `approve`.
-
-Try a second fixture with a select field and checkbox:
-
-```bash
-npm run formctl -- submit admin-invite --email ops@example.com --role admin --notify true --dry-run --json --headless
-```
-
-Try a support refund fixture with a date input and textarea:
-
-```bash
-npm run formctl -- submit support-refund --orderId ORD-1001 --refundDate 2026-05-26 --reason "Duplicate charge" --dry-run --json --headless
-```
-
-Try a vendor onboarding fixture with file upload, select, checkbox, date, and notes:
-
-```bash
-npm run formctl -- submit vendor-onboarding --legalName "Acme Supplies" --website https://vendor.example --taxForm demo/tax-form.txt --riskTier medium --ndaSigned true --onboardingDate 2026-05-26 --notes "Approved vendor" --dry-run --json --headless
-```
-
-Try a procurement approval fixture with an open modal, two visible steps, and a confirmation page:
-
-```bash
-npm run formctl -- submit procurement-approval --requestorEmail buyer@example.com --department finance --amount 98000 --neededBy 2026-06-01 --justification "Quarterly laptop refresh" --urgent true --dry-run --json --headless
-```
-
-Try a CRM update fixture with a pipeline stage, owner, next contact date, priority flag, and notes:
-
-```bash
-npm run formctl -- submit crm-update --accountName "Northwind Traders" --stage renewal --ownerEmail ae@example.com --nextContactDate 2026-06-03 --priority true --notes "Renewal risk flagged" --dry-run --json --headless
-```
-
-Try a compliance attestation fixture with a control area, attestation date, checkbox, and notes:
-
-```bash
-npm run formctl -- submit compliance-attestation --employeeEmail auditor@example.com --controlArea security --attestationDate 2026-06-15 --compliant true --notes "Quarterly access review complete" --dry-run --json --headless
-```
 
 Run artifacts are written under `.formctl/runs/<run-id>/`:
 
