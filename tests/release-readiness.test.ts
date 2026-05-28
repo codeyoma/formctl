@@ -329,6 +329,8 @@ describe("release readiness docs", () => {
     expect(launch).toContain("npm run test:package");
     expect(launch).toContain("npm run publish:check -- --json");
     expect(launch).toContain("Treat `npm_auth_required` as an external auth blocker, not a package-readiness failure.");
+    expect(launch).toContain("Treat `npm_publish_otp_required` as an external OTP blocker, not a package-readiness failure.");
+    expect(launch).toContain("npm exec --yes --package=formctl@0.1.1 -- formctl --version");
     expect(launch).toContain("npm run build");
     expect(launch).toContain("npx tsc --noEmit");
     expect(launch).toContain("npm run demo");
@@ -516,7 +518,7 @@ describe("release readiness docs", () => {
     expect(growthLog).toContain("Shipped MCP workflow discovery and validation tools for agent clients.");
     expect(growthLog).toContain("gh repo view codeyoma/formctl");
     expect(growthLog).toContain("npm view formctl");
-    expect(growthLog).toContain("npm publish is blocked until npm browser/one-time-password authentication is completed");
+    expect(growthLog).toContain("npm package is published as latest `0.1.1`");
     expect(growthLog).toContain("Post one example-led outreach message");
     expect(growthLog).toContain("Weekly Review Template");
     expect(growthLog).toContain("Positioning Change");

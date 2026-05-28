@@ -1801,6 +1801,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Harden the npm publish preflight or release docs around `EOTP`, then either complete npm publish or add CAPTCHA/MFA manual-resume fixture coverage.
 
+### 2026-05-29: Harden npm OTP Preflight And Verify Published Package
+
+**Date:** 2026-05-29
+
+**Experiment:** Stop `npm run publish:check -- --json` from returning a false OK when the npm account requires a one-time password for publishing, then verify the newly visible npm package from outside the repo.
+
+**Hypothesis:** If `npm profile get tfa --json` reports `auth-and-writes` and no OTP is available, publish preflight should return a blocked `npm_publish_otp_required` result. If `formctl@0.1.1` is actually published, an installed-package smoke from a temporary directory should find the `formctl` binary.
+
+**Result:** Passed. `publish:check` now reports `npm_publish_otp_required` when no OTP is supplied, while accepting `--otp`, `NPM_CONFIG_OTP`, or `npm_config_otp` as evidence that the publish command can be run with an OTP. The npm registry now reports `formctl@0.1.1` as `latest`, and `npm exec --yes --package=formctl@0.1.1 -- formctl --version` works from a temporary directory.
+
+**Why This Was Highest Value:** Distribution was the highest adoption blocker. A 100k-star CLI cannot have a release preflight that says OK immediately before `npm publish` fails, and the repo needed to record that the npm package is now actually installable.
+
+**Evidence:** RED was observed with `npm test -- --run tests/package-readiness.test.ts -t "publish check"` because `describePublishProtection` returned `ok` for an `auth-and-writes` profile without OTP. GREEN passed after adding OTP detection and the `npm_publish_otp_required` branch. Documentation RED was observed with `npm test -- --run tests/release-readiness.test.ts -t "launch checklist"` and `npm test -- --run tests/release-readiness.test.ts -t "growth log"` before updating launch and growth docs. Published-package smoke passed with `npm view formctl version dist-tags time --json`, `npm exec --yes --package=formctl@0.1.1 -- formctl --version`, `npm exec --yes --package=formctl@0.1.1 -- formctl doctor --json`, and `npm exec --yes --package=formctl@0.1.1 -- formctl --help` from temporary directories.
+
+**What Failed:** Running `npm exec --package formctl@0.1.1 -- formctl --version` from inside this repo returned `sh: formctl: command not found`; rerunning from a temporary directory fixed it. The lesson is to test published npm packages outside a checkout whose local package has the same name.
+
+**Suggested Next Task:** Add CAPTCHA/MFA manual-resume fixture coverage, or post the prepared launch copy now that GitHub and npm distribution are both live.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -28,6 +28,20 @@ function trimmedError(result) {
   return (result.stderr || result.stdout || "command failed").trim();
 }
 
+export function hasPublishOtp(argv = process.argv, env = process.env) {
+  if ((env.NPM_CONFIG_OTP ?? "").trim().length > 0 || (env.npm_config_otp ?? "").trim().length > 0) {
+    return true;
+  }
+
+  return argv.some((arg, index) => {
+    if (arg.startsWith("--otp=")) {
+      return arg.slice("--otp=".length).trim().length > 0;
+    }
+
+    return arg === "--otp" && (argv[index + 1] ?? "").trim().length > 0;
+  });
+}
+
 export function describeNpmAuth(result) {
   if (result.status === 0) {
     return {
@@ -86,7 +100,7 @@ export function describePackageName(result) {
   };
 }
 
-export function describePublishProtection(result) {
+export function describePublishProtection(result, { hasOneTimePassword = false } = {}) {
   if (result.status !== 0) {
     return {
       name: "publish-protection",
@@ -98,7 +112,8 @@ export function describePublishProtection(result) {
   }
 
   const profile = JSON.parse(result.stdout);
-  if (profile.tfa === false) {
+  const tfaMode = typeof profile.tfa === "object" && profile.tfa !== null ? profile.tfa.mode : profile.tfa;
+  if (tfaMode === false || tfaMode === "auth-only") {
     return {
       name: "publish-protection",
       status: "blocked",
@@ -108,10 +123,22 @@ export function describePublishProtection(result) {
     };
   }
 
+  if (tfaMode === "auth-and-writes" && !hasOneTimePassword) {
+    return {
+      name: "publish-protection",
+      status: "blocked",
+      code: "npm_publish_otp_required",
+      message: "npm account requires a one-time password for publishing.",
+      fix: "Complete npm browser authentication, run npm publish --otp <code>, or use a granular publish token with OTP bypass.",
+    };
+  }
+
   return {
     name: "publish-protection",
     status: "ok",
-    message: "npm publish protection is configured.",
+    message: hasOneTimePassword
+      ? "npm publish protection is configured and a one-time password is available."
+      : "npm publish protection is configured.",
   };
 }
 
@@ -163,9 +190,12 @@ function printTextReport(report) {
 }
 
 function printReport({ json }) {
+  const oneTimePasswordAvailable = hasPublishOtp();
   const report = createPublishReport([
     describeNpmAuth(runCommandLine(npmAuthCommand)),
-    describePublishProtection(runCommandLine(publishProtectionCommand)),
+    describePublishProtection(runCommandLine(publishProtectionCommand), {
+      hasOneTimePassword: oneTimePasswordAvailable,
+    }),
     describePackageName(runCommandLine(packageNameCommand)),
     describePackDryRun(runCommandLine(packDryRunCommand)),
   ]);

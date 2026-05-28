@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.1.1 - Pending npm publish
+## 0.1.1 - 2026-05-29
 
 - Write `.formctl/runs/<run-id>/audit.jsonl` for successful dry-run and approved submissions.
 - Expose the audit log path in run summaries and `submit --json` artifact output.

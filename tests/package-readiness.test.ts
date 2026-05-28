@@ -141,6 +141,32 @@ describe("npm package readiness", () => {
       fix: "Enable npm 2FA for writes or use a granular automation token that can publish with 2FA bypass, then rerun npm run publish:check.",
     });
 
+    expect(publishCheck.describePublishProtection({
+      status: 0,
+      stdout: JSON.stringify({ tfa: { mode: "auth-and-writes" }, name: "codeyoma" }),
+      stderr: "",
+    })).toEqual({
+      name: "publish-protection",
+      status: "blocked",
+      code: "npm_publish_otp_required",
+      message: "npm account requires a one-time password for publishing.",
+      fix: "Complete npm browser authentication, run npm publish --otp <code>, or use a granular publish token with OTP bypass.",
+    });
+
+    expect(publishCheck.describePublishProtection({
+      status: 0,
+      stdout: JSON.stringify({ tfa: { mode: "auth-and-writes" }, name: "codeyoma" }),
+      stderr: "",
+    }, { hasOneTimePassword: true })).toEqual({
+      name: "publish-protection",
+      status: "ok",
+      message: "npm publish protection is configured and a one-time password is available.",
+    });
+
+    expect(publishCheck.hasPublishOtp(["node", "publish-check.mjs", "--otp=123456"], {})).toBe(true);
+    expect(publishCheck.hasPublishOtp(["node", "publish-check.mjs"], { NPM_CONFIG_OTP: "123456" })).toBe(true);
+    expect(publishCheck.hasPublishOtp(["node", "publish-check.mjs"], {})).toBe(false);
+
     expect(publishCheck.createPublishReport([
       { name: "npm-auth", status: "blocked" },
       { name: "package-name", status: "ok" },

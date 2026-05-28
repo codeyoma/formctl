@@ -10,6 +10,9 @@ Public repo: https://github.com/codeyoma/formctl
 - [ ] Run `npm run test:package`.
 - [ ] Run `npm run publish:check -- --json`.
 - [ ] Treat `npm_auth_required` as an external auth blocker, not a package-readiness failure.
+- [ ] Treat `npm_publish_otp_required` as an external OTP blocker, not a package-readiness failure.
+- [ ] When npm asks for OTP, complete browser authentication or run `npm publish --otp <code>`.
+- [ ] After publishing, verify from outside the repo: `tmpdir=$(mktemp -d) && cd "$tmpdir" && npm exec --yes --package=formctl@0.1.1 -- formctl --version`.
 - [ ] Run `npm run build`.
 - [ ] Run `npx tsc --noEmit`.
 - [ ] Run `npm run demo`.

@@ -28,6 +28,16 @@ Use this file for the weekly 10k-star loop. Record the metric snapshot, what shi
 
 **Notes:** Repository metrics were captured from `gh api repos/codeyoma/formctl`; npm still reports `E404`, so package publication remains blocked on npm browser/one-time-password authentication rather than package name availability.
 
+## Snapshot: 2026-05-29
+
+| Date | Channel | Posted URL | GitHub Stars | Forks | Open Issues | Discussions | npm Downloads | Demo Views | Comments | Workflow Leads | Next Action |
+| --- | --- | --- | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| 2026-05-29 | npm publish | https://www.npmjs.com/package/formctl | 0 | 0 | 1 | 0 | Published latest `0.1.1` | Not measured | 0 | 0 | Post one example-led outreach message |
+
+**Shipped:** Published `formctl@0.1.1` to npm and verified the installed package from a temporary directory.
+
+**Notes:** The npm package is published as latest `0.1.1`. Future publishes still require OTP or a granular publish token; run `npm run publish:check -- --json` before the next version.
+
 ## Source commands
 
 ```bash
@@ -47,7 +57,7 @@ npm view formctl version --json
 
 Use the snapshot command first; the raw `gh` and `npm` commands are kept here for auditability if the script output needs to be checked by hand.
 
-The npm package name still appears available, but npm publish is blocked until npm browser/one-time-password authentication is completed.
+The npm package is published as latest `0.1.1`.
 
 ## Weekly Review Template
 

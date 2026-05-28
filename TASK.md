@@ -257,7 +257,7 @@ formctl doctor
 
 **Goal:** Make installation trivial.
 
-- [ ] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `formctl@0.1.1` is prepared, and `npm run publish:check -- --json` passes, but real `npm publish` still stops with npm `EOTP` browser/one-time-password authentication. Complete the npm auth challenge or use a granular publish token, then rerun `npm publish`.
+- [x] Publish as `formctl` or a clear scoped fallback if the name is unavailable. `formctl@0.1.1` is published on npm as `latest`; future publishes still require an OTP or a granular publish token.
 - [x] Ensure `npx formctl --help` works.
 - [x] Add `npm run publish:check` so npm auth blockers are separated from package-readiness failures.
 - [x] Add install docs:
