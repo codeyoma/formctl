@@ -18,6 +18,21 @@ const DEFAULT_WORKFLOW_SAFETY = {
 } as const;
 const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.";
+const SUPPORTED_FIELD_TYPE_LIST = [
+  "text",
+  "email",
+  "number",
+  "date",
+  "file",
+  "select",
+  "checkbox",
+  "textarea",
+  "url",
+  "tel",
+  "password",
+  "search",
+] as const;
+const SUPPORTED_FIELD_TYPES = new Set<string>(SUPPORTED_FIELD_TYPE_LIST);
 
 const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
 
@@ -356,6 +371,20 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       && isNonEmptyString(field.name)
       && isNonEmptyString(field.selector)
       && isNonEmptyString(field.type));
+  const unsupportedFieldTypes = Array.isArray(fields)
+    ? fields.flatMap((field) => {
+      if (!isObject(field) || !isNonEmptyString(field.type)) {
+        return [];
+      }
+
+      if (SUPPORTED_FIELD_TYPES.has(field.type.toLowerCase())) {
+        return [];
+      }
+
+      const fieldName = isNonEmptyString(field.name) ? field.name : "<unnamed>";
+      return [`${fieldName}: ${field.type}`];
+    })
+    : [];
 
   return [
     buildValidationCheck(
@@ -376,6 +405,14 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       "Workflow must include at least one field with name, selector, and type.",
       "Add fields entries with name, selector, and type for every required form field.",
     ),
+    ...(Array.isArray(fields) && fields.length > 0 ? [
+      buildValidationCheck(
+        "field-types",
+        unsupportedFieldTypes.length === 0,
+        `Unsupported workflow field type(s): ${unsupportedFieldTypes.join(", ")}.`,
+        `Use one of: ${SUPPORTED_FIELD_TYPE_LIST.join(", ")}.`,
+      ),
+    ] : []),
     buildValidationCheck(
       "submit-selector",
       isObject(submit) && isNonEmptyString(submit.selector),

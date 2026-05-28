@@ -895,6 +895,22 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Next Step:** Return to growth/distribution work: npm auth/publish if credentials are available, otherwise execute the first outreach channel from `docs/OUTREACH.md`.
 
+### 2026-05-28: Reject Unsupported Workflow Field Types
+
+**Date:** 2026-05-28
+
+**Experiment:** Validate workflow field types before any browser-backed submit work starts.
+
+**Hypothesis:** Unsupported field types should fail as `workflow_invalid` repair tasks instead of falling through to generic Playwright fill behavior.
+
+**Result:** Passed. `submit --dry-run --json` now rejects unsupported field types such as `range-slider` with a `field-types` validation check, `submitted: false`, and no `.formctl/runs` directory.
+
+**Evidence:** RED was observed with `npm test -- --run tests/cli.test.ts -t "unsupported field types"`: the test failed with `Unexpected end of JSON input` because the current path did not emit validation JSON before browser work. Focused GREEN passed with the same command after adding supported field type validation. Broader verification passed with `npm test`, `npx tsc --noEmit`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`. `npm run publish:check -- --json` still returns `npm_auth_required`, and `npm whoami` still returns `ENEEDAUTH`, so npm publish remains blocked until login. GitHub issue #1 remains open and valid for launch outreach.
+
+**Decision:** Keep the supported type list aligned with field behaviors the replay engine can actually handle. New field controls should add replay behavior and validation together.
+
+**Next Step:** If npm auth is available, publish the package. Otherwise execute the first external outreach post from `docs/POSTING_QUEUE.md` and measure response.
+
 ### Template
 
 **Date:** YYYY-MM-DD

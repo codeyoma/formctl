@@ -600,6 +600,7 @@ describe("formctl CLI", () => {
         { name: "workflow-name", status: "ok" },
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
+        { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         { name: "safety-metadata", status: "ok" },
       ],
@@ -778,6 +779,63 @@ describe("formctl CLI", () => {
     });
   });
 
+  test("submit --dry-run --json rejects unsupported field types before browser work", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-unsupported-field-type-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        "url: http://127.0.0.1:9/expense",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: range-slider",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl([
+      "submit",
+      "expense-report",
+      "--amount",
+      "120000",
+      "--dry-run",
+      "--json",
+      "--headless",
+    ], workspace);
+    const parsed = JSON.parse(result.stdout);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(parsed).toMatchObject({
+      status: "error",
+      command: "submit",
+      workflow: "expense-report",
+      path: ".formctl/workflows/expense-report.yml",
+      exitCode: 1,
+      submitted: false,
+      requiresApproval: false,
+      error: {
+        code: "workflow_invalid",
+        message: "Workflow validation failed: field-types",
+        fix: "Run formctl validate expense-report --json for detailed repair guidance.",
+      },
+      checks: [
+        {
+          name: "field-types",
+          status: "error",
+          message: "Unsupported workflow field type(s): amount: range-slider.",
+          fix: "Use one of: text, email, number, date, file, select, checkbox, textarea, url, tel, password, search.",
+        },
+      ],
+    });
+    expect(existsSync(path.join(workspace, ".formctl", "runs"))).toBe(false);
+  });
+
   test("validate --json exits 1 when safety metadata is missing", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-invalid-workflow-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
@@ -811,6 +869,7 @@ describe("formctl CLI", () => {
         { name: "workflow-name", status: "ok" },
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
+        { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         {
           name: "safety-metadata",
@@ -867,6 +926,7 @@ describe("formctl CLI", () => {
         { name: "workflow-name", status: "ok" },
         { name: "target-url", status: "ok" },
         { name: "fields", status: "ok" },
+        { name: "field-types", status: "ok" },
         { name: "submit-selector", status: "ok" },
         { name: "safety-metadata", status: "ok" },
         {
