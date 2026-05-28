@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add multi-step recording guidance for review-only click/wait metadata.
 - Record page navigation during manual recording as redacted `waitFor: navigation` metadata.
 - Record named non-submit button clicks as redacted manual `click` events.
 - Record manual select controls and file uploads as semantic `select` and `file` events.

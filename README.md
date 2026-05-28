@@ -6,7 +6,7 @@ Run a saved workflow. Preview first. Approve only when ready.
 
 `formctl` is for developers, operators, and AI agents that need reliable automation for web forms with no useful API. One person records a form workflow into reviewable YAML, then everyone else can run it as a CLI command with dry-run artifacts and explicit approval before real submission.
 
-[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Example before/after posts](docs/EXAMPLE_POSTS.md) · [Growth log](docs/GROWTH_LOG.md) · [Trust and security notes](docs/TRUST.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
+[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Example before/after posts](docs/EXAMPLE_POSTS.md) · [Growth log](docs/GROWTH_LOG.md) · [Trust and security notes](docs/TRUST.md) · [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
 
 ```bash
 formctl submit expense-report --values values.json --dry-run --json
@@ -114,6 +114,7 @@ Use `--storage-state <path>` with `record` or `submit` only after the user has c
 Manual recording stores redacted `recording.events` entries for changed fields and file inputs.
 Manual recording labels text input as `input`, select controls as `select`, file inputs as `file`, named non-submit button clicks as `click`, and page navigation as `wait` so the YAML is easier to review.
 When present, `submit` uses the first recorded event for each field to replay fields in the same order the human recorded them.
+See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: `click` and `wait` events are review-only metadata, while `submit` replays fields and still requires dry-run/approval before side effects.
 If terminal input closes before Enter, `record --manual` cancels without writing a workflow file.
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
 `record` also saves a baseline screenshot next to the workflow file.

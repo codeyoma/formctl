@@ -1963,6 +1963,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Move from Task 6.1 into Task 6.4 by adding a narrow multi-step fixture or docs example that shows how the new recorded click/wait metadata helps reviewers without yet replaying arbitrary browser steps.
 
+### 2026-05-29: Document Multi-Step Recording Metadata
+
+**Date:** 2026-05-29
+
+**Experiment:** Add the first explicit guide for bounded multi-step recording metadata before adding arbitrary step replay.
+
+**Hypothesis:** Now that manual recording can capture `click` and `wait` events, launch readers need a clear safe boundary: those events explain setup in reviewable YAML, while `submit` still only replays fields and keeps dry-run/approval as the side-effect boundary.
+
+**Result:** Passed. `docs/MULTI_STEP_RECORDING.md` now explains review-only `click`/`wait` metadata, field replay order, validation rules, and when raw Playwright or browser agents are a better fit. README links to the guide, Task 6.7 records the documentation step, and the changelog captures the addition.
+
+**Why This Was Highest Value:** Task 6.1 just expanded the workflow metadata contract. Without this guide, users could reasonably overread `click` and `wait` as replayed steps, which would weaken trust and create adoption confusion before the runtime multi-step design is ready.
+
+**Evidence:** RED was observed with `npx vitest run tests/release-readiness.test.ts -t "multi-step recording metadata"` because `docs/MULTI_STEP_RECORDING.md` did not exist. GREEN passed after adding the guide and links. Broader verification passed with `npm run build`, `npm test`, `git diff --check`, `npx tsc --noEmit`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** `npm pack --dry-run --json` now includes the new guide and reports 44 entries. `npm run publish:check -- --json` remains blocked with npm `E401` / `npm_auth_unknown`, while the pack dry-run check itself is ok.
+
+**Suggested Next Task:** Start Task 6.7 runtime work with one bounded known-step fixture: replay a named setup click or modal-opening step under explicit validation, while dry-run still stops before final submit.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
