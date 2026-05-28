@@ -918,13 +918,13 @@ function buildFieldDiff(workflow: Workflow, filledFields: Record<string, string>
   };
 }
 
-async function readApprovalLine(stdin: ApprovalInput): Promise<string> {
+async function readApprovalLine(stdin: ApprovalInput): Promise<string | undefined> {
   stdin.setEncoding?.("utf8");
 
   return new Promise((resolve) => {
     let input = "";
     let settled = false;
-    const finish = (value: string) => {
+    const finish = (value: string | undefined) => {
       if (settled) {
         return;
       }
@@ -942,10 +942,10 @@ async function readApprovalLine(stdin: ApprovalInput): Promise<string> {
       }
     };
     const onEnd = () => {
-      finish(input.trim());
+      finish(undefined);
     };
     const onError = () => {
-      finish(input.trim());
+      finish(undefined);
     };
 
     stdin.on("data", onData);
@@ -1433,17 +1433,27 @@ export async function run(
           });
           stdout.write(`${interactionRequired.message}\n`);
           stdout.write("Press Enter to resume formctl after completing the browser step.\n");
-          await readApprovalLine(stdin);
-          await page.waitForTimeout(100);
-          interactionRequired = await detectInteractionRequired(page);
-          auditEvents.push({
-            event: "interaction_resume_checked",
-            result: interactionRequired === undefined ? "ok" : "blocked",
-            ...(interactionRequired === undefined ? {} : {
+          const resumeInput = await readApprovalLine(stdin);
+          if (resumeInput !== undefined) {
+            await page.waitForTimeout(100);
+            interactionRequired = await detectInteractionRequired(page);
+            auditEvents.push({
+              event: "interaction_resume_checked",
+              result: interactionRequired === undefined ? "ok" : "blocked",
+              ...(interactionRequired === undefined ? {} : {
+                code: interactionRequired.code,
+                detected: interactionRequired.detected,
+              }),
+            });
+          } else {
+            auditEvents.push({
+              event: "interaction_resume_checked",
+              result: "blocked",
               code: interactionRequired.code,
               detected: interactionRequired.detected,
-            }),
-          });
+              reason: "input_closed",
+            });
+          }
         }
       }
       if (interactionRequired !== undefined) {

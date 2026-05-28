@@ -1837,6 +1837,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add CAPTCHA/MFA manual-resume fixture coverage, or post the prepared launch copy and record the first channel-specific growth snapshot.
 
+### 2026-05-29: Require Explicit Enter For CAPTCHA/MFA Resume
+
+**Date:** 2026-05-29
+
+**Experiment:** Verify that CAPTCHA and MFA challenge pages only resume after a real manual Enter keypress, not merely because stdin closes.
+
+**Hypothesis:** `submit --resume-after-interaction` should pause on CAPTCHA/MFA safe stops and keep returning exit code `6` if the interactive input closes without a newline, even when the page later changes into the target form.
+
+**Result:** Passed. `readApprovalLine` now distinguishes a newline from EOF, and the resume path only waits/rechecks after receiving a real line. If stdin closes first, the run stays on the original `captcha_required` or `mfa_required` safe stop, writes failure artifacts, and does not fill or submit the form.
+
+**Why This Was Highest Value:** Task 6.3 still had an unchecked trust boundary. Agents often run with piped or closed stdin, so treating EOF as a human approval would weaken the core promise that CAPTCHA/MFA boundaries require explicit human action.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "does not resume CAPTCHA or MFA"` because EOF let the delayed challenge page become a normal form and returned status `0`. GREEN passed after requiring newline-backed input before resume. Broader verification passed with `npx vitest run tests/cli.test.ts -t "can resume after manual interaction"`, `npm run build`, `npm test`, `git diff --check`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**What Failed:** The bug was narrower than selector validation: challenge detection itself worked, but the resume prompt treated a closed stream as if the user pressed Enter. `npm run publish:check -- --json` still exits blocked with `npm_publish_otp_required`, which is expected until a human provides npm OTP or a publish-capable granular token.
+
+**Suggested Next Task:** Run the full release gate, then move to either outreach posting metrics or a deterministic multi-control replay fixture from Task 6.1.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

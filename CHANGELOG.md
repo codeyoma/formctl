@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Require a real Enter keypress before `submit --resume-after-interaction` rechecks CAPTCHA or MFA safe stops.
+
 ## 0.1.1 - 2026-05-29
 
 - Write `.formctl/runs/<run-id>/audit.jsonl` for successful dry-run and approved submissions.

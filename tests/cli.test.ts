@@ -82,6 +82,12 @@ function createDelayedInteractiveInput(text: string, delayMs: number) {
   return input;
 }
 
+function createClosedInteractiveInput() {
+  const input = Readable.from([]) as Readable & { isTTY?: boolean };
+  input.isTTY = true;
+  return input;
+}
+
 async function serveFixture(html: string) {
   let postCount = 0;
   const server = http.createServer((_, response) => {
@@ -3130,6 +3136,98 @@ describe("formctl CLI", () => {
           resolve();
         });
       });
+    }
+  });
+
+  test("submit --dry-run does not resume CAPTCHA or MFA challenges without Enter", async () => {
+    const challenges = [
+      {
+        name: "captcha",
+        message: "Manual interaction required: page appears to require CAPTCHA before form replay.",
+        initialHtml: `
+          <main id="challenge">
+            <h1>Verify you are human</h1>
+          </main>
+        `,
+      },
+      {
+        name: "mfa",
+        message: "Manual interaction required: page appears to require MFA before form replay.",
+        initialHtml: `
+          <form id="mfa" method="post" action="/mfa" aria-label="Security check">
+            <label>Security code <input name="code" inputmode="numeric" /></label>
+            <button type="submit">Verify</button>
+          </form>
+        `,
+      },
+    ];
+
+    for (const challenge of challenges) {
+      const fixture = await serveFixture(`
+        <!doctype html>
+        <html>
+          <body>
+            ${challenge.initialHtml}
+            <script>
+              setTimeout(() => {
+                document.body.innerHTML = '<form method="post" action="/submit" aria-label="Expense report"><label>Amount <input name="amount" type="number" /></label><button type="submit">Submit expense</button></form>';
+              }, 50);
+            </script>
+          </body>
+        </html>
+      `);
+      const workspace = mkdtempSync(path.join(os.tmpdir(), `formctl-no-resume-${challenge.name}-`));
+      mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+      writeFileSync(
+        path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+        [
+          "name: expense-report",
+          `url: ${fixture.url}`,
+          ...workflowSafetyYaml,
+          "fields:",
+          "  - name: amount",
+          "    selector: input[name=\"amount\"]",
+          "    type: number",
+          "submit:",
+          "  selector: button[type=\"submit\"]",
+          "",
+        ].join("\n"),
+      );
+      const stdout = createWritableCapture();
+      const stderr = createWritableCapture();
+      const previousCwd = process.cwd();
+
+      try {
+        const { run } = await import("../src/cli.js");
+
+        process.chdir(workspace);
+        const status = await run(
+          [
+            process.execPath,
+            cliPath,
+            "submit",
+            "expense-report",
+            "--amount",
+            "120000",
+            "--dry-run",
+            "--resume-after-interaction",
+            "--headless",
+          ],
+          stdout.stream,
+          stderr.stream,
+          createClosedInteractiveInput(),
+        );
+
+        expect(status).toBe(6);
+        expect(stdout.text()).toContain(challenge.message);
+        expect(stdout.text()).toContain("Press Enter to resume formctl after completing the browser step.");
+        expect(stdout.text()).not.toContain("Dry-run complete");
+        expect(stderr.text()).toContain(challenge.message);
+        expect(fixture.postCount()).toBe(0);
+      } finally {
+        process.chdir(previousCwd);
+        await fixture.close();
+      }
     }
   });
 

@@ -380,7 +380,7 @@ npx formctl doctor
 - [x] Document that `formctl` does not solve CAPTCHA, store passwords, or replay MFA secrets.
 - [x] Verify: A login-wall fixture blocks JSON submit and resumes only after manual user action.
 - [x] Verify: Challenge fixtures block headless submit with typed JSON errors.
-- [ ] Verify: CAPTCHA/MFA challenge fixtures resume only after manual user action.
+- [x] Verify: CAPTCHA/MFA challenge fixtures resume only after manual user action.
 - [x] Record site-policy and trust limitations in `REVIEW.md`.
 
 ### Task 6.4: Evaluate Hosted Execution Separately
