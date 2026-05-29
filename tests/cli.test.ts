@@ -27,10 +27,11 @@ function runFormctl(args: string[], cwd = projectRoot, env: NodeJS.ProcessEnv = 
   });
 }
 
-function runFormctlAsync(args: string[], cwd = projectRoot) {
+function runFormctlAsync(args: string[], cwd = projectRoot, env: NodeJS.ProcessEnv = {}) {
   return new Promise<{ status: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, ["--import", tsxLoaderPath, cliPath, ...args], {
       cwd,
+      env: { ...process.env, ...env },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -135,6 +136,7 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("formctl workflows [--json]");
     expect(result.stdout).toContain("formctl validate <workflow-name> [--json]");
     expect(result.stdout).toContain("formctl cleanup --max-age-days <days> [--dry-run] [--json]");
+    expect(result.stdout).toContain("formctl artifacts reveal <artifact-path> --passphrase-env <env>");
     expect(result.stdout).toContain("formctl record <workflow-name> <url>");
     expect(result.stdout).toContain("formctl doctor");
     expect(result.stdout).toContain("Start with an existing .formctl/workflows/<name>.yml file.");
@@ -142,6 +144,8 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("--headed");
     expect(result.stdout).toContain("--headless");
     expect(result.stdout).toContain("--resume-after-interaction");
+    expect(result.stdout).toContain("--protect-artifacts");
+    expect(result.stdout).toContain("--artifact-passphrase-env");
     expect(result.stdout).toContain("--manual");
     expect(result.stdout).toContain("--version");
   });
@@ -4358,6 +4362,118 @@ describe("formctl CLI", () => {
         diff: `.formctl/runs/${parsed.runId}/field-diff.json`,
         summary: `.formctl/runs/${parsed.runId}/summary.json`,
         audit: `.formctl/runs/${parsed.runId}/audit.jsonl`,
+      });
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  });
+
+  test("submit --dry-run can write protected artifacts that reveal only with a passphrase", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <button type="submit">Submit expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-protected-artifacts-"));
+    const env = { FORMCTL_ARTIFACT_KEY: "correct horse battery staple" };
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[type=\"submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+        "--json",
+        "--headless",
+        "--protect-artifacts",
+        "--artifact-passphrase-env",
+        "FORMCTL_ARTIFACT_KEY",
+      ], workspace, env);
+      const parsed = JSON.parse(result.stdout);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "dry-run",
+        workflow: "expense-report",
+        exitCode: 0,
+        submitted: false,
+        requiresApproval: false,
+        artifactsProtected: true,
+        artifactProtection: {
+          type: "passphrase-env",
+          env: "FORMCTL_ARTIFACT_KEY",
+        },
+        fields: {
+          amount: "120000",
+        },
+      });
+      expect(parsed.artifacts).toEqual({
+        screenshot: `.formctl/runs/${parsed.runId}/dry-run.png.protected`,
+        diff: `.formctl/runs/${parsed.runId}/field-diff.json.protected`,
+        summary: `.formctl/runs/${parsed.runId}/summary.json.protected`,
+        audit: `.formctl/runs/${parsed.runId}/audit.jsonl.protected`,
+      });
+
+      const runDirectory = path.join(workspace, ".formctl", "runs", parsed.runId);
+      expect(existsSync(path.join(runDirectory, "dry-run.png"))).toBe(false);
+      expect(existsSync(path.join(runDirectory, "field-diff.json"))).toBe(false);
+      expect(existsSync(path.join(runDirectory, "summary.json"))).toBe(false);
+      expect(existsSync(path.join(runDirectory, "audit.jsonl"))).toBe(false);
+      const rawProtectedSummary = readFileSync(path.join(workspace, parsed.artifacts.summary), "utf8");
+      expect(rawProtectedSummary).not.toContain('"fields"');
+      expect(rawProtectedSummary).not.toContain('"amount"');
+      expect(rawProtectedSummary).not.toContain("expense-report");
+
+      const missingPassphrase = runFormctl([
+        "artifacts",
+        "reveal",
+        parsed.artifacts.summary,
+        "--passphrase-env",
+        "MISSING_FORMCTL_ARTIFACT_KEY",
+      ], workspace);
+      expect(missingPassphrase.status).toBe(1);
+      expect(missingPassphrase.stderr).toContain("Artifact passphrase environment variable is not set.");
+
+      const reveal = runFormctl([
+        "artifacts",
+        "reveal",
+        parsed.artifacts.summary,
+        "--passphrase-env",
+        "FORMCTL_ARTIFACT_KEY",
+      ], workspace, env);
+      expect(reveal.status).toBe(0);
+      expect(reveal.stderr).toBe("");
+      expect(JSON.parse(reveal.stdout)).toMatchObject({
+        status: "dry-run",
+        workflow: "expense-report",
+        fields: {
+          amount: "120000",
+        },
       });
       expect(fixture.postCount()).toBe(0);
     } finally {

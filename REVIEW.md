@@ -2271,6 +2271,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Continue Task 6.6 with opt-in protected artifact storage, starting with a failing test that a protected run writes non-readable artifact payloads unless a configured passphrase/key is supplied.
 
+### 2026-05-29: Opt-In Protected Run Artifacts
+
+**Date:** 2026-05-29
+
+**Experiment:** Add passphrase-env protected artifact storage for sensitive local runs without changing the default plaintext artifact workflow.
+
+**Hypothesis:** `formctl` can reduce local artifact exposure while preserving reviewability if protected storage is opt-in, reports artifact paths, stores encrypted `.protected` payloads, and reveals plaintext only when a local passphrase environment variable is supplied.
+
+**Result:** Passed. `submit` now accepts `--protect-artifacts --artifact-passphrase-env <env>`, writes encrypted `.protected` JSON, JSONL, and screenshot artifacts, omits the plaintext artifact files, and reports `artifactsProtected` plus the passphrase env name without exposing the value. Added `formctl artifacts reveal <path> --passphrase-env <env>` for local inspection of protected artifacts.
+
+**Why This Was Highest Value:** Task 6.6 was the next unfinished trust item after cleanup. Protected artifacts address the biggest remaining local privacy gap for screenshots, summaries, diffs, and audit logs while keeping the default first-run UX simple.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "protected artifacts"` because `--protect-artifacts`, `--artifact-passphrase-env`, and `artifacts reveal` were not implemented. GREEN passed after adding passphrase-env encryption and reveal support. Focused verification passed with `npx vitest run tests/cli.test.ts -t "help|protected artifacts"` and `npx vitest run tests/release-readiness.test.ts -t "README explains|trust and comparison|agent safety|multi-step"`. Broader verification passed with `npm run build`, `npx tsc --noEmit`, `npm test` (127 tests), `npm run test:agent`, `npm run test:replay`, `npm run test:package`, `git diff --check`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The first protected-artifact GREEN attempt failed because the test asserted the raw encrypted envelope did not contain `120000`, but the KDF iteration count is `120000`; checking for plaintext structure such as `"fields"`, `"amount"`, and the workflow name was the correct assertion. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 48 package entries.
+
+**Suggested Next Task:** Add a small `artifacts inspect` command that reports protected artifact metadata without decrypting payloads, so agents can distinguish protected screenshots, JSON summaries, and audit logs before asking for a reveal passphrase.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

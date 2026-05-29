@@ -18,6 +18,7 @@ Treat unknown submit field flags as typos and stop on `field_values_invalid`.
 Use `--storage-state <path>` only with a user-provided local Playwright storageState file for authenticated forms.
 For protected forms, require the user to complete login, MFA, or setup before recording or replaying with `--storage-state`.
 Never create, print, commit, or paste storage state files because they can contain cookies or session tokens.
+For sensitive local runs, prefer `--protect-artifacts --artifact-passphrase-env <env>` and keep the passphrase in a local environment variable or secret manager.
 Use `--resume-after-interaction` only in a local interactive submit run; JSON automation must still treat interaction-required pages as safe stops.
 Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.
 Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.
@@ -120,6 +121,7 @@ MCP setup guide: docs/MCP.md
 - Interaction-required failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
 - Agents should report artifact paths instead of embedding screenshots or file contents in chat.
 - Use `formctl cleanup --max-age-days <days> --dry-run --json` to preview local artifact cleanup, and do not delete artifacts until the user or policy approves it.
+- Protected artifact paths end in `.protected`; use `formctl artifacts reveal <path> --passphrase-env <env>` only when the user or policy authorizes local inspection.
 
 ## Secret Handling
 

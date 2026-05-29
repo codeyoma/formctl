@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add opt-in protected run artifacts with passphrase-env encryption and `formctl artifacts reveal`.
 - Add `formctl cleanup --max-age-days` for previewing and removing old local run artifacts.
 - Add reviewable workflow-step selector repair suggestions with ambiguity-safe omission.
 - Add reviewable submit selector repair suggestions with ambiguity-safe omission.

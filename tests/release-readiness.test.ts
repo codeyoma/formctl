@@ -125,6 +125,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("`record` also saves a baseline screenshot next to the workflow file.");
     expect(readme).toContain("formctl workflows [--json]");
     expect(readme).toContain("formctl validate <workflow-name> [--json]");
+    expect(readme).toContain("formctl artifacts reveal <artifact-path> --passphrase-env <env>");
     expect(readme).toContain("Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.");
     expect(readme).toContain("Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.");
     expect(readme).toContain("Unreadable workflow YAML returns a `readable-yaml` check with `message` and `fix` fields.");
@@ -143,6 +144,8 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Field diffs list the resolved values that will be set before submission, with file inputs redacted as `[file]`.");
     expect(readme).toContain("Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.");
     expect(readme).toContain("Use `formctl cleanup --max-age-days 7 --dry-run --json` to preview old local run artifacts before deleting them.");
+    expect(readme).toContain("For sensitive local runs, add `--protect-artifacts --artifact-passphrase-env FORMCTL_ARTIFACT_KEY`");
+    expect(readme).toContain("formctl artifacts reveal .formctl/runs/<run-id>/summary.json.protected --passphrase-env FORMCTL_ARTIFACT_KEY");
     expect(readme).toContain("Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.");
     expect(readme).toContain("Workflow names may contain only letters, numbers, dots, underscores, and dashes.");
     expect(readme).toContain("Field selectors and workflow step selectors fail before filling fields or submitting.");
@@ -225,7 +228,10 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Extend selector suggestions to submit selectors after adding ambiguity coverage.");
     expect(task).toContain("- [x] Extend selector suggestions to workflow-step selectors after adding ambiguity and submit-typed coverage.");
     expect(task).toContain("- [x] Add configurable cleanup for old `.formctl/runs` directories.");
+    expect(task).toContain("- [x] Add opt-in protected artifact storage for sensitive local runs.");
+    expect(task).toContain("- [x] Keep agents reporting artifact paths rather than embedding artifact contents in chat.");
     expect(task).toContain("- [x] Verify: cleanup removes expired runs.");
+    expect(task).toContain("- [x] Verify: protected artifacts are not readable without the configured key or passphrase.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
@@ -242,6 +248,7 @@ describe("release readiness docs", () => {
     expect(changelog).toContain("Add reviewable submit selector repair suggestions with ambiguity-safe omission.");
     expect(changelog).toContain("Add reviewable workflow-step selector repair suggestions with ambiguity-safe omission.");
     expect(changelog).toContain("Add `formctl cleanup --max-age-days` for previewing and removing old local run artifacts.");
+    expect(changelog).toContain("Add opt-in protected run artifacts with passphrase-env encryption and `formctl artifacts reveal`.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });
@@ -791,6 +798,9 @@ describe("release readiness docs", () => {
     expect(trust).toContain("A selector repair suggestion is not applied automatically.");
     expect(trust).toContain("Update the workflow YAML only after reviewing `failure.png`, `failure.json`, and `audit.jsonl`.");
     expect(trust).toContain("Use `formctl cleanup --max-age-days <days> --dry-run --json` to preview expired run directories");
+    expect(trust).toContain("For sensitive local runs, use `--protect-artifacts --artifact-passphrase-env <env>` with `submit`.");
+    expect(trust).toContain("formctl artifacts reveal .formctl/runs/<run-id>/summary.json.protected --passphrase-env FORMCTL_ARTIFACT_KEY");
+    expect(trust).toContain("Protected artifact output still reports paths, not contents.");
     expect(trust).toContain("When recording or replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.");
     expect(trust).toContain("Storage state files can contain cookies or session tokens; keep them local, exclude them from git, and do not print them in agent output.");
     expect(trust).toContain("For headed local submits, `--resume-after-interaction` pauses after a login, MFA, or CAPTCHA detection and rechecks the page only after the user presses Enter.");
@@ -825,6 +835,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Use `--storage-state <path>` only with a user-provided local Playwright storageState file for authenticated forms.");
     expect(agents).toContain("For protected forms, require the user to complete login, MFA, or setup before recording or replaying with `--storage-state`.");
     expect(agents).toContain("Never create, print, commit, or paste storage state files because they can contain cookies or session tokens.");
+    expect(agents).toContain("For sensitive local runs, prefer `--protect-artifacts --artifact-passphrase-env <env>`");
     expect(agents).toContain("Use `--resume-after-interaction` only in a local interactive submit run; JSON automation must still treat interaction-required pages as safe stops.");
     expect(agents).toContain("Use workflow discovery recording summaries to decide whether to inspect manual recording metadata.");
     expect(agents).toContain("Treat `workflow_unreadable` items in workflow discovery as repair tasks, not runnable workflows.");
@@ -855,6 +866,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Selector repair suggestions are review hints only; they do not authorize approved submit.");
     expect(agents).toContain("Interaction-required failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.");
     expect(agents).toContain("Use `formctl cleanup --max-age-days <days> --dry-run --json` to preview local artifact cleanup, and do not delete artifacts until the user or policy approves it.");
+    expect(agents).toContain("Protected artifact paths end in `.protected`; use `formctl artifacts reveal <path> --passphrase-env <env>` only when the user or policy authorizes local inspection.");
   });
 
   test("MCP setup guide is copy-pasteable before and after npm publish", () => {

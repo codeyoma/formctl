@@ -86,6 +86,11 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 Field diffs list the resolved values that will be set before submission, with file inputs redacted as `[file]`.
 Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.
 Use `formctl cleanup --max-age-days 7 --dry-run --json` to preview old local run artifacts before deleting them. Remove them with `formctl cleanup --max-age-days 7`.
+For sensitive local runs, add `--protect-artifacts --artifact-passphrase-env FORMCTL_ARTIFACT_KEY` to write encrypted `.protected` artifacts instead of plaintext JSON, JSONL, or screenshot files. Reveal a protected text artifact only when needed:
+
+```bash
+formctl artifacts reveal .formctl/runs/<run-id>/summary.json.protected --passphrase-env FORMCTL_ARTIFACT_KEY
+```
 
 Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.
 Workflow names may contain only letters, numbers, dots, underscores, and dashes.
@@ -134,6 +139,7 @@ formctl submit <workflow-name> [flags]
 formctl inspect <workflow-name> [--json]
 formctl workflows [--json]
 formctl validate <workflow-name> [--json]
+formctl artifacts reveal <artifact-path> --passphrase-env <env>
 formctl record <workflow-name> <url>
 formctl doctor [--json]
 ```

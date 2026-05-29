@@ -42,6 +42,17 @@ Audit logs are local files. Review them before sharing because screenshots and p
 
 Run artifacts stay local under `.formctl/runs` until removed. Use `formctl cleanup --max-age-days <days> --dry-run --json` to preview expired run directories, then rerun without `--dry-run` to delete only those expired directories.
 
+## Protected artifacts
+
+For sensitive local runs, use `--protect-artifacts --artifact-passphrase-env <env>` with `submit`. `formctl` encrypts JSON, JSONL, and screenshot artifacts into `.protected` files and does not leave the plaintext artifact names in the run directory.
+
+```bash
+FORMCTL_ARTIFACT_KEY="..." formctl submit expense-report --values values.json --dry-run --json --protect-artifacts --artifact-passphrase-env FORMCTL_ARTIFACT_KEY
+formctl artifacts reveal .formctl/runs/<run-id>/summary.json.protected --passphrase-env FORMCTL_ARTIFACT_KEY
+```
+
+Protected artifact output still reports paths, not contents. Keep the passphrase in a local environment variable or secret manager, and do not paste it into agent chat.
+
 ## Interaction-required safe stops
 
 If the loaded page appears to require login, CAPTCHA, or MFA, `formctl` stops before filling fields or submitting. In JSON mode it returns `interaction_required`, `captcha_required`, or `mfa_required` with exit code `6` and writes:
@@ -86,7 +97,7 @@ File inputs are summarized as `[file]` in JSON and audit output. Do not paste sc
 - `formctl` does not solve CAPTCHA.
 - `formctl` does not replay MFA secrets.
 - `formctl` does not silently heal selectors after page drift.
-- `formctl` does not encrypt local artifacts.
+- `formctl` does not encrypt local artifacts by default.
 - `formctl` does not guarantee that a third-party site allows automation.
 - `formctl` does not replace human approval for irreversible actions.
 

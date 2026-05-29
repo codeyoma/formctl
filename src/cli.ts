@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type Page } from "playwright";
@@ -22,6 +23,8 @@ const WORKFLOW_FIELD_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const RECORDING_CLICK_SELECTOR_PATTERN = /^[a-z][a-z0-9-]*\[name="[^"]+"\]$/;
 const WORKFLOW_STEP_KEYS = new Set(["name", "action", "selector", "when", "waitFor"]);
 const WORKFLOW_STEP_WAIT_KEYS = new Set(["type", "sameOrigin", "path"]);
+const PROTECTED_ARTIFACT_VERSION = 1;
+const PROTECTED_ARTIFACT_KDF_ITERATIONS = 120_000;
 const SUPPORTED_FIELD_TYPE_LIST = [
   "text",
   "email",
@@ -47,6 +50,8 @@ const SUBMIT_CONTROL_OPTIONS = new Set([
   "resume-after-interaction",
   "storage-state",
   "values",
+  "protect-artifacts",
+  "artifact-passphrase-env",
 ]);
 
 const HELP_TEXT = `formctl runs recorded browser forms as safe CLI commands
@@ -58,6 +63,7 @@ Usage:
   formctl workflows [--json]
   formctl validate <workflow-name> [--json]
   formctl cleanup --max-age-days <days> [--dry-run] [--json]
+  formctl artifacts reveal <artifact-path> --passphrase-env <env>
   formctl record <workflow-name> <url>
   formctl doctor
 
@@ -78,6 +84,10 @@ Flags:
   --resume-after-interaction
                 For submit: pause after login, MFA, or CAPTCHA detection, then recheck
   --values PATH Load submit field values from a JSON object file
+  --protect-artifacts
+                For submit: encrypt local run artifacts with a passphrase env var
+  --artifact-passphrase-env NAME
+                Environment variable used with --protect-artifacts
   --manual      For record: wait for Enter after you complete the form in the browser
 `;
 
@@ -180,6 +190,14 @@ type AuditEvent = Record<string, unknown>;
 type ApprovalInput = NodeJS.ReadableStream & {
   isTTY?: boolean;
   setEncoding?: (encoding: BufferEncoding) => unknown;
+};
+
+type ArtifactProtection = {
+  enabled: false;
+} | {
+  enabled: true;
+  passphraseEnv: string;
+  passphrase: string;
 };
 
 type FailureArtifacts = {
@@ -859,6 +877,180 @@ function cleanupRunDirectories(maxAgeDays: number, dryRun: boolean): {
   return { removed, wouldRemove, kept };
 }
 
+function readArtifactProtectionOption(options: Map<string, string | true>): ArtifactProtection | { error: { message: string } } {
+  if (!options.has("protect-artifacts")) {
+    return { enabled: false };
+  }
+
+  const passphraseEnv = options.get("artifact-passphrase-env");
+  if (typeof passphraseEnv !== "string" || passphraseEnv.trim() === "") {
+    return { error: { message: "Protected artifacts require --artifact-passphrase-env <env>." } };
+  }
+
+  const passphrase = process.env[passphraseEnv];
+  if (passphrase === undefined || passphrase === "") {
+    return { error: { message: "Artifact passphrase environment variable is not set." } };
+  }
+
+  return { enabled: true, passphraseEnv, passphrase };
+}
+
+function readArtifactRevealPassphrase(options: Map<string, string | true>): { passphrase: string } | { error: string } {
+  const passphraseEnv = options.get("passphrase-env");
+  if (typeof passphraseEnv !== "string" || passphraseEnv.trim() === "") {
+    return { error: "artifacts reveal requires --passphrase-env <env>." };
+  }
+
+  const passphrase = process.env[passphraseEnv];
+  if (passphrase === undefined || passphrase === "") {
+    return { error: "Artifact passphrase environment variable is not set." };
+  }
+
+  return { passphrase };
+}
+
+function artifactRelativePath(relativeRunDirectory: string, fileName: string, protection: ArtifactProtection): string {
+  return `${relativeRunDirectory}/${fileName}${protection.enabled ? ".protected" : ""}`;
+}
+
+function artifactFilePath(runDirectory: string, fileName: string, protection: ArtifactProtection): string {
+  return path.join(runDirectory, `${fileName}${protection.enabled ? ".protected" : ""}`);
+}
+
+function artifactProtectionSummary(protection: ArtifactProtection): { artifactsProtected: true; artifactProtection: { type: "passphrase-env"; env: string } } | {} {
+  if (!protection.enabled) {
+    return {};
+  }
+
+  return {
+    artifactsProtected: true,
+    artifactProtection: {
+      type: "passphrase-env",
+      env: protection.passphraseEnv,
+    },
+  };
+}
+
+function artifactContentType(fileName: string): string {
+  if (fileName.endsWith(".png")) {
+    return "image/png";
+  }
+  if (fileName.endsWith(".jsonl")) {
+    return "application/jsonl";
+  }
+  if (fileName.endsWith(".json")) {
+    return "application/json";
+  }
+
+  return "application/octet-stream";
+}
+
+function protectArtifactBuffer(
+  plaintext: Buffer,
+  protection: Extract<ArtifactProtection, { enabled: true }>,
+  plaintextName: string,
+): Buffer {
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const key = pbkdf2Sync(protection.passphrase, salt, PROTECTED_ARTIFACT_KDF_ITERATIONS, 32, "sha256");
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const envelope = {
+    formctlProtectedArtifact: PROTECTED_ARTIFACT_VERSION,
+    algorithm: "aes-256-gcm",
+    kdf: "pbkdf2-sha256",
+    iterations: PROTECTED_ARTIFACT_KDF_ITERATIONS,
+    salt: salt.toString("base64"),
+    iv: iv.toString("base64"),
+    tag: cipher.getAuthTag().toString("base64"),
+    contentType: artifactContentType(plaintextName),
+    plaintextName,
+    ciphertext: ciphertext.toString("base64"),
+  };
+
+  return Buffer.from(`${JSON.stringify(envelope, null, 2)}\n`, "utf8");
+}
+
+function writeArtifactBuffer(filePath: string, content: Buffer, protection: ArtifactProtection, plaintextName: string): void {
+  if (!protection.enabled) {
+    writeFileSync(filePath, content);
+    return;
+  }
+
+  writeFileSync(filePath, protectArtifactBuffer(content, protection, plaintextName));
+}
+
+function writeArtifactText(filePath: string, content: string, protection: ArtifactProtection, plaintextName: string): void {
+  writeArtifactBuffer(filePath, Buffer.from(content, "utf8"), protection, plaintextName);
+}
+
+async function writeScreenshotArtifact(page: Page, filePath: string, protection: ArtifactProtection, plaintextName: string): Promise<void> {
+  if (!protection.enabled) {
+    await page.screenshot({ path: filePath, fullPage: true });
+    return;
+  }
+
+  const screenshot = await page.screenshot({ fullPage: true });
+  writeArtifactBuffer(filePath, screenshot, protection, plaintextName);
+}
+
+function writeAuditEvents(auditPath: string, auditEvents: AuditEvent[], protection: ArtifactProtection): void {
+  const content = auditEvents.map((event) => JSON.stringify(event)).join("\n");
+  writeArtifactText(auditPath, `${content}${content.length === 0 ? "" : "\n"}`, protection, "audit.jsonl");
+}
+
+function decryptProtectedArtifact(envelopeText: string, passphrase: string): Buffer {
+  const envelope = JSON.parse(envelopeText) as {
+    formctlProtectedArtifact?: number;
+    algorithm?: string;
+    kdf?: string;
+    iterations?: number;
+    salt?: string;
+    iv?: string;
+    tag?: string;
+    ciphertext?: string;
+  };
+
+  if (
+    envelope.formctlProtectedArtifact !== PROTECTED_ARTIFACT_VERSION
+    || envelope.algorithm !== "aes-256-gcm"
+    || envelope.kdf !== "pbkdf2-sha256"
+    || typeof envelope.iterations !== "number"
+    || typeof envelope.salt !== "string"
+    || typeof envelope.iv !== "string"
+    || typeof envelope.tag !== "string"
+    || typeof envelope.ciphertext !== "string"
+  ) {
+    throw new Error("Artifact is not a supported protected formctl artifact.");
+  }
+
+  const salt = Buffer.from(envelope.salt, "base64");
+  const iv = Buffer.from(envelope.iv, "base64");
+  const tag = Buffer.from(envelope.tag, "base64");
+  const ciphertext = Buffer.from(envelope.ciphertext, "base64");
+  const key = pbkdf2Sync(passphrase, salt, envelope.iterations, 32, "sha256");
+  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(tag);
+
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+}
+
+function resolveLocalRunArtifactPath(artifactPath: string): { filePath: string } | { error: string } {
+  if (path.isAbsolute(artifactPath)) {
+    return { error: "Artifact path must be relative to the current workspace." };
+  }
+
+  const normalized = path.normalize(artifactPath);
+  if (normalized.startsWith("..") || normalized.includes(`${path.sep}..${path.sep}`)) {
+    return { error: "Artifact path must stay inside the current workspace." };
+  }
+  if (!normalized.startsWith(`.formctl${path.sep}runs${path.sep}`)) {
+    return { error: "Artifact path must be under .formctl/runs." };
+  }
+
+  return { filePath: path.join(process.cwd(), normalized) };
+}
+
 function readSubmitFieldValues(
   options: Map<string, string | true>,
   fields: WorkflowField[],
@@ -1066,11 +1258,13 @@ function writeSelectorFailure(
   wantsJson: boolean,
   runId?: string,
   artifacts?: FailureArtifacts,
+  artifactProtection?: ArtifactProtection,
 ): void {
   const payload = {
     ...failurePayload,
     ...(runId === undefined ? {} : { runId }),
     ...(artifacts === undefined ? {} : { artifacts }),
+    ...(artifactProtection === undefined ? {} : artifactProtectionSummary(artifactProtection)),
   };
 
   if (wantsJson) {
@@ -1082,10 +1276,6 @@ function writeSelectorFailure(
   if (runId !== undefined) {
     output.write(`Run: .formctl/runs/${runId}\n`);
   }
-}
-
-function appendAuditEvent(auditPath: string, event: AuditEvent): void {
-  appendFileSync(auditPath, `${JSON.stringify(event)}\n`);
 }
 
 function buildFieldDiff(workflow: Workflow, filledFields: Record<string, string>, submitted: boolean): FieldDiff {
@@ -1597,27 +1787,29 @@ async function writeSelectorMismatchFailureArtifacts(
   workingDirectory: string,
   failurePayload: BrowserFailurePayload,
   auditEvents: AuditEvent[],
+  artifactProtection: ArtifactProtection,
 ): Promise<{ runId: string; artifacts: FailureArtifacts }> {
   const runId = `${Date.now()}-failed`;
   const runDirectory = path.join(workingDirectory, ".formctl", "runs", runId);
   const relativeRunDirectory = `.formctl/runs/${runId}`;
   const artifacts = {
-    screenshot: `${relativeRunDirectory}/failure.png`,
-    failure: `${relativeRunDirectory}/failure.json`,
-    audit: `${relativeRunDirectory}/audit.jsonl`,
+    screenshot: artifactRelativePath(relativeRunDirectory, "failure.png", artifactProtection),
+    failure: artifactRelativePath(relativeRunDirectory, "failure.json", artifactProtection),
+    audit: artifactRelativePath(relativeRunDirectory, "audit.jsonl", artifactProtection),
   };
-  const screenshotPath = path.join(runDirectory, "failure.png");
-  const failurePath = path.join(runDirectory, "failure.json");
-  const auditPath = path.join(runDirectory, "audit.jsonl");
+  const screenshotPath = artifactFilePath(runDirectory, "failure.png", artifactProtection);
+  const failurePath = artifactFilePath(runDirectory, "failure.json", artifactProtection);
+  const auditPath = artifactFilePath(runDirectory, "audit.jsonl", artifactProtection);
   const failure = {
     ...failurePayload,
     runId,
     artifacts,
+    ...artifactProtectionSummary(artifactProtection),
   };
 
   mkdirSync(runDirectory, { recursive: true });
-  await page.screenshot({ path: screenshotPath, fullPage: true });
-  writeFileSync(failurePath, `${JSON.stringify(failure, null, 2)}\n`);
+  await writeScreenshotArtifact(page, screenshotPath, artifactProtection, "failure.png");
+  writeArtifactText(failurePath, `${JSON.stringify(failure, null, 2)}\n`, artifactProtection, "failure.json");
   auditEvents.push(
     {
       event: "screenshot_saved",
@@ -1630,9 +1822,7 @@ async function writeSelectorMismatchFailureArtifacts(
       artifacts,
     },
   );
-  for (const event of auditEvents) {
-    appendAuditEvent(auditPath, event);
-  }
+  writeAuditEvents(auditPath, auditEvents, artifactProtection);
 
   return { runId, artifacts };
 }
@@ -1685,6 +1875,42 @@ export async function run(
       }
     }
     return exitCode;
+  }
+
+  if (command === "artifacts") {
+    const action = args[3];
+    const artifactPath = args[4];
+
+    if (action !== "reveal" || artifactPath === undefined) {
+      stderr.write("Usage: formctl artifacts reveal <artifact-path> --passphrase-env <env>\n");
+      return 1;
+    }
+
+    const options = parseOptions(args.slice(5));
+    const passphraseResult = readArtifactRevealPassphrase(options);
+    if ("error" in passphraseResult) {
+      stderr.write(`${passphraseResult.error}\n`);
+      return 1;
+    }
+
+    const artifactPathResult = resolveLocalRunArtifactPath(artifactPath);
+    if ("error" in artifactPathResult) {
+      stderr.write(`${artifactPathResult.error}\n`);
+      return 1;
+    }
+    if (!existsSync(artifactPathResult.filePath)) {
+      stderr.write(`Artifact not found: ${artifactPath}\n`);
+      return 1;
+    }
+
+    try {
+      const plaintext = decryptProtectedArtifact(readFileSync(artifactPathResult.filePath, "utf8"), passphraseResult.passphrase);
+      stdout.write(plaintext);
+      return 0;
+    } catch (error) {
+      stderr.write(`Could not reveal protected artifact: ${getErrorMessage(error)}\n`);
+      return 1;
+    }
   }
 
   if (command === "inspect") {
@@ -1963,6 +2189,27 @@ export async function run(
       }
       return 1;
     }
+    const artifactProtectionResult = readArtifactProtectionOption(options);
+    if ("error" in artifactProtectionResult) {
+      const payload = {
+        status: "error",
+        workflow: workflowName,
+        exitCode: 1,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "artifact_protection_invalid",
+          message: artifactProtectionResult.error.message,
+        },
+      };
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify(payload)}\n`);
+      } else {
+        stderr.write(`${artifactProtectionResult.error.message}\n`);
+      }
+      return 1;
+    }
+    const artifactProtection = artifactProtectionResult;
     const browserHeadless = resolveBrowserHeadless({ command: "submit", flags, isDryRun: isDryRun || isInteractiveApproval });
     const browser = await chromium.launch({ headless: browserHeadless });
     const runStatus = isDryRun ? "dry-run" : "submitted";
@@ -1989,6 +2236,7 @@ export async function run(
           headless: browserHeadless,
           json: wantsJson,
           ...(storageStateResult.storageStatePath === undefined ? {} : { storageState: true }),
+          ...(artifactProtection.enabled ? { artifactsProtected: true } : {}),
         },
       });
       const context = await browser.newContext(
@@ -2009,6 +2257,7 @@ export async function run(
           process.cwd(),
           failurePayload,
           auditEvents,
+          artifactProtection,
         );
         writeSelectorFailure(
           wantsJson ? stdout : stderr,
@@ -2016,6 +2265,7 @@ export async function run(
           wantsJson,
           failure.runId,
           failure.artifacts,
+          artifactProtection,
         );
         return 6;
       };
@@ -2064,6 +2314,7 @@ export async function run(
           process.cwd(),
           failurePayload,
           auditEvents,
+          artifactProtection,
         );
         writeSelectorFailure(
           wantsJson ? stdout : stderr,
@@ -2071,6 +2322,7 @@ export async function run(
           wantsJson,
           failure.runId,
           failure.artifacts,
+          artifactProtection,
         );
         return 3;
       };
@@ -2119,8 +2371,13 @@ export async function run(
           mkdirSync(runDirectory, { recursive: true });
           const stepNumber = String((clickEvent.stepIndex ?? index) + 1).padStart(2, "0");
           const stepScreenshotFileName = `step-${stepNumber}-${slugifyArtifactName(clickEvent.name)}.png`;
-          const stepScreenshotArtifact = `${relativeRunDirectory}/${stepScreenshotFileName}`;
-          await page.screenshot({ path: path.join(runDirectory, stepScreenshotFileName), fullPage: true });
+          const stepScreenshotArtifact = artifactRelativePath(relativeRunDirectory, stepScreenshotFileName, artifactProtection);
+          await writeScreenshotArtifact(
+            page,
+            artifactFilePath(runDirectory, stepScreenshotFileName, artifactProtection),
+            artifactProtection,
+            stepScreenshotFileName,
+          );
           stepArtifacts.push({
             name: clickEvent.name,
             screenshot: stepScreenshotArtifact,
@@ -2210,6 +2467,7 @@ export async function run(
             process.cwd(),
             failurePayload,
             auditEvents,
+            artifactProtection,
           );
           writeSelectorFailure(
             wantsJson ? stdout : stderr,
@@ -2217,6 +2475,7 @@ export async function run(
             wantsJson,
             failure.runId,
             failure.artifacts,
+            artifactProtection,
           );
           return 3;
         }
@@ -2244,6 +2503,7 @@ export async function run(
             process.cwd(),
             failurePayload,
             auditEvents,
+            artifactProtection,
           );
           writeSelectorFailure(
             wantsJson ? stdout : stderr,
@@ -2251,6 +2511,7 @@ export async function run(
             wantsJson,
             failure.runId,
             failure.artifacts,
+            artifactProtection,
           );
           return 3;
         }
@@ -2279,6 +2540,7 @@ export async function run(
               process.cwd(),
               failurePayload,
               auditEvents,
+              artifactProtection,
             );
             writeSelectorFailure(
               wantsJson ? stdout : stderr,
@@ -2286,6 +2548,7 @@ export async function run(
               wantsJson,
               failure.runId,
               failure.artifacts,
+              artifactProtection,
             );
             return 3;
           }
@@ -2315,6 +2578,7 @@ export async function run(
               process.cwd(),
               failurePayload,
               auditEvents,
+              artifactProtection,
             );
             writeSelectorFailure(
               wantsJson ? stdout : stderr,
@@ -2322,6 +2586,7 @@ export async function run(
               wantsJson,
               failure.runId,
               failure.artifacts,
+              artifactProtection,
             );
             return 3;
           }
@@ -2380,11 +2645,13 @@ export async function run(
       }
 
       mkdirSync(runDirectory, { recursive: true });
-      const auditPath = path.join(runDirectory, "audit.jsonl");
-      const fieldDiffArtifact = `${relativeRunDirectory}/field-diff.json`;
-      writeFileSync(
-        path.join(runDirectory, "field-diff.json"),
+      const auditPath = artifactFilePath(runDirectory, "audit.jsonl", artifactProtection);
+      const fieldDiffArtifact = artifactRelativePath(relativeRunDirectory, "field-diff.json", artifactProtection);
+      writeArtifactText(
+        artifactFilePath(runDirectory, "field-diff.json", artifactProtection),
         `${JSON.stringify(buildFieldDiff(workflow, filledFields, false), null, 2)}\n`,
+        artifactProtection,
+        "field-diff.json",
       );
       let dryRunScreenshotArtifact: string | undefined;
       auditEvents.push({
@@ -2392,8 +2659,13 @@ export async function run(
         fields: filledFields,
       });
       if (isInteractiveApproval) {
-        dryRunScreenshotArtifact = `${relativeRunDirectory}/dry-run.png`;
-        await page.screenshot({ path: path.join(runDirectory, "dry-run.png"), fullPage: true });
+        dryRunScreenshotArtifact = artifactRelativePath(relativeRunDirectory, "dry-run.png", artifactProtection);
+        await writeScreenshotArtifact(
+          page,
+          artifactFilePath(runDirectory, "dry-run.png", artifactProtection),
+          artifactProtection,
+          "dry-run.png",
+        );
         auditEvents.push({
           event: "screenshot_saved",
           path: dryRunScreenshotArtifact,
@@ -2411,7 +2683,7 @@ export async function run(
           const artifacts = {
             screenshot: dryRunScreenshotArtifact,
             diff: fieldDiffArtifact,
-            audit: `${relativeRunDirectory}/audit.jsonl`,
+            audit: artifactRelativePath(relativeRunDirectory, "audit.jsonl", artifactProtection),
           };
           auditEvents.push({
             event: "run_finished",
@@ -2419,9 +2691,7 @@ export async function run(
             submitted: false,
             artifacts,
           });
-          for (const event of auditEvents) {
-            appendAuditEvent(auditPath, event);
-          }
+          writeAuditEvents(auditPath, auditEvents, artifactProtection);
 
           stderr.write("Approval declined; not submitted.\n");
           return 5;
@@ -2431,17 +2701,17 @@ export async function run(
         await page.locator(workflow.submit.selector).click();
       }
 
-      const screenshotPath = path.join(runDirectory, screenshotFileName);
-      const summaryPath = path.join(runDirectory, "summary.json");
+      const screenshotPath = artifactFilePath(runDirectory, screenshotFileName, artifactProtection);
+      const summaryPath = artifactFilePath(runDirectory, "summary.json", artifactProtection);
       const artifacts = {
-        screenshot: `${relativeRunDirectory}/${screenshotFileName}`,
+        screenshot: artifactRelativePath(relativeRunDirectory, screenshotFileName, artifactProtection),
         ...(stepArtifacts.length === 0 ? {} : { steps: stepArtifacts }),
         ...(dryRunScreenshotArtifact === undefined ? {} : { dryRunScreenshot: dryRunScreenshotArtifact }),
         diff: fieldDiffArtifact,
-        summary: `${relativeRunDirectory}/summary.json`,
-        audit: `${relativeRunDirectory}/audit.jsonl`,
+        summary: artifactRelativePath(relativeRunDirectory, "summary.json", artifactProtection),
+        audit: artifactRelativePath(relativeRunDirectory, "audit.jsonl", artifactProtection),
       };
-      await page.screenshot({ path: screenshotPath, fullPage: true });
+      await writeScreenshotArtifact(page, screenshotPath, artifactProtection, screenshotFileName);
       const summary = {
         status: runStatus,
         workflow: workflow.name,
@@ -2449,8 +2719,9 @@ export async function run(
         ...(isDryRun ? {} : { approval: isInteractiveApproval ? "interactive" : "flag" }),
         fields: filledFields,
         artifacts,
+        ...artifactProtectionSummary(artifactProtection),
       };
-      writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`);
+      writeArtifactText(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, artifactProtection, "summary.json");
       auditEvents.push(
         {
           event: "screenshot_saved",
@@ -2463,9 +2734,7 @@ export async function run(
           artifacts,
         },
       );
-      for (const event of auditEvents) {
-        appendAuditEvent(auditPath, event);
-      }
+      writeAuditEvents(auditPath, auditEvents, artifactProtection);
 
       if (wantsJson) {
         stdout.write(`${JSON.stringify({
@@ -2485,8 +2754,8 @@ export async function run(
       }
 
       mkdirSync(runDirectory, { recursive: true });
-      const failureArtifact = `${relativeRunDirectory}/failure.json`;
-      const auditArtifact = `${relativeRunDirectory}/audit.jsonl`;
+      const failureArtifact = artifactRelativePath(relativeRunDirectory, "failure.json", artifactProtection);
+      const auditArtifact = artifactRelativePath(relativeRunDirectory, "audit.jsonl", artifactProtection);
       const artifacts = {
         failure: failureArtifact,
         audit: auditArtifact,
@@ -2500,6 +2769,7 @@ export async function run(
         submitted: false,
         requiresApproval: false,
         artifacts,
+        ...artifactProtectionSummary(artifactProtection),
         error: {
           code: "dry_run_failed",
           message,
@@ -2512,10 +2782,13 @@ export async function run(
         error: payload.error,
         artifacts,
       });
-      writeFileSync(path.join(runDirectory, "failure.json"), `${JSON.stringify(payload, null, 2)}\n`);
-      for (const event of auditEvents) {
-        appendAuditEvent(path.join(runDirectory, "audit.jsonl"), event);
-      }
+      writeArtifactText(
+        artifactFilePath(runDirectory, "failure.json", artifactProtection),
+        `${JSON.stringify(payload, null, 2)}\n`,
+        artifactProtection,
+        "failure.json",
+      );
+      writeAuditEvents(artifactFilePath(runDirectory, "audit.jsonl", artifactProtection), auditEvents, artifactProtection);
 
       if (wantsJson) {
         stdout.write(`${JSON.stringify(payload)}\n`);
