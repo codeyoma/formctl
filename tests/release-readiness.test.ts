@@ -159,11 +159,14 @@ describe("release readiness docs", () => {
   test("multi-step recording metadata docs explain the current safe boundary", () => {
     const readme = readFileSync(path.join(projectRoot, "README.md"), "utf8");
     const guide = readFileSync(path.join(projectRoot, "docs", "MULTI_STEP_RECORDING.md"), "utf8");
+    const navigation = readFileSync(path.join(projectRoot, "docs", "NAVIGATION_STEPS.md"), "utf8");
     const task = readFileSync(path.join(projectRoot, "TASK.md"), "utf8");
     const changelog = readFileSync(path.join(projectRoot, "CHANGELOG.md"), "utf8");
 
     expect(readme).toContain("[Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md)");
+    expect(readme).toContain("[Navigation step design](docs/NAVIGATION_STEPS.md)");
     expect(guide).toContain("# Multi-Step Recording Metadata");
+    expect(guide).toContain("[Bounded navigation step design](NAVIGATION_STEPS.md)");
     expect(guide).toContain("bounded setup click replay");
     expect(guide).toContain("steps:");
     expect(guide).toContain("when: before-fields");
@@ -181,12 +184,23 @@ describe("release readiness docs", () => {
     expect(guide).toContain("waitFor: navigation");
     expect(guide).toContain('value: "[redacted]"');
     expect(guide).toContain("Use raw Playwright or a browser agent");
+    expect(navigation).toContain("# Bounded Navigation Step Design");
+    expect(navigation).toContain("Navigation step replay is not implemented yet.");
+    expect(navigation).toContain("A future navigation step must be triggered by a named non-submit click");
+    expect(navigation).toContain("must not store full destination URLs");
+    expect(navigation).toContain("same-origin");
+    expect(navigation).toContain("rerun interaction-required checks");
+    expect(navigation).toContain("dry-run still stops before the final submit selector");
+    expect(navigation).toContain("No automatic branching");
+    expect(navigation).toContain("No direct `page.goto` replay");
+    expect(navigation).toContain("Use raw Playwright or a browser agent");
     expect(task).toContain("- [x] Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(task).toContain("- [x] Add structured before-fields click steps with per-step screenshot artifacts.");
     expect(task).toContain("- [x] Add structured after-fields confirmation click steps for known review controls.");
     expect(task).toContain("- [x] Add a checked-in demo workflow that proves after-fields confirmation replay in package/demo smoke tests.");
     expect(task).toContain("- [x] Preserve dry-run stopping before the final submit action.");
     expect(task).toContain("- [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.");
+    expect(task).toContain("- [x] Write a bounded-navigation design note before adding navigation replay.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
@@ -194,6 +208,7 @@ describe("release readiness docs", () => {
     expect(changelog).toContain("Add structured before-fields click steps with per-step screenshot artifacts.");
     expect(changelog).toContain("Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.");
     expect(changelog).toContain("Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.");
+    expect(changelog).toContain("Document the bounded navigation step design before adding navigation replay.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });

@@ -6,7 +6,7 @@ Run a saved workflow. Preview first. Approve only when ready.
 
 `formctl` is for developers, operators, and AI agents that need reliable automation for web forms with no useful API. One person records a form workflow into reviewable YAML, then everyone else can run it as a CLI command with dry-run artifacts and explicit approval before real submission.
 
-[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Example before/after posts](docs/EXAMPLE_POSTS.md) · [Growth log](docs/GROWTH_LOG.md) · [Trust and security notes](docs/TRUST.md) · [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
+[Workflow request guide](docs/WORKFLOW_REQUESTS.md) · [Example before/after posts](docs/EXAMPLE_POSTS.md) · [Growth log](docs/GROWTH_LOG.md) · [Trust and security notes](docs/TRUST.md) · [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) · [Navigation step design](docs/NAVIGATION_STEPS.md) · [Comparison with Playwright, browser agents, and RPA](docs/COMPARISON.md) · [Why browser agents need form-specific CLIs](docs/WHY_FORM_CLIS.md)
 
 ```bash
 formctl submit expense-report --values values.json --dry-run --json

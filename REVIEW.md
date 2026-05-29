@@ -2109,6 +2109,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Write a separate bounded-navigation design note before adding any navigation replay, so Task 6.7 does not accidentally become generic browser automation.
 
+### 2026-05-29: Bounded Navigation Step Design Note
+
+**Date:** 2026-05-29
+
+**Experiment:** Define the safety contract for future navigation steps before implementing any navigation replay.
+
+**Hypothesis:** Navigation replay is the most likely way for Task 6.7 to drift into generic browser automation. A separate design note should keep the future implementation constrained to reviewed, same-origin, named-click-triggered navigation with explicit audit artifacts and approval gates.
+
+**Result:** Passed. Added `docs/NAVIGATION_STEPS.md`, linked it from README and the multi-step metadata guide, and marked the design-note checkpoint in `TASK.md`. The note explicitly says navigation step replay is not implemented yet, rejects full destination URLs and direct `page.goto` replay, requires same-origin named non-submit click triggers, reruns interaction-required checks after navigation, and preserves dry-run before final submit.
+
+**Why This Was Highest Value:** The runtime already supports setup and after-field confirmation steps. Implementing navigation next without a written boundary would increase correctness and trust risk, especially around stored URLs, tokens, cross-origin movement, and hidden approval flows.
+
+**Evidence:** RED was observed with `npx vitest run tests/release-readiness.test.ts -t "multi-step"` because `docs/NAVIGATION_STEPS.md` did not exist and README did not link it. GREEN passed after adding the note and links. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** No runtime changes were needed. The important decision is to keep future navigation replay explicit and same-origin, and to route dynamic branching or arbitrary navigation back to raw Playwright or browser agents. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 45 package entries including `docs/NAVIGATION_STEPS.md`.
+
+**Suggested Next Task:** Add a failing validation fixture for a future navigation-step shape before any implementation, especially rejecting full URLs, cross-origin waits, and direct navigation actions.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

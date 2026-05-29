@@ -60,6 +60,8 @@ Do not rely on this metadata for dynamic branching, arbitrary page exploration, 
 
 Use raw Playwright or a browser agent when the workflow needs custom assertions, conditional branching, open-ended exploration, or arbitrary click/wait replay. Bring the workflow back to `formctl` once the final form path is known and should become a reviewable CLI command.
 
+See the [Bounded navigation step design](NAVIGATION_STEPS.md) before adding any navigation replay support. Navigation steps must remain explicit, same-origin, reviewable, and approval-gated.
+
 ## Validation Rules
 
 Validation rejects recording metadata that is not bounded and redacted:
