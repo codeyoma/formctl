@@ -65,7 +65,7 @@ If a selector is missing or ambiguous, `formctl` stops with exit code `3` and wr
 
 ### Reviewable selector repair suggestions
 
-When a missing field selector has enough evidence, `formctl` may include `error.repair` in selector mismatch JSON and `failure.json`. The first supported signal is strict: one candidate field on the current page must have the same input type and the same recorded label.
+When a missing selector has enough evidence, `formctl` may include `error.repair` in selector mismatch JSON and `failure.json`. Supported suggestions are intentionally narrow: missing field selectors can suggest one same-type, same-label field; missing submit selectors can suggest one named submit control. Ambiguous pages produce no suggestion.
 
 A selector repair suggestion is not applied automatically. `submit` still exits `3`, does not fill fields, and does not submit. Update the workflow YAML only after reviewing `failure.png`, `failure.json`, and `audit.jsonl`.
 

@@ -1193,11 +1193,27 @@ async function validateSubmitSelector(
     result: submitMatchCount === 1 ? "ok" : "mismatch",
   });
   if (submitMatchCount !== 1) {
+    const repair = submitMatchCount === 0
+      ? await findSubmitSelectorRepairSuggestion(page)
+      : undefined;
+    if (repair !== undefined) {
+      auditEvents.push({
+        event: "selector_repair_suggestion",
+        role: "submit",
+        selector: workflow.submit.selector,
+        suggestedSelector: repair.selector,
+        confidence: repair.confidence,
+        requiresReview: repair.requiresReview,
+        reason: repair.reason,
+      });
+    }
+
     return buildSelectorMismatchPayload(
       workflow.name,
       workflow.submit.selector,
       submitMatchCount,
       "submit",
+      repair,
     );
   }
 
@@ -1365,6 +1381,31 @@ async function findFieldSelectorRepairSuggestion(
     confidence: "high",
     requiresReview: true,
     reason: `Found exactly one ${expectedType} field with matching label "${expectedLabel}". Review failure.png before updating the workflow YAML.`,
+  };
+}
+
+async function findSubmitSelectorRepairSuggestion(page: Page): Promise<SelectorRepairSuggestion | undefined> {
+  const candidates = await page.locator('button[type="submit"][name], input[type="submit"][name]').evaluateAll((elements) => elements.flatMap((element) => {
+    const tagName = element.tagName.toLowerCase();
+    const name = element.getAttribute("name") ?? "";
+    if (name.length === 0) {
+      return [];
+    }
+
+    return [{ tagName, name }];
+  }));
+  const matches = candidates.filter((candidate) => WORKFLOW_FIELD_NAME_PATTERN.test(candidate.name));
+
+  if (matches.length !== 1) {
+    return undefined;
+  }
+
+  const candidate = matches[0];
+  return {
+    selector: `${candidate.tagName}[name="${candidate.name}"]`,
+    confidence: "high",
+    requiresReview: true,
+    reason: "Found exactly one named submit control. Review failure.png before updating the workflow YAML.",
   };
 }
 

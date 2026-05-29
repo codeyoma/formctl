@@ -4702,6 +4702,171 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit suggests a submit selector repair but still exits 3 until YAML is updated", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <button type="submit" name="send-expense">Send expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-submit-selector-repair-"));
+    const workflowPath = path.join(workspace, ".formctl", "workflows", "expense-report.yml");
+    mkdirSync(path.dirname(workflowPath), { recursive: true });
+    const brokenWorkflow = [
+      "name: expense-report",
+      `url: ${fixture.url}`,
+      ...workflowSafetyYaml,
+      "fields:",
+      "  - name: amount",
+      "    selector: input[name=\"amount\"]",
+      "    type: number",
+      "submit:",
+      "  selector: button[name=\"old-submit\"]",
+      "",
+    ].join("\n");
+    writeFileSync(workflowPath, brokenWorkflow);
+
+    try {
+      const broken = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const brokenJson = JSON.parse(broken.stdout);
+
+      expect(broken.status).toBe(3);
+      expect(broken.stderr).toBe("");
+      expect(brokenJson).toMatchObject({
+        status: "error",
+        workflow: "expense-report",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          role: "submit",
+          selector: 'button[name="old-submit"]',
+          expectedMatches: 1,
+          actualMatches: 0,
+          repair: {
+            selector: 'button[name="send-expense"]',
+            confidence: "high",
+            requiresReview: true,
+          },
+        },
+      });
+      expect(brokenJson.error.repair.reason).toContain("one named submit control");
+      expect(existsSync(path.join(workspace, brokenJson.artifacts.failure))).toBe(true);
+      const failureJson = JSON.parse(readFileSync(path.join(workspace, brokenJson.artifacts.failure), "utf8"));
+      expect(failureJson.error.repair).toEqual(brokenJson.error.repair);
+      const auditLog = readFileSync(path.join(workspace, brokenJson.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"event":"selector_repair_suggestion"');
+      expect(auditLog).toContain('"role":"submit"');
+      expect(auditLog).toContain('"suggestedSelector":"button[name=\\"send-expense\\"]"');
+      expect(fixture.postCount()).toBe(0);
+
+      writeFileSync(workflowPath, brokenWorkflow.replace('button[name="old-submit"]', brokenJson.error.repair.selector));
+      const repaired = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(repaired.status).toBe(0);
+      expect(JSON.parse(repaired.stdout)).toMatchObject({
+        status: "dry-run",
+        submitted: false,
+        fields: {
+          amount: "120000",
+        },
+      });
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  }, 35_000);
+
+  test("submit omits submit selector repair suggestions when candidates are ambiguous", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Expense report">
+            <input name="amount" type="number" />
+            <button type="submit" name="save-draft">Save draft</button>
+            <button type="submit" name="send-expense">Send expense</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-submit-selector-ambiguous-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "expense-report.yml"),
+      [
+        "name: expense-report",
+        `url: ${fixture.url}`,
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"old-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "expense-report",
+        "--amount",
+        "120000",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const parsed = JSON.parse(result.stdout);
+
+      expect(result.status).toBe(3);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "error",
+        workflow: "expense-report",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          role: "submit",
+          selector: 'button[name="old-submit"]',
+          expectedMatches: 1,
+          actualMatches: 0,
+        },
+      });
+      expect(parsed.error.repair).toBeUndefined();
+      const auditLog = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8");
+      expect(auditLog).not.toContain('"event":"selector_repair_suggestion"');
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  }, 35_000);
+
   test("submit --dry-run --json stops with interaction_required when the target page is a login wall", async () => {
     const fixture = await serveFixture(`
       <!doctype html>

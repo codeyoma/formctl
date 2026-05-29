@@ -91,7 +91,7 @@ Workflow names may contain only letters, numbers, dots, underscores, and dashes.
 Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.
 Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.
 Unreadable workflow YAML returns a `readable-yaml` check with `message` and `fix` fields.
-Selector mismatch JSON may include `error.repair` when a missing field selector has exactly one same-type, same-label candidate. Treat it as a review hint, update workflow YAML manually, and rerun dry-run.
+Selector mismatch JSON may include `error.repair` when a missing field or submit selector has exactly one bounded candidate. Treat it as a review hint, update workflow YAML manually, and rerun dry-run.
 Validation rejects unredacted `recording.events` metadata when present.
 Validation also rejects `recording.events` entries that do not match a known workflow field and selector.
 Validation rejects duplicate workflow field names before any browser work.

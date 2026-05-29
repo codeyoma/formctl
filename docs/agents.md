@@ -65,6 +65,7 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 Treat exit code `5` as an approval gate, not a retryable failure.
 Treat `interaction_required`, `captcha_required`, and `mfa_required` as safe stops, not selector drift.
 When selector mismatch JSON includes `error.repair`, report the suggested selector and artifact paths, then wait for a workflow YAML update instead of retrying automatically.
+If selector mismatch JSON has no `error.repair`, treat the drift as unresolved instead of guessing a selector.
 When `validate --json` returns `status: "error"`, report the failed check names plus their `message` and `fix` fields.
 For `readable-yaml` failures, report the YAML parse message and fix before retrying.
 Treat a `recording-metadata` validation failure as a possible sensitive-data leak.

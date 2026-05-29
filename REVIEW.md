@@ -2217,6 +2217,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Extend selector suggestions to submit and workflow-step selectors only after adding failing ambiguity fixtures that prove suggestions are omitted when more than one candidate matches.
 
+### 2026-05-29: Reviewable Submit Selector Repair Suggestions
+
+**Date:** 2026-05-29
+
+**Experiment:** Extend selector repair hints to missing submit selectors without silently changing the workflow or submitting.
+
+**Hypothesis:** A common final-submit drift case is recoverable when the page has exactly one named submit control. `formctl` should suggest that selector as a review-only YAML edit, continue exiting `3`, and omit the suggestion when multiple submit candidates exist.
+
+**Result:** Passed. Selector mismatch JSON, `failure.json`, and `audit.jsonl` now include a submit-role `error.repair` only when exactly one bounded named submit control exists. Ambiguous submit pages produce no repair suggestion. The repaired YAML dry-run succeeds, and neither failed nor repaired dry-runs submit the fixture.
+
+**Why This Was Highest Value:** The prior field-only repair path left the final submit selector as the next obvious drift recovery gap. This expands usefulness while keeping the trust boundary intact: no auto-healing, no retry, and no approval implied by the suggestion.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "submit selector repair"` because submit selector mismatch JSON had no `error.repair`. An implementation attempt first failed with exit code `4` because a browser-context `evaluateAll` callback referenced a Node-side regex; moving the safe-name filter back to Node made the focused test GREEN. Additional focused verification passed with `npx vitest run tests/cli.test.ts -t "selector repair|machine-readable selector mismatch"` and `npx vitest run tests/release-readiness.test.ts -t "README explains|trust and comparison|agent safety|multi-step"`. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The submit suggestion path is intentionally strict: it only considers explicit `button[type="submit"][name]` and `input[type="submit"][name]` controls with safe names, and it omits suggestions on ambiguity. Workflow-step selector suggestions remain out of scope until they have their own ambiguity fixtures. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 48 package entries.
+
+**Suggested Next Task:** Extend selector suggestions to workflow-step selectors only after writing failing fixtures for one safe candidate, multiple candidates, and submit-typed setup-click false positives.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

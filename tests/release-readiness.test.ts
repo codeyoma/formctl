@@ -128,6 +128,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("Run `formctl validate <workflow-name> --json` before reviewing or sharing workflow YAML.");
     expect(readme).toContain("Invalid workflow checks include `message` and `fix` fields so agents can report a concrete repair.");
     expect(readme).toContain("Unreadable workflow YAML returns a `readable-yaml` check with `message` and `fix` fields.");
+    expect(readme).toContain("Selector mismatch JSON may include `error.repair` when a missing field or submit selector has exactly one bounded candidate.");
     expect(readme).toContain("Validation rejects unredacted `recording.events` metadata when present.");
     expect(readme).toContain("Validation also rejects `recording.events` entries that do not match a known workflow field and selector.");
     expect(readme).toContain("Invalid workflow names return `invalid_workflow_name` in JSON mode.");
@@ -219,6 +220,8 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Require user review and workflow YAML update before replaying with a repaired selector.");
     expect(task).toContain("- [x] Keep `submit` failing before filling or submitting when the current selector contract is broken.");
     expect(task).toContain("- [x] Verify: A drift fixture produces a suggested repair but still exits `3` until the workflow is updated.");
+    expect(task).toContain("- [x] Extend selector suggestions to submit selectors after adding ambiguity coverage.");
+    expect(task).toContain("- [ ] Extend selector suggestions to workflow-step selectors only after submit suggestions prove useful.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
@@ -232,6 +235,7 @@ describe("release readiness docs", () => {
     expect(changelog).toContain("Add same-origin path-only navigation step replay with post-navigation interaction checks.");
     expect(changelog).toContain("Add a checked-in procurement handoff demo that proves navigation step replay in package and demo smoke tests.");
     expect(changelog).toContain("Add reviewable field selector repair suggestions while keeping selector mismatch runs failed until workflow YAML is updated.");
+    expect(changelog).toContain("Add reviewable submit selector repair suggestions with ambiguity-safe omission.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });
@@ -775,6 +779,8 @@ describe("release readiness docs", () => {
     expect(trust).toContain("does not replay MFA secrets");
     expect(trust).toContain("does not silently heal selectors");
     expect(trust).toContain("Reviewable selector repair suggestions");
+    expect(trust).toContain("missing submit selectors can suggest one named submit control");
+    expect(trust).toContain("Ambiguous pages produce no suggestion.");
     expect(trust).toContain("A selector repair suggestion is not applied automatically.");
     expect(trust).toContain("Update the workflow YAML only after reviewing `failure.png`, `failure.json`, and `audit.jsonl`.");
     expect(trust).toContain("When recording or replaying protected forms, pass a user-provided Playwright storageState file with `--storage-state <path>`.");
@@ -833,6 +839,7 @@ describe("release readiness docs", () => {
     expect(agents).toContain("Treat exit code `5` as an approval gate, not a retryable failure.");
     expect(agents).toContain("Treat `interaction_required`, `captcha_required`, and `mfa_required` as safe stops, not selector drift.");
     expect(agents).toContain("When selector mismatch JSON includes `error.repair`, report the suggested selector and artifact paths, then wait for a workflow YAML update instead of retrying automatically.");
+    expect(agents).toContain("If selector mismatch JSON has no `error.repair`, treat the drift as unresolved instead of guessing a selector.");
     expect(agents).toContain("Do not print secrets, file contents, cookies, or private page data.");
     expect(agents).toContain("Dry-run artifacts include `summary.json`, `field-diff.json`, `dry-run.png`, and `audit.jsonl`.");
     expect(agents).toContain("Approved submit artifacts include `summary.json`, `field-diff.json`, `post-submit.png`, and `audit.jsonl`.");

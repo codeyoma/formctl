@@ -404,7 +404,8 @@ npx formctl doctor
 - [x] Keep `submit` failing before filling or submitting when the current selector contract is broken.
 - [x] Verify: A drift fixture produces a suggested repair but still exits `3` until the workflow is updated.
 - [x] Record false positives in `REVIEW.md`.
-- [ ] Extend selector suggestions to submit and workflow-step selectors only after field suggestions prove useful.
+- [x] Extend selector suggestions to submit selectors after adding ambiguity coverage.
+- [ ] Extend selector suggestions to workflow-step selectors only after submit suggestions prove useful.
 
 ### Task 6.6: Add Local Artifact Privacy Controls
 
