@@ -1354,14 +1354,14 @@ describe("formctl CLI", () => {
         {
           name: "workflow-steps",
           status: "error",
-          message: "Workflow steps currently support only named before-fields or after-fields click steps with bounded selectors and no navigation waits.",
-          fix: "Remove waitFor, url, and navigation actions until bounded navigation step replay is implemented.",
+          message: "Workflow steps must be bounded click steps. Navigation waits must be same-origin path-only targets.",
+          fix: "Use name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], when: before-fields or after-fields, and optional waitFor.type: navigation with sameOrigin: true and a path without query or fragment.",
         },
       ],
     });
   });
 
-  test("validate --json rejects navigation workflow steps before runtime support exists", () => {
+  test("validate --json rejects unsafe navigation workflow steps", () => {
     const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-step-navigation-"));
     mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
 
@@ -1411,8 +1411,18 @@ describe("formctl CLI", () => {
       "    url: https://admin.example.test/procurement/details",
       "    when: after-fields",
     ]);
+    writeWorkflow("query-navigation", [
+      "  - name: continue to details",
+      "    action: click",
+      "    selector: button[name=\"continue\"]",
+      "    when: after-fields",
+      "    waitFor:",
+      "      type: navigation",
+      "      sameOrigin: true",
+      "      path: /procurement/details?token=secret",
+    ]);
 
-    for (const workflowName of ["full-url-navigation", "cross-origin-navigation", "direct-navigation"]) {
+    for (const workflowName of ["full-url-navigation", "cross-origin-navigation", "direct-navigation", "query-navigation"]) {
       const result = runFormctl(["validate", workflowName, "--json"], workspace);
 
       expect(result.status).toBe(1);
@@ -1425,12 +1435,53 @@ describe("formctl CLI", () => {
           {
             name: "workflow-steps",
             status: "error",
-            message: "Workflow steps currently support only named before-fields or after-fields click steps with bounded selectors and no navigation waits.",
-            fix: "Remove waitFor, url, and navigation actions until bounded navigation step replay is implemented.",
+            message: "Workflow steps must be bounded click steps. Navigation waits must be same-origin path-only targets.",
+            fix: "Use name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], when: before-fields or after-fields, and optional waitFor.type: navigation with sameOrigin: true and a path without query or fragment.",
           },
         ]),
       });
     }
+  });
+
+  test("validate --json accepts same-origin path-only navigation workflow steps", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-step-navigation-valid-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-navigation.yml"),
+      [
+        "name: approval-navigation",
+        "url: http://localhost:3000/approval",
+        "steps:",
+        "  - name: continue to confirmation",
+        "    action: click",
+        "    selector: button[name=\"continue\"]",
+        "    when: after-fields",
+        "    waitFor:",
+        "      type: navigation",
+        "      sameOrigin: true",
+        "      path: /approval/confirm",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runFormctl(["validate", "approval-navigation", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      status: "ok",
+      workflow: "approval-navigation",
+      checks: expect.arrayContaining([
+        { name: "workflow-steps", status: "ok" },
+      ]),
+    });
   });
 
   test("validate --json accepts bounded before-fields and after-fields workflow steps", () => {
@@ -3246,6 +3297,288 @@ describe("formctl CLI", () => {
       });
       expect(postCount).toBe(1);
       expect(submittedBody).toContain("amount=4500");
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
+  test("submit replays same-origin navigation steps before final submit", async () => {
+    let postCount = 0;
+    let submittedBody = "";
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        postCount += 1;
+        request.setEncoding("utf8");
+        request.on("data", (chunk) => {
+          submittedBody += chunk;
+        });
+        request.on("end", () => {
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          response.end("<!doctype html><html><body>Submitted</body></html>");
+        });
+        return;
+      }
+
+      if (request.url === "/approval/confirm") {
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        response.end(`
+          <!doctype html>
+          <html>
+            <body>
+              <form method="post" action="/submit" aria-label="Confirm approval">
+                <input name="amount" type="hidden" />
+                <button type="submit" name="final-submit">Submit approval</button>
+              </form>
+              <script>
+                document.querySelector('input[name="amount"]').value = sessionStorage.getItem("amount") || "";
+              </script>
+            </body>
+          </html>
+        `);
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form aria-label="Approval details">
+              <input name="amount" type="number" />
+              <button type="button" name="continue">Continue</button>
+            </form>
+            <script>
+              document.querySelector('button[name="continue"]').addEventListener("click", () => {
+                sessionStorage.setItem("amount", document.querySelector('input[name="amount"]').value);
+                window.location.assign("/approval/confirm");
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Navigation step fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-navigation-step-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-navigation.yml"),
+      [
+        "name: approval-navigation",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "steps:",
+        "  - name: continue to confirmation",
+        "    action: click",
+        "    selector: button[name=\"continue\"]",
+        "    when: after-fields",
+        "    waitFor:",
+        "      type: navigation",
+        "      sameOrigin: true",
+        "      path: /approval/confirm",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const dryRun = await runFormctlAsync([
+        "submit",
+        "approval-navigation",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(dryRun.status).toBe(0);
+      expect(dryRun.stderr).toBe("");
+      const dryRunJson = JSON.parse(dryRun.stdout);
+      expect(dryRunJson).toMatchObject({
+        status: "dry-run",
+        submitted: false,
+        fields: {
+          amount: "4500",
+        },
+        artifacts: {
+          steps: [
+            {
+              name: "continue to confirmation",
+              screenshot: `.formctl/runs/${dryRunJson.runId}/step-01-continue-to-confirmation.png`,
+            },
+          ],
+        },
+      });
+      expect(postCount).toBe(0);
+      expect(existsSync(path.join(workspace, dryRunJson.artifacts.steps[0].screenshot))).toBe(true);
+      const auditLog = readFileSync(path.join(workspace, dryRunJson.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"event":"workflow_step"');
+      expect(auditLog).toContain('"event":"navigation_wait"');
+      expect(auditLog).toContain('"path":"/approval/confirm"');
+      expect(auditLog).toContain('"event":"navigation_interaction_check"');
+      expect(auditLog).toContain('"result":"ok"');
+
+      const approved = await runFormctlAsync([
+        "submit",
+        "approval-navigation",
+        "--amount",
+        "4500",
+        "--approve",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(approved.status).toBe(0);
+      expect(approved.stderr).toBe("");
+      expect(JSON.parse(approved.stdout)).toMatchObject({
+        status: "submitted",
+        submitted: true,
+      });
+      expect(postCount).toBe(1);
+      expect(submittedBody).toContain("amount=4500");
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  });
+
+  test("submit stops when a navigation step reaches an interaction wall", async () => {
+    let postCount = 0;
+    const server = http.createServer((request, response) => {
+      if (request.method === "POST") {
+        postCount += 1;
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        response.end("<!doctype html><html><body>Submitted</body></html>");
+        return;
+      }
+
+      if (request.url === "/approval/login") {
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        response.end(`
+          <!doctype html>
+          <html>
+            <body>
+              <form method="post" action="/login" aria-label="Sign in">
+                <label>Password <input name="password" type="password" autocomplete="current-password" /></label>
+                <button type="submit">Sign in</button>
+              </form>
+            </body>
+          </html>
+        `);
+        return;
+      }
+
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(`
+        <!doctype html>
+        <html>
+          <body>
+            <form aria-label="Approval details">
+              <input name="amount" type="number" />
+              <button type="button" name="continue">Continue</button>
+            </form>
+            <script>
+              document.querySelector('button[name="continue"]').addEventListener("click", () => {
+                window.location.assign("/approval/login");
+              });
+            </script>
+          </body>
+        </html>
+      `);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("Navigation interaction fixture server did not expose a TCP port");
+    }
+
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-navigation-interaction-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-navigation.yml"),
+      [
+        "name: approval-navigation",
+        `url: http://127.0.0.1:${address.port}/approval`,
+        "steps:",
+        "  - name: continue to protected confirmation",
+        "    action: click",
+        "    selector: button[name=\"continue\"]",
+        "    when: after-fields",
+        "    waitFor:",
+        "      type: navigation",
+        "      sameOrigin: true",
+        "      path: /approval/login",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "approval-navigation",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      const parsed = JSON.parse(result.stdout);
+      expect(result.status).toBe(6);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "error",
+        workflow: "approval-navigation",
+        exitCode: 6,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "interaction_required",
+          detected: "password_input",
+        },
+      });
+      expect(postCount).toBe(0);
+      const auditLog = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"event":"navigation_wait"');
+      expect(auditLog).toContain('"path":"/approval/login"');
+      expect(auditLog).toContain('"event":"navigation_interaction_check"');
+      expect(auditLog).toContain('"result":"blocked"');
     } finally {
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {

@@ -1,12 +1,12 @@
 # Bounded Navigation Step Design
 
-Navigation step replay is not implemented yet. This note defines the boundary that must hold before `formctl` accepts navigation replay in workflow YAML.
+Bounded navigation step replay is implemented for reviewed same-origin path-only workflow steps. This note defines the boundary that must hold whenever `formctl` accepts navigation replay in workflow YAML.
 
-`formctl` should support known multi-page forms without becoming a general browser automation runner. A future navigation step must be triggered by a named non-submit click that a reviewer can inspect in YAML. It must not store full destination URLs, query strings, fragments, tokens, cookies, or arbitrary browser state.
+`formctl` should support known multi-page forms without becoming a general browser automation runner. A navigation step must be triggered by a named non-submit click that a reviewer can inspect in YAML. It must not store full destination URLs, query strings, fragments, tokens, cookies, or arbitrary browser state.
 
-## Future Workflow Shape
+## Workflow Shape
 
-The exact YAML is still a draft. A safe shape would look like this:
+A safe same-origin handoff looks like this:
 
 ```yaml
 steps:
@@ -20,13 +20,13 @@ steps:
       path: /procurement/details
 ```
 
-This is not accepted by `formctl validate` yet. The point of the shape is to keep navigation explicit, named, same-origin, and reviewable before runtime support exists.
+The point of the shape is to keep navigation explicit, named, same-origin, and reviewable.
 
-`formctl validate` rejects workflow steps that include `waitFor`, `url`, or navigation actions until runtime support exists.
+`formctl validate` rejects workflow steps that include full URLs, cross-origin waits, direct navigation actions, query strings, or fragments.
 
-## Future Validation Acceptance Criteria
+## Validation Acceptance Criteria
 
-When navigation replay is implemented, validation should accept a navigation step only if all of these are true:
+Validation accepts a navigation step only if all of these are true:
 
 - The trigger remains `action: click` with a named non-submit selector.
 - `waitFor.type` is exactly `navigation`.
@@ -34,9 +34,9 @@ When navigation replay is implemented, validation should accept a navigation ste
 - `path` starts with `/` and contains no query string or fragment.
 - The workflow stores no full destination URL, request body, cookie, token, credential, query string, or fragment.
 
-Validation should reject `waitFor.url`, `url`, `sameOrigin: false`, direct navigation actions, and paths containing `?` or `#`.
+Validation rejects `waitFor.url`, `url`, `sameOrigin: false`, direct navigation actions, and paths containing `?` or `#`.
 
-Runtime support must also recheck interaction-required state after navigation before checking next-page selectors.
+Runtime support rechecks interaction-required state after navigation before checking next-page selectors.
 
 ## Required Contract
 

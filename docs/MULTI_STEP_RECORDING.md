@@ -3,7 +3,7 @@
 Manual recording can capture bounded setup context before a form is saved. This is useful for internal tools where a human opens a modal, moves to a known step, or navigates to the final form page before committing the workflow YAML.
 
 Today `submit` supports bounded setup click replay for named non-submit controls at the start of `recording.events`, then replays fields in the first-recorded field order. It does not replay arbitrary clicks or waits. That boundary keeps dry-run and approval behavior predictable while allowing common modal-opening setup flows.
-Reviewed workflows can also declare structured `before-fields` click steps for known setup actions and structured `after-fields` click steps for known review or confirmation controls that run after field values are filled.
+Reviewed workflows can also declare structured `before-fields` click steps for known setup actions, structured `after-fields` click steps for known review or confirmation controls that run after field values are filled, and same-origin path-only navigation steps for known multi-page handoffs.
 
 ## Example
 
@@ -19,6 +19,14 @@ steps:
     action: click
     selector: button[name="review-details"]
     when: after-fields
+  - name: continue to confirmation
+    action: click
+    selector: button[name="continue"]
+    when: after-fields
+    waitFor:
+      type: navigation
+      sameOrigin: true
+      path: /procurement/confirm
 recording:
   mode: manual
   events:
@@ -44,23 +52,24 @@ What this means:
 - A `before-fields` step must be a named non-submit click with a bounded selector.
 - An `after-fields` step must also be a named non-submit click with a bounded selector. Its selector and control type are checked before fields are filled; the actual click runs after field replay.
 - Structured steps emit `workflow_step` and `step_screenshot_saved` audit events, and `submit --json` includes their screenshot artifacts under `artifacts.steps`.
+- Same-origin path-only navigation steps also emit `navigation_wait` and `navigation_interaction_check` audit events.
 - `click` documents a named non-submit control the human used during setup.
 - Only leading `click` events before the first field or wait event are replayed as setup.
 - `submit` checks that each setup click selector resolves to exactly one non-submit control, clicks it, and writes `selector_check` plus `setup_click` audit events.
 - Setup click selector failures return selector-mismatch JSON with `role: "setup-click"` before any field filling or final submission.
-- `wait` documents a bounded navigation wait without storing the destination URL.
+- `wait` recording metadata documents a bounded navigation wait without storing the destination URL.
 - Field events can affect replay order because `submit` replays fields in the order the human first recorded them.
-- `wait` events are not replayed by `submit` yet.
+- Raw recording `wait` events are not replayed by `submit`.
 
 ## Current Safe Boundary
 
-Use bounded setup click replay when a known form requires opening a stable modal or panel before the fields exist. Use an `after-fields` step when a known review button is already selectable before field filling, becomes clickable after field values are entered, and reveals the final submit control. A raw `click` recorded after a field event remains review metadata until it is promoted into a reviewed structured step. Use wait metadata only when reviewers need to understand that manual navigation happened before recording.
+Use bounded setup click replay when a known form requires opening a stable modal or panel before the fields exist. Use an `after-fields` step when a known review button is already selectable before field filling, becomes clickable after field values are entered, and reveals the final submit control. Use same-origin path-only navigation steps when a known click hands off to a known next page without storing URLs, query strings, or fragments. A raw `click` recorded after a field event remains review metadata until it is promoted into a reviewed structured step. Use wait metadata only when reviewers need to understand that manual navigation happened before recording.
 
-Do not rely on this metadata for dynamic branching, arbitrary page exploration, hidden approvals, login bypasses, CAPTCHA handling, MFA replay, or navigation replay. `formctl` still stops before the final submit selector during dry-run and requires explicit approval before a real submission.
+Do not rely on this metadata for dynamic branching, arbitrary page exploration, hidden approvals, login bypasses, CAPTCHA handling, MFA replay, or cross-origin navigation. `formctl` still stops before the final submit selector during dry-run and requires explicit approval before a real submission.
 
 Use raw Playwright or a browser agent when the workflow needs custom assertions, conditional branching, open-ended exploration, or arbitrary click/wait replay. Bring the workflow back to `formctl` once the final form path is known and should become a reviewable CLI command.
 
-See the [Bounded navigation step design](NAVIGATION_STEPS.md) before adding any navigation replay support. Navigation steps must remain explicit, same-origin, reviewable, and approval-gated.
+See the [Bounded navigation step design](NAVIGATION_STEPS.md) for the navigation step contract. Navigation steps must remain explicit, same-origin, reviewable, path-only, and approval-gated.
 
 ## Validation Rules
 
@@ -76,5 +85,6 @@ Validation rejects recording metadata that is not bounded and redacted:
 - setup click selector drift is reported with `role: "setup-click"` in JSON failure output
 - structured step selector drift is reported with `role: "workflow-step"` in JSON failure output
 - `after-fields` step selectors are checked before field filling, clicked after field replay, and screenshot artifacts are captured after the click
+- navigation steps must use `waitFor.type: navigation`, `sameOrigin: true`, and a path-only target with no query string or fragment
 - wait events must use `waitFor: navigation`
 - wait events must not store URLs, tokens, or private navigation data

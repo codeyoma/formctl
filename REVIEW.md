@@ -2163,6 +2163,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add runtime navigation support only after writing a failing fixture that proves a same-origin path-only navigation step, reruns interaction-required detection after navigation, and still stops dry-run before final submit.
 
+### 2026-05-29: Same-Origin Navigation Step Replay
+
+**Date:** 2026-05-29
+
+**Experiment:** Add the smallest runtime support for reviewed same-origin path-only navigation steps.
+
+**Hypothesis:** `formctl` can support common multi-page form handoffs without becoming generic browser automation if navigation is triggered only by a reviewed bounded click, waits only for a same-origin path without query or fragment, reruns interaction-required detection after navigation, and still preserves dry-run before final submit.
+
+**Result:** Passed. Workflow validation now accepts `waitFor.type: navigation`, `sameOrigin: true`, and a path-only target on bounded click steps while still rejecting full URLs, cross-origin waits, direct navigation actions, query strings, and fragments. Submit replay now waits for the declared same-origin path, emits `navigation_wait` and `navigation_interaction_check` audit events, captures the step screenshot, stops on post-navigation login/CAPTCHA/MFA walls, and keeps dry-run non-mutating before final submit.
+
+**Why This Was Highest Value:** Task 6.7 already had setup-click and after-fields support plus a navigation design note. The remaining correctness gap was runtime support for the real internal-tool pattern: fill page one, click a known continue button, land on a known same-origin confirmation page, then preview before final submission.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "navigation workflow steps|same-origin navigation|navigation step reaches"` because same-origin path-only navigation steps were rejected and runtime replay did not wait or recheck interaction walls. GREEN passed after adding validation and runtime replay. Focused regression passed with `npx vitest run tests/cli.test.ts -t "workflow steps use an unbounded selector|navigation workflow steps|same-origin navigation|navigation step reaches"` and `npx vitest run tests/release-readiness.test.ts -t "README explains|multi-step"`. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The first full `npm test` run failed on stale exact-string expectations for the workflow-step validation message and README reviewed-steps sentence; updating the tests to the new safety contract fixed it. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 45 package entries.
+
+**Suggested Next Task:** Add a checked-in demo workflow that proves navigation step replay in package/demo smoke tests.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

@@ -20,7 +20,8 @@ const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.";
 const WORKFLOW_FIELD_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const RECORDING_CLICK_SELECTOR_PATTERN = /^[a-z][a-z0-9-]*\[name="[^"]+"\]$/;
-const WORKFLOW_STEP_KEYS = new Set(["name", "action", "selector", "when"]);
+const WORKFLOW_STEP_KEYS = new Set(["name", "action", "selector", "when", "waitFor"]);
+const WORKFLOW_STEP_WAIT_KEYS = new Set(["type", "sameOrigin", "path"]);
 const SUPPORTED_FIELD_TYPE_LIST = [
   "text",
   "email",
@@ -110,11 +111,18 @@ type WorkflowRecordingEvent = WorkflowFieldRecordingEvent | WorkflowClickRecordi
 
 type WorkflowStepTiming = "before-fields" | "after-fields";
 
+type WorkflowStepWaitFor = {
+  type: "navigation";
+  sameOrigin: true;
+  path: string;
+};
+
 type WorkflowStep = {
   name: string;
   action: "click";
   selector: string;
   when: WorkflowStepTiming;
+  waitFor?: WorkflowStepWaitFor;
 };
 
 type Workflow = {
@@ -505,7 +513,28 @@ function hasValidWorkflowSteps(value: unknown): boolean {
     && step.action === "click"
     && isNonEmptyString(step.selector)
     && RECORDING_CLICK_SELECTOR_PATTERN.test(step.selector)
-    && (step.when === "before-fields" || step.when === "after-fields"));
+    && (step.when === "before-fields" || step.when === "after-fields")
+    && hasValidWorkflowStepWait(step.waitFor));
+}
+
+function hasValidWorkflowStepWait(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+
+  return isObject(value)
+    && Object.keys(value).every((key) => WORKFLOW_STEP_WAIT_KEYS.has(key))
+    && value.type === "navigation"
+    && value.sameOrigin === true
+    && isPathOnlyNavigationTarget(value.path);
+}
+
+function isPathOnlyNavigationTarget(value: unknown): value is string {
+  return isNonEmptyString(value)
+    && value.startsWith("/")
+    && !value.startsWith("//")
+    && !value.includes("?")
+    && !value.includes("#");
 }
 
 function validateWorkflow(workflowName: string, workflow: unknown): ValidationCheck[] {
@@ -619,8 +648,8 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       buildValidationCheck(
         "workflow-steps",
         hasValidWorkflowSteps(workflowObject.steps),
-        "Workflow steps currently support only named before-fields or after-fields click steps with bounded selectors and no navigation waits.",
-        "Remove waitFor, url, and navigation actions until bounded navigation step replay is implemented.",
+        "Workflow steps must be bounded click steps. Navigation waits must be same-origin path-only targets.",
+        "Use name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], when: before-fields or after-fields, and optional waitFor.type: navigation with sameOrigin: true and a path without query or fragment.",
       ),
     ]),
     ...(workflowObject.recording === undefined ? [] : [
@@ -1055,6 +1084,7 @@ type SetupClickReplayStep = {
   selector: string;
   source: "workflow-step" | "recording";
   stepIndex?: number;
+  waitFor?: WorkflowStepWaitFor;
 };
 
 function setupClicksForReplay(workflow: Workflow, when: WorkflowStepTiming = "before-fields"): SetupClickReplayStep[] {
@@ -1065,6 +1095,7 @@ function setupClicksForReplay(workflow: Workflow, when: WorkflowStepTiming = "be
           selector: step.selector,
           source: "workflow-step" as const,
           stepIndex: index,
+          ...(step.waitFor === undefined ? {} : { waitFor: step.waitFor }),
         }]
       : []));
   }
@@ -1690,6 +1721,29 @@ export async function run(
       );
       const page = await context.newPage();
       await page.goto(workflow.url, { waitUntil: "domcontentloaded" });
+      const writeInteractionRequiredFailure = async (blockedInteraction: InteractionRequiredDetection): Promise<6> => {
+        const failurePayload = buildInteractionRequiredPayload(workflow.name, blockedInteraction);
+        auditEvents.push({
+          event: "interaction_required",
+          code: blockedInteraction.code,
+          detected: blockedInteraction.detected,
+          result: "blocked",
+        });
+        const failure = await writeSelectorMismatchFailureArtifacts(
+          page,
+          process.cwd(),
+          failurePayload,
+          auditEvents,
+        );
+        writeSelectorFailure(
+          wantsJson ? stdout : stderr,
+          failurePayload,
+          wantsJson,
+          failure.runId,
+          failure.artifacts,
+        );
+        return 6;
+      };
       let interactionRequired = await detectInteractionRequired(page);
       if (interactionRequired !== undefined) {
         const canResumeAfterInteraction = flags.has("--resume-after-interaction") && !wantsJson && stdin.isTTY === true;
@@ -1726,27 +1780,7 @@ export async function run(
         }
       }
       if (interactionRequired !== undefined) {
-        const failurePayload = buildInteractionRequiredPayload(workflow.name, interactionRequired);
-        auditEvents.push({
-          event: "interaction_required",
-          code: interactionRequired.code,
-          detected: interactionRequired.detected,
-          result: "blocked",
-        });
-        const failure = await writeSelectorMismatchFailureArtifacts(
-          page,
-          process.cwd(),
-          failurePayload,
-          auditEvents,
-        );
-        writeSelectorFailure(
-          wantsJson ? stdout : stderr,
-          failurePayload,
-          wantsJson,
-          failure.runId,
-          failure.artifacts,
-        );
-        return 6;
+        return await writeInteractionRequiredFailure(interactionRequired);
       }
 
       const writeSelectorReplayFailure = async (failurePayload: SelectorFailurePayload): Promise<3> => {
@@ -1766,9 +1800,27 @@ export async function run(
         return 3;
       };
 
-      const replayClickStep = async (clickEvent: SetupClickReplayStep, index: number): Promise<void> => {
+      const replayClickStep = async (
+        clickEvent: SetupClickReplayStep,
+        index: number,
+      ): Promise<InteractionRequiredDetection | undefined> => {
         const auditRole = clickEvent.source === "workflow-step" ? "workflow-step" : "setup-click";
-        await page.locator(clickEvent.selector).click();
+        const waitFor = clickEvent.waitFor;
+        if (waitFor === undefined) {
+          await page.locator(clickEvent.selector).click();
+        } else {
+          const startUrl = new URL(page.url());
+          await Promise.all([
+            page.waitForURL(
+              (url) => url.origin === startUrl.origin
+                && url.pathname === waitFor.path
+                && url.search === ""
+                && url.hash === "",
+              { waitUntil: "domcontentloaded" },
+            ),
+            page.locator(clickEvent.selector).click(),
+          ]);
+        }
         auditEvents.push({
           event: clickEvent.source === "workflow-step" ? "workflow_step" : "setup_click",
           role: auditRole,
@@ -1776,6 +1828,18 @@ export async function run(
           ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
           result: "clicked",
         });
+        if (waitFor !== undefined) {
+          auditEvents.push({
+            event: "navigation_wait",
+            role: auditRole,
+            selector: clickEvent.selector,
+            ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
+            type: waitFor.type,
+            sameOrigin: waitFor.sameOrigin,
+            path: waitFor.path,
+            result: "ok",
+          });
+        }
         if (clickEvent.source === "workflow-step" && clickEvent.name !== undefined) {
           mkdirSync(runDirectory, { recursive: true });
           const stepNumber = String((clickEvent.stepIndex ?? index) + 1).padStart(2, "0");
@@ -1793,6 +1857,22 @@ export async function run(
             path: stepScreenshotArtifact,
           });
         }
+        if (waitFor !== undefined) {
+          const blockedInteraction = await detectInteractionRequired(page);
+          auditEvents.push({
+            event: "navigation_interaction_check",
+            role: auditRole,
+            ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
+            result: blockedInteraction === undefined ? "ok" : "blocked",
+            ...(blockedInteraction === undefined ? {} : {
+              code: blockedInteraction.code,
+              detected: blockedInteraction.detected,
+            }),
+          });
+          return blockedInteraction;
+        }
+
+        return undefined;
       };
 
       const beforeFieldClicks = setupClicksForReplay(workflow, "before-fields");
@@ -1803,7 +1883,10 @@ export async function run(
           return await writeSelectorReplayFailure(failurePayload);
         }
 
-        await replayClickStep(clickEvent, index);
+        const blockedInteraction = await replayClickStep(clickEvent, index);
+        if (blockedInteraction !== undefined) {
+          return await writeInteractionRequiredFailure(blockedInteraction);
+        }
       }
 
       for (const clickEvent of afterFieldClicks) {
@@ -1991,7 +2074,10 @@ export async function run(
       }
 
       for (const [index, clickEvent] of afterFieldClicks.entries()) {
-        await replayClickStep(clickEvent, index);
+        const blockedInteraction = await replayClickStep(clickEvent, index);
+        if (blockedInteraction !== undefined) {
+          return await writeInteractionRequiredFailure(blockedInteraction);
+        }
       }
 
       if (afterFieldClicks.length > 0) {

@@ -64,6 +64,7 @@ That is the main loop: discover, validate, dry-run, approve.
 
 The demo workflows are already checked in under `.formctl/workflows/`. Run `npm run formctl -- inspect <workflow-name> --json` to see required fields for `expense-report`, `admin-invite`, `support-refund`, `vendor-onboarding`, `procurement-approval`, `crm-update`, and `compliance-attestation`.
 The `procurement-approval` demo also proves bounded multi-step replay: the workflow opens a named approval modal, fills fields, clicks a reviewed `after-fields` confirmation step, and still stops before final submit during dry-run.
+Workflows can also use same-origin path-only navigation steps for known multi-page handoffs.
 
 Use `--values <path>` when field flags would be hard to quote. Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.
 Use `--storage-state <path>` to replay a protected form with a local Playwright storageState JSON file after the user has already logged in.
@@ -114,9 +115,9 @@ Use `--manual` when login, navigation, or form setup needs a human-visible brows
 Use `--storage-state <path>` with `record` or `submit` only after the user has completed login, MFA, or setup in a local browser session.
 Manual recording stores redacted `recording.events` entries for changed fields and file inputs.
 Manual recording labels text input as `input`, select controls as `select`, file inputs as `file`, named non-submit button clicks as `click`, and page navigation as `wait` so the YAML is easier to review.
-Reviewed `steps` entries can describe named `before-fields` setup clicks or preflighted `after-fields` review clicks that need per-step screenshots.
+Reviewed `steps` entries can describe named `before-fields` setup clicks, preflighted `after-fields` review clicks, or same-origin path-only navigation steps that need per-step screenshots.
 When present, `submit` uses the first recorded event for each field to replay fields in the same order the human recorded them.
-See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: bounded named setup clicks can open known UI before field checks, preflighted `after-fields` clicks can reveal a final submit control after fields are filled, `wait` events remain review metadata, and side effects still require dry-run/approval.
+See [Multi-step recording metadata](docs/MULTI_STEP_RECORDING.md) for the current safe boundary: bounded named setup clicks can open known UI before field checks, preflighted `after-fields` clicks can reveal a final submit control after fields are filled, same-origin path-only navigation steps can hand off to a known page, recording `wait` events remain review metadata, and side effects still require dry-run/approval.
 If terminal input closes before Enter, `record --manual` cancels without writing a workflow file.
 Commit or share the generated `.formctl/workflows/<workflow-name>.yml` file so other users can start from `submit --dry-run`.
 `record` also saves a baseline screenshot next to the workflow file.
@@ -154,6 +155,7 @@ Workflow files are stored at:
 - Field selectors and workflow step selectors fail before filling fields or submitting.
   For workflows without `after-fields` steps, the submit selector also fails before field filling.
   For workflows with reviewed `after-fields` steps, the final submit selector is checked after those steps and still before the real submit click.
+  Navigation steps must be same-origin and path-only, and login/CAPTCHA/MFA checks run again after navigation.
   Selector mismatch failures write `failure.json`, `failure.png`, and `audit.jsonl`.
 - Login, CAPTCHA, and MFA walls fail before filling fields or submitting.
   Interaction-required failures write `failure.json`, `failure.png`, and `audit.jsonl` with `interaction_required`, `captcha_required`, or `mfa_required`.

@@ -2,8 +2,9 @@
 
 ## Unreleased
 
+- Add same-origin path-only navigation step replay with post-navigation interaction checks.
 - Document future validation acceptance criteria for bounded navigation steps.
-- Reject future navigation step shapes before bounded navigation replay is implemented.
+- Reject unsafe navigation step shapes that store URLs, cross-origin waits, or direct navigation actions.
 - Document the bounded navigation step design before adding navigation replay.
 - Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.
 - Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.
