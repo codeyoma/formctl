@@ -38,6 +38,10 @@ Each dry-run, approved submit, and selector mismatch writes `audit.jsonl` inside
 
 Audit logs are local files. Review them before sharing because screenshots and page metadata can still contain private business context.
 
+## Artifact cleanup
+
+Run artifacts stay local under `.formctl/runs` until removed. Use `formctl cleanup --max-age-days <days> --dry-run --json` to preview expired run directories, then rerun without `--dry-run` to delete only those expired directories.
+
 ## Interaction-required safe stops
 
 If the loaded page appears to require login, CAPTCHA, or MFA, `formctl` stops before filling fields or submitting. In JSON mode it returns `interaction_required`, `captcha_required`, or `mfa_required` with exit code `6` and writes:

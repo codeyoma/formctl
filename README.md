@@ -85,6 +85,7 @@ Run artifacts are written under `.formctl/runs/<run-id>/`:
 
 Field diffs list the resolved values that will be set before submission, with file inputs redacted as `[file]`.
 Audit logs record selector checks, redacted field values, approval source, screenshots, field diff paths, and final result.
+Use `formctl cleanup --max-age-days 7 --dry-run --json` to preview old local run artifacts before deleting them. Remove them with `formctl cleanup --max-age-days 7`.
 
 Workflow files include safety metadata for dry-run first, required approval, selector drift failure, and file-input redaction.
 Workflow names may contain only letters, numbers, dots, underscores, and dashes.

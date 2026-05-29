@@ -411,10 +411,11 @@ npx formctl doctor
 
 **Goal:** Reduce risk from local screenshots, summaries, diffs, and audit logs.
 
-- [ ] Add configurable cleanup for old `.formctl/runs` directories.
+- [x] Add configurable cleanup for old `.formctl/runs` directories.
 - [ ] Add opt-in protected artifact storage for sensitive local runs.
 - [ ] Keep agents reporting artifact paths rather than embedding artifact contents in chat.
-- [ ] Verify: Protected artifacts are not readable without the configured key or passphrase, and cleanup removes expired runs.
+- [x] Verify: cleanup removes expired runs.
+- [ ] Verify: protected artifacts are not readable without the configured key or passphrase.
 - [ ] Record usability tradeoffs in `REVIEW.md`.
 
 ### Task 6.7: Support Bounded Multi-Step Known Forms

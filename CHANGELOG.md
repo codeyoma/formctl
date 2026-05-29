@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `formctl cleanup --max-age-days` for previewing and removing old local run artifacts.
 - Add reviewable workflow-step selector repair suggestions with ambiguity-safe omission.
 - Add reviewable submit selector repair suggestions with ambiguity-safe omission.
 - Add reviewable field selector repair suggestions while keeping selector mismatch runs failed until workflow YAML is updated.

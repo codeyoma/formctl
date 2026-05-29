@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type Page } from "playwright";
@@ -57,6 +57,7 @@ Usage:
   formctl inspect <workflow-name>
   formctl workflows [--json]
   formctl validate <workflow-name> [--json]
+  formctl cleanup --max-age-days <days> [--dry-run] [--json]
   formctl record <workflow-name> <url>
   formctl doctor
 
@@ -805,6 +806,57 @@ function parseOptions(args: string[]): Map<string, string | true> {
   }
 
   return options;
+}
+
+function readCleanupMaxAgeDays(options: Map<string, string | true>): { maxAgeDays: number } | { error: string } {
+  const value = options.get("max-age-days");
+  if (typeof value !== "string") {
+    return { error: "cleanup requires --max-age-days <days>." };
+  }
+
+  const maxAgeDays = Number(value);
+  if (!Number.isFinite(maxAgeDays) || maxAgeDays < 0) {
+    return { error: "--max-age-days must be a non-negative number." };
+  }
+
+  return { maxAgeDays };
+}
+
+function cleanupRunDirectories(maxAgeDays: number, dryRun: boolean): {
+  removed: string[];
+  wouldRemove: string[];
+  kept: string[];
+} {
+  const runsDirectory = path.join(process.cwd(), ".formctl", "runs");
+  if (!existsSync(runsDirectory)) {
+    return { removed: [], wouldRemove: [], kept: [] };
+  }
+
+  const cutoffMs = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+  const removed: string[] = [];
+  const wouldRemove: string[] = [];
+  const kept: string[] = [];
+  const entries = readdirSync(runsDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .sort((left, right) => left.name.localeCompare(right.name));
+
+  for (const entry of entries) {
+    const runPath = path.join(runsDirectory, entry.name);
+    const artifactPath = `.formctl/runs/${entry.name}`;
+    if (statSync(runPath).mtimeMs < cutoffMs) {
+      if (dryRun) {
+        wouldRemove.push(artifactPath);
+      } else {
+        rmSync(runPath, { recursive: true, force: true });
+        removed.push(artifactPath);
+      }
+      continue;
+    }
+
+    kept.push(artifactPath);
+  }
+
+  return { removed, wouldRemove, kept };
 }
 
 function readSubmitFieldValues(
@@ -1758,6 +1810,66 @@ export async function run(
       }
     }
     return exitCode;
+  }
+
+  if (command === "cleanup") {
+    const options = parseOptions(args.slice(3));
+    const wantsJson = flags.has("--json");
+    const dryRun = flags.has("--dry-run");
+    const allowedOptions = new Set(["dry-run", "json", "max-age-days"]);
+    const unknownOptions = Array.from(options.keys()).filter((optionName) => !allowedOptions.has(optionName));
+    const maxAgeDaysResult = readCleanupMaxAgeDays(options);
+    const writeCleanupOptionsError = (message: string): 1 => {
+      const fix = "Run formctl cleanup --max-age-days 7 --dry-run --json to preview artifact cleanup.";
+      if (wantsJson) {
+        stdout.write(`${JSON.stringify({
+          status: "error",
+          command: "cleanup",
+          exitCode: 1,
+          error: {
+            code: "cleanup_options_invalid",
+            message,
+            fix,
+          },
+        })}\n`);
+        return 1;
+      }
+
+      stderr.write(`${message}\nfix: ${fix}\n`);
+      return 1;
+    };
+
+    if (unknownOptions.length > 0) {
+      return writeCleanupOptionsError(`Unknown cleanup option(s): ${unknownOptions.join(", ")}`);
+    }
+    if ("error" in maxAgeDaysResult) {
+      return writeCleanupOptionsError(maxAgeDaysResult.error);
+    }
+
+    const result = cleanupRunDirectories(maxAgeDaysResult.maxAgeDays, dryRun);
+    const payload = {
+      status: "ok",
+      command: "cleanup",
+      exitCode: 0,
+      dryRun,
+      runsDirectory: ".formctl/runs",
+      maxAgeDays: maxAgeDaysResult.maxAgeDays,
+      ...result,
+    };
+
+    if (wantsJson) {
+      stdout.write(`${JSON.stringify(payload)}\n`);
+      return 0;
+    }
+
+    stdout.write(`formctl cleanup: ok\nRuns: .formctl/runs\n`);
+    stdout.write(`Max age days: ${maxAgeDaysResult.maxAgeDays}\n`);
+    stdout.write(`${dryRun ? "Would remove" : "Removed"}: ${dryRun ? result.wouldRemove.length : result.removed.length}\n`);
+    for (const artifactPath of dryRun ? result.wouldRemove : result.removed) {
+      stdout.write(`- ${artifactPath}\n`);
+    }
+    stdout.write(`Kept: ${result.kept.length}\n`);
+    return 0;
   }
 
   if (command === "submit") {

@@ -2253,6 +2253,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Start Task 6.6 by adding local artifact privacy controls, beginning with a failing test that configures a shorter artifact retention or redaction policy without deleting current safe audit evidence.
 
+### 2026-05-29: Configurable Local Run Artifact Cleanup
+
+**Date:** 2026-05-29
+
+**Experiment:** Add a small cleanup command for old `.formctl/runs` directories before attempting protected artifact storage.
+
+**Hypothesis:** Local screenshots and JSON artifacts are useful for review, but they should not accumulate forever. A cleanup command with an explicit `--max-age-days` threshold and a JSON dry-run preview gives agents a safe way to manage artifact retention without deleting evidence by default.
+
+**Result:** Passed. Added `formctl cleanup --max-age-days <days> [--dry-run] [--json]`. JSON mode reports `removed`, `wouldRemove`, and `kept` artifact paths under `.formctl/runs`. Dry-run leaves expired directories intact; non-dry-run removes only expired run directories and keeps recent ones.
+
+**Why This Was Highest Value:** Task 6.6 is the next incomplete trust item after selector repair. Cleanup is lower risk and more immediately useful than encryption because it reduces local artifact exposure while preserving the existing review-first artifact model.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "cleanup"` because `cleanup` was still an unknown command. GREEN passed after adding cleanup option parsing and run-directory removal. Focused docs/help verification passed with `npx vitest run tests/cli.test.ts -t "help|cleanup"` and `npx vitest run tests/release-readiness.test.ts -t "README explains|trust and comparison|agent safety|multi-step"`. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The first build failed because a cleanup option error expression did not narrow the union type for TypeScript. Splitting unknown-option and missing/invalid `--max-age-days` branches fixed the typecheck without changing behavior. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 48 package entries.
+
+**Suggested Next Task:** Continue Task 6.6 with opt-in protected artifact storage, starting with a failing test that a protected run writes non-readable artifact payloads unless a configured passphrase/key is supplied.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

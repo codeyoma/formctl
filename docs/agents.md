@@ -119,6 +119,7 @@ MCP setup guide: docs/MCP.md
 - Selector repair suggestions are review hints only; they do not authorize approved submit.
 - Interaction-required failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
 - Agents should report artifact paths instead of embedding screenshots or file contents in chat.
+- Use `formctl cleanup --max-age-days <days> --dry-run --json` to preview local artifact cleanup, and do not delete artifacts until the user or policy approves it.
 
 ## Secret Handling
 

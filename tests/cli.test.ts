@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -134,6 +134,7 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("formctl inspect <workflow-name>");
     expect(result.stdout).toContain("formctl workflows [--json]");
     expect(result.stdout).toContain("formctl validate <workflow-name> [--json]");
+    expect(result.stdout).toContain("formctl cleanup --max-age-days <days> [--dry-run] [--json]");
     expect(result.stdout).toContain("formctl record <workflow-name> <url>");
     expect(result.stdout).toContain("formctl doctor");
     expect(result.stdout).toContain("Start with an existing .formctl/workflows/<name>.yml file.");
@@ -202,6 +203,68 @@ describe("formctl CLI", () => {
     expect(result.stdout).toContain("- playwright-chromium: error");
     expect(result.stdout).toContain("message: Playwright Chromium is not installed.");
     expect(result.stdout).toContain("install: npx playwright install chromium");
+  });
+
+  test("cleanup --dry-run --json reports expired run directories without deleting them", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-cleanup-dry-run-"));
+    const runsDirectory = path.join(workspace, ".formctl", "runs");
+    const oldRun = path.join(runsDirectory, "1000-dry-run");
+    const recentRun = path.join(runsDirectory, "2000-dry-run");
+    mkdirSync(oldRun, { recursive: true });
+    mkdirSync(recentRun, { recursive: true });
+    const oldDate = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    const recentDate = new Date(Date.now());
+    utimesSync(oldRun, oldDate, oldDate);
+    utimesSync(recentRun, recentDate, recentDate);
+
+    const result = runFormctl(["cleanup", "--max-age-days", "7", "--dry-run", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "ok",
+      command: "cleanup",
+      exitCode: 0,
+      dryRun: true,
+      runsDirectory: ".formctl/runs",
+      maxAgeDays: 7,
+      removed: [],
+      wouldRemove: [".formctl/runs/1000-dry-run"],
+      kept: [".formctl/runs/2000-dry-run"],
+    });
+    expect(existsSync(oldRun)).toBe(true);
+    expect(existsSync(recentRun)).toBe(true);
+  });
+
+  test("cleanup --json removes expired run directories and keeps recent runs", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-cleanup-remove-"));
+    const runsDirectory = path.join(workspace, ".formctl", "runs");
+    const oldRun = path.join(runsDirectory, "1000-failed");
+    const recentRun = path.join(runsDirectory, "2000-dry-run");
+    mkdirSync(oldRun, { recursive: true });
+    mkdirSync(recentRun, { recursive: true });
+    const oldDate = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    const recentDate = new Date(Date.now());
+    utimesSync(oldRun, oldDate, oldDate);
+    utimesSync(recentRun, recentDate, recentDate);
+
+    const result = runFormctl(["cleanup", "--max-age-days", "7", "--json"], workspace);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(JSON.parse(result.stdout)).toEqual({
+      status: "ok",
+      command: "cleanup",
+      exitCode: 0,
+      dryRun: false,
+      runsDirectory: ".formctl/runs",
+      maxAgeDays: 7,
+      removed: [".formctl/runs/1000-failed"],
+      wouldRemove: [],
+      kept: [".formctl/runs/2000-dry-run"],
+    });
+    expect(existsSync(oldRun)).toBe(false);
+    expect(existsSync(recentRun)).toBe(true);
   });
 
   test("inspect returns exit code 2 when the workflow does not exist", () => {
