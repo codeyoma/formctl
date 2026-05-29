@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Procurement Handoff Demo</title>
+    <style>
+      body {
+        background: #f8fafc;
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+      }
+
+      form {
+        max-width: 40rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 1rem 0;
+      }
+
+      input,
+      textarea {
+        display: block;
+        font: inherit;
+        margin-top: 0.35rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+
+      textarea {
+        min-height: 5rem;
+      }
+
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Procurement handoff</h1>
+    <p>Fill the request, then continue to a same-origin confirmation page.</p>
+    <form aria-label="Procurement handoff request">
+      <label>
+        Requestor email
+        <input name="requestorEmail" type="email" required />
+      </label>
+      <label>
+        Amount
+        <input name="amount" type="number" min="1" required />
+      </label>
+      <label>
+        Needed by
+        <input name="neededBy" type="date" required />
+      </label>
+      <label>
+        Justification
+        <textarea name="justification" required></textarea>
+      </label>
+      <button type="button" name="continue">Continue to confirmation</button>
+    </form>
+    <script>
+      document.querySelector('button[name="continue"]').addEventListener("click", () => {
+        const form = document.querySelector("form");
+        if (!form.reportValidity()) {
+          return;
+        }
+
+        for (const field of ["requestorEmail", "amount", "neededBy", "justification"]) {
+          sessionStorage.setItem(`procurement.${field}`, form.elements[field].value);
+        }
+        window.location.assign("/procurement-handoff/confirm");
+      });
+    </script>
+  </body>
+</html>

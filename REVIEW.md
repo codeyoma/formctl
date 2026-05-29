@@ -2181,6 +2181,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add a checked-in demo workflow that proves navigation step replay in package/demo smoke tests.
 
+### 2026-05-29: Checked-In Navigation Replay Demo
+
+**Date:** 2026-05-29
+
+**Experiment:** Add a shipped demo workflow that proves bounded navigation replay through the same package and demo smoke paths users and CI already exercise.
+
+**Hypothesis:** Runtime support is more trustworthy when the repository includes a ready-to-run multi-page fixture, not only synthetic unit coverage. A checked-in workflow should dry-run without submission, approve exactly once, emit navigation audit events, and be included in the npm package tarball.
+
+**Result:** Passed. Added `procurement-handoff`, a same-origin two-page demo that fills a request page, clicks a reviewed `after-fields` continue step, waits for `/procurement-handoff/confirm`, and submits only after approval from the confirmation page. The demo server serves both pages, `scripts/package-smoke.mjs` validates the installed `procurement-handoff` workflow, README lists the new workflow, and Task 6.7 is now fully checked off.
+
+**Why This Was Highest Value:** The previous session added navigation runtime behavior, but examples are what make a 100k-star CLI easy to understand and recommend. This closes the gap between implementation and user-visible proof by making navigation replay part of the checked-in demo and package smoke surface.
+
+**Evidence:** RED was observed with `npx vitest run tests/demo-replay.test.ts`, `npx vitest run tests/package-readiness.test.ts -t "demo workflows"`, and `npx vitest run tests/release-readiness.test.ts -t "README explains|demo fixture|multi-step"` because `procurement-handoff` HTML, workflow YAML, README text, and task/changelog entries did not exist. GREEN passed for those focused tests after adding the fixture and docs. Broader verification passed with `npm run formctl -- validate procurement-handoff --json`, `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** No runtime changes were needed. The demo replay test already had the right shape; it only needed an `extraRoutes` mapping for confirmation pages. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 48 package entries including `procurement-handoff`.
+
+**Suggested Next Task:** Start Task 6.5 by writing a failing drift fixture that produces a reviewable selector repair suggestion while `submit` still exits `3` until the workflow YAML is updated.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

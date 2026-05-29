@@ -97,6 +97,12 @@ try {
     throw new Error(`Installed formctl validate failed: ${validation.stdout}`);
   }
 
+  const navigationValidation = run(formctl, ["validate", "procurement-handoff", "--json"]);
+  const navigationValidationPayload = JSON.parse(navigationValidation.stdout);
+  if (navigationValidationPayload.status !== "ok" || navigationValidationPayload.exitCode !== 0) {
+    throw new Error(`Installed formctl navigation workflow validate failed: ${navigationValidation.stdout}`);
+  }
+
   run(process.execPath, [path.join(projectRoot, "scripts", "agent-branch-smoke.mjs")], {
     env: {
       ...process.env,

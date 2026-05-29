@@ -9,6 +9,8 @@ const adminInviteHtml = readFileSync(join(demoDir, "admin-invite.html"), "utf8")
 const supportRefundHtml = readFileSync(join(demoDir, "support-refund.html"), "utf8");
 const vendorOnboardingHtml = readFileSync(join(demoDir, "vendor-onboarding.html"), "utf8");
 const procurementApprovalHtml = readFileSync(join(demoDir, "procurement-approval.html"), "utf8");
+const procurementHandoffHtml = readFileSync(join(demoDir, "procurement-handoff.html"), "utf8");
+const procurementHandoffConfirmHtml = readFileSync(join(demoDir, "procurement-handoff-confirm.html"), "utf8");
 const crmUpdateHtml = readFileSync(join(demoDir, "crm-update.html"), "utf8");
 const complianceAttestationHtml = readFileSync(join(demoDir, "compliance-attestation.html"), "utf8");
 let expenseSubmissions = 0;
@@ -16,6 +18,7 @@ let adminInviteSubmissions = 0;
 let supportRefundSubmissions = 0;
 let vendorOnboardingSubmissions = 0;
 let procurementApprovalSubmissions = 0;
+let procurementHandoffSubmissions = 0;
 let crmUpdateSubmissions = 0;
 let complianceAttestationSubmissions = 0;
 
@@ -52,6 +55,13 @@ const server = createServer((request, response) => {
     procurementApprovalSubmissions += 1;
     response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     response.end(`<h1>Procurement approved</h1><p>Total submissions: ${procurementApprovalSubmissions}</p>`);
+    return;
+  }
+
+  if (request.method === "POST" && request.url === "/procurement-handoff/submit") {
+    procurementHandoffSubmissions += 1;
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    response.end(`<h1>Procurement handoff approved</h1><p>Total submissions: ${procurementHandoffSubmissions}</p>`);
     return;
   }
 
@@ -93,6 +103,18 @@ const server = createServer((request, response) => {
     return;
   }
 
+  if (request.url === "/procurement-handoff") {
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    response.end(procurementHandoffHtml);
+    return;
+  }
+
+  if (request.url === "/procurement-handoff/confirm") {
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    response.end(procurementHandoffConfirmHtml);
+    return;
+  }
+
   if (request.url === "/crm-update") {
     response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     response.end(crmUpdateHtml);
@@ -117,6 +139,7 @@ server.listen(4173, "127.0.0.1", () => {
   console.log("support refund demo running at http://127.0.0.1:4173/support-refund");
   console.log("vendor onboarding demo running at http://127.0.0.1:4173/vendor-onboarding");
   console.log("procurement approval demo running at http://127.0.0.1:4173/procurement-approval");
+  console.log("procurement handoff demo running at http://127.0.0.1:4173/procurement-handoff");
   console.log("CRM update demo running at http://127.0.0.1:4173/crm-update");
   console.log("compliance attestation demo running at http://127.0.0.1:4173/compliance-attestation");
 });

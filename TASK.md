@@ -435,7 +435,7 @@ npx formctl doctor
 - [x] Reject unsafe navigation step shapes with URLs, cross-origin waits, or direct navigation actions.
 - [x] Split future navigation validation acceptance criteria before runtime support.
 - [x] Add same-origin path-only navigation step replay with post-navigation interaction checks.
-- [ ] Add a checked-in demo workflow that proves navigation step replay in package/demo smoke tests.
+- [x] Add a checked-in demo workflow that proves navigation step replay in package/demo smoke tests.
 
 ---
 

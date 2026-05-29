@@ -15,6 +15,7 @@ type ReplayCase = {
   route: string;
   submitRoute: string;
   htmlFile: string;
+  extraRoutes?: Array<{ route: string; htmlFile: string }>;
   args: string[];
   expectedFields: Record<string, string>;
   expectedAuditEvents?: string[];
@@ -119,6 +120,33 @@ const replayCases: ReplayCase[] = [
     expectedStepArtifacts: ["open approval modal", "review entered details"],
   },
   {
+    name: "procurement-handoff",
+    route: "/procurement-handoff",
+    submitRoute: "/procurement-handoff/submit",
+    htmlFile: "procurement-handoff.html",
+    extraRoutes: [
+      { route: "/procurement-handoff/confirm", htmlFile: "procurement-handoff-confirm.html" },
+    ],
+    args: [
+      "--requestorEmail",
+      "buyer@example.com",
+      "--amount",
+      "125000",
+      "--neededBy",
+      "2026-06-08",
+      "--justification",
+      "Replacement laptops",
+    ],
+    expectedFields: {
+      requestorEmail: "buyer@example.com",
+      amount: "125000",
+      neededBy: "2026-06-08",
+      justification: "Replacement laptops",
+    },
+    expectedAuditEvents: ["workflow_step", "navigation_wait", "navigation_interaction_check", "step_screenshot_saved"],
+    expectedStepArtifacts: ["continue to confirmation"],
+  },
+  {
     name: "crm-update",
     route: "/crm-update",
     submitRoute: "/crm-update/submit",
@@ -198,7 +226,11 @@ function runFormctlAsync(args: string[], cwd: string) {
 }
 
 async function serveDemoFixtures() {
-  const htmlByRoute = new Map(replayCases.map((fixture) => [
+  const routeFiles = replayCases.flatMap((fixture) => [
+    { route: fixture.route, htmlFile: fixture.htmlFile },
+    ...(fixture.extraRoutes ?? []),
+  ]);
+  const htmlByRoute = new Map(routeFiles.map((fixture) => [
     fixture.route,
     readFileSync(path.join(projectRoot, "demo", fixture.htmlFile), "utf8"),
   ]));

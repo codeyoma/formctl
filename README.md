@@ -62,8 +62,9 @@ npm run formctl -- submit expense-report --values demo/expense-values.json --app
 
 That is the main loop: discover, validate, dry-run, approve.
 
-The demo workflows are already checked in under `.formctl/workflows/`. Run `npm run formctl -- inspect <workflow-name> --json` to see required fields for `expense-report`, `admin-invite`, `support-refund`, `vendor-onboarding`, `procurement-approval`, `crm-update`, and `compliance-attestation`.
+The demo workflows are already checked in under `.formctl/workflows/`. Run `npm run formctl -- inspect <workflow-name> --json` to see required fields for `expense-report`, `admin-invite`, `support-refund`, `vendor-onboarding`, `procurement-approval`, `procurement-handoff`, `crm-update`, and `compliance-attestation`.
 The `procurement-approval` demo also proves bounded multi-step replay: the workflow opens a named approval modal, fills fields, clicks a reviewed `after-fields` confirmation step, and still stops before final submit during dry-run.
+The `procurement-handoff` demo proves same-origin path-only navigation replay: the workflow fills a request page, clicks a reviewed continue button, waits for `/procurement-handoff/confirm`, and still dry-runs before the final approval submit.
 Workflows can also use same-origin path-only navigation steps for known multi-page handoffs.
 
 Use `--values <path>` when field flags would be hard to quote. Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.

@@ -29,6 +29,7 @@ describe("npm package readiness", () => {
     expect(readFileSync(path.join(projectRoot, "scripts", "package-smoke.mjs"), "utf8")).toContain("validate");
     expect(readFileSync(path.join(projectRoot, "scripts", "package-smoke.mjs"), "utf8")).toContain("formctl_workflows");
     expect(readFileSync(path.join(projectRoot, "scripts", "package-smoke.mjs"), "utf8")).toContain("formctl_validate");
+    expect(readFileSync(path.join(projectRoot, "scripts", "package-smoke.mjs"), "utf8")).toContain("procurement-handoff");
   });
 
   test("package includes ready-to-run demo workflows", () => {
@@ -39,6 +40,7 @@ describe("npm package readiness", () => {
       "support-refund",
       "vendor-onboarding",
       "procurement-approval",
+      "procurement-handoff",
       "crm-update",
       "compliance-attestation",
     ];
@@ -57,6 +59,12 @@ describe("npm package readiness", () => {
       expect(workflow).toContain("submit:");
       if (workflowName === "procurement-approval") {
         expect(workflow).toContain("when: after-fields");
+        expect(workflow).toContain('selector: button[name="final-submit"]');
+      } else if (workflowName === "procurement-handoff") {
+        expect(workflow).toContain("waitFor:");
+        expect(workflow).toContain("type: navigation");
+        expect(workflow).toContain("sameOrigin: true");
+        expect(workflow).toContain("path: /procurement-handoff/confirm");
         expect(workflow).toContain('selector: button[name="final-submit"]');
       } else {
         expect(workflow).toContain('selector: button[type="submit"]');

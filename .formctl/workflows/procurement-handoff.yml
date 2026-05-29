@@ -1,0 +1,31 @@
+name: procurement-handoff
+url: http://127.0.0.1:4173/procurement-handoff
+steps:
+  - name: continue to confirmation
+    action: click
+    selector: button[name="continue"]
+    when: after-fields
+    waitFor:
+      type: navigation
+      sameOrigin: true
+      path: /procurement-handoff/confirm
+safety:
+  dryRunFirst: true
+  approvalRequired: true
+  selectorDrift: fail
+  fileInputs: redacted
+fields:
+  - name: requestorEmail
+    selector: input[name="requestorEmail"]
+    type: email
+  - name: amount
+    selector: input[name="amount"]
+    type: number
+  - name: neededBy
+    selector: input[name="neededBy"]
+    type: date
+  - name: justification
+    selector: textarea[name="justification"]
+    type: textarea
+submit:
+  selector: button[name="final-submit"]

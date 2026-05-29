@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>formctl Procurement Handoff Confirmation</title>
+    <style>
+      body {
+        background: #f8fafc;
+        color: #1f2937;
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+      }
+
+      form {
+        max-width: 40rem;
+      }
+
+      dl {
+        display: grid;
+        gap: 0.5rem;
+        grid-template-columns: max-content 1fr;
+      }
+
+      dt {
+        font-weight: 700;
+      }
+
+      button {
+        font: inherit;
+        margin-top: 1rem;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Confirm procurement request</h1>
+    <dl>
+      <dt>Requestor</dt>
+      <dd data-field="requestorEmail"></dd>
+      <dt>Amount</dt>
+      <dd data-field="amount"></dd>
+      <dt>Needed by</dt>
+      <dd data-field="neededBy"></dd>
+      <dt>Justification</dt>
+      <dd data-field="justification"></dd>
+    </dl>
+    <form method="post" action="/procurement-handoff/submit" aria-label="Confirm procurement handoff">
+      <input name="requestorEmail" type="hidden" />
+      <input name="amount" type="hidden" />
+      <input name="neededBy" type="hidden" />
+      <input name="justification" type="hidden" />
+      <button type="submit" name="final-submit">Approve procurement handoff</button>
+    </form>
+    <script>
+      for (const field of ["requestorEmail", "amount", "neededBy", "justification"]) {
+        const value = sessionStorage.getItem(`procurement.${field}`) || "";
+        document.querySelector(`[data-field="${field}"]`).textContent = value;
+        document.querySelector(`input[name="${field}"]`).value = value;
+      }
+    </script>
+  </body>
+</html>

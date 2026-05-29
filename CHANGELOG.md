@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add a checked-in procurement handoff demo that proves navigation step replay in package and demo smoke tests.
 - Add same-origin path-only navigation step replay with post-navigation interaction checks.
 - Document future validation acceptance criteria for bounded navigation steps.
 - Reject unsafe navigation step shapes that store URLs, cross-origin waits, or direct navigation actions.
