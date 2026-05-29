@@ -2145,6 +2145,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Before implementing navigation replay, split the future navigation contract into validation-level acceptance criteria: same-origin path-only wait target, no query or fragment, named non-submit trigger, and post-navigation interaction-required recheck.
 
+### 2026-05-29: Navigation Validation Acceptance Criteria
+
+**Date:** 2026-05-29
+
+**Experiment:** Convert the bounded navigation design note into concrete future validation acceptance criteria before any runtime implementation.
+
+**Hypothesis:** Navigation replay has enough safety risk that the next implementer should not infer the schema from prose. The repo should explicitly state the future valid shape and the invalid cases that must remain rejected.
+
+**Result:** Passed. `docs/NAVIGATION_STEPS.md` now separates future validation acceptance criteria from the runtime contract: named non-submit click trigger, `waitFor.type: navigation`, `sameOrigin: true`, path-only targets with no query or fragment, and post-navigation interaction-required recheck. It also names invalid cases: `waitFor.url`, top-level `url`, `sameOrigin: false`, direct navigation actions, and paths containing `?` or `#`.
+
+**Why This Was Highest Value:** The previous session made validation fail closed for all navigation-shaped steps. The next risk is ambiguity when reopening that gate. Concrete acceptance criteria keep Task 6.7 from turning into generic browser navigation or storing sensitive URLs.
+
+**Evidence:** RED was observed with `npx vitest run tests/release-readiness.test.ts -t "multi-step"` because the navigation design note lacked future validation acceptance criteria. GREEN passed after adding the criteria and updating `TASK.md` and `CHANGELOG.md`. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The first GREEN attempt still failed because the test expected lowercase wording while the Markdown heading used title case; aligning the test with the actual heading fixed it. No runtime code changed. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 45 package entries.
+
+**Suggested Next Task:** Add runtime navigation support only after writing a failing fixture that proves a same-origin path-only navigation step, reruns interaction-required detection after navigation, and still stops dry-run before final submit.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

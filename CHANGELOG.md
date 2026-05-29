@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Document future validation acceptance criteria for bounded navigation steps.
 - Reject future navigation step shapes before bounded navigation replay is implemented.
 - Document the bounded navigation step design before adding navigation replay.
 - Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.

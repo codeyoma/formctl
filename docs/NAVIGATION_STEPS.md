@@ -24,6 +24,20 @@ This is not accepted by `formctl validate` yet. The point of the shape is to kee
 
 `formctl validate` rejects workflow steps that include `waitFor`, `url`, or navigation actions until runtime support exists.
 
+## Future Validation Acceptance Criteria
+
+When navigation replay is implemented, validation should accept a navigation step only if all of these are true:
+
+- The trigger remains `action: click` with a named non-submit selector.
+- `waitFor.type` is exactly `navigation`.
+- `sameOrigin: true` is required.
+- `path` starts with `/` and contains no query string or fragment.
+- The workflow stores no full destination URL, request body, cookie, token, credential, query string, or fragment.
+
+Validation should reject `waitFor.url`, `url`, `sameOrigin: false`, direct navigation actions, and paths containing `?` or `#`.
+
+Runtime support must also recheck interaction-required state after navigation before checking next-page selectors.
+
 ## Required Contract
 
 - The trigger must be a named non-submit click, not a free-form browser action.
