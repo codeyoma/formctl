@@ -116,7 +116,7 @@ const replayCases: ReplayCase[] = [
       urgent: "true",
     },
     expectedAuditEvents: ["workflow_step", "step_screenshot_saved"],
-    expectedStepArtifacts: ["open approval modal"],
+    expectedStepArtifacts: ["open approval modal", "review entered details"],
   },
   {
     name: "crm-update",

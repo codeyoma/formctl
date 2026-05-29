@@ -55,7 +55,12 @@ describe("npm package readiness", () => {
       expect(workflow).toContain("fileInputs: redacted");
       expect(workflow).toContain("fields:");
       expect(workflow).toContain("submit:");
-      expect(workflow).toContain('selector: button[type="submit"]');
+      if (workflowName === "procurement-approval") {
+        expect(workflow).toContain("when: after-fields");
+        expect(workflow).toContain('selector: button[name="final-submit"]');
+      } else {
+        expect(workflow).toContain('selector: button[type="submit"]');
+      }
     }
   });
 

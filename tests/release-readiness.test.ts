@@ -103,7 +103,7 @@ describe("release readiness docs", () => {
     expect(readme).toContain("That is the main loop: discover, validate, dry-run, approve.");
     expect(readme).toContain("The demo workflows are already checked in under `.formctl/workflows/`.");
     expect(readme).toContain("Run `npm run formctl -- inspect <workflow-name> --json` to see required fields");
-    expect(readme).toContain("The `procurement-approval` demo also proves bounded setup click replay");
+    expect(readme).toContain("The `procurement-approval` demo also proves bounded multi-step replay");
     expect(readme).toContain("Use `--values <path>` when field flags would be hard to quote.");
     expect(readme).toContain("Unknown JSON keys or unknown submit field flags are rejected as `field_values_invalid` before opening the browser.");
     expect(readme).toContain("Use `--storage-state <path>` to replay a protected form with a local Playwright storageState JSON file after the user has already logged in.");
@@ -184,6 +184,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(task).toContain("- [x] Add structured before-fields click steps with per-step screenshot artifacts.");
     expect(task).toContain("- [x] Add structured after-fields confirmation click steps for known review controls.");
+    expect(task).toContain("- [x] Add a checked-in demo workflow that proves after-fields confirmation replay in package/demo smoke tests.");
     expect(task).toContain("- [x] Preserve dry-run stopping before the final submit action.");
     expect(task).toContain("- [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
@@ -192,6 +193,7 @@ describe("release readiness docs", () => {
     expect(changelog).toContain("Report setup-click selector drift with a machine-readable error role before field filling.");
     expect(changelog).toContain("Add structured before-fields click steps with per-step screenshot artifacts.");
     expect(changelog).toContain("Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.");
+    expect(changelog).toContain("Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });
@@ -293,6 +295,8 @@ describe("release readiness docs", () => {
     expect(procurementApproval).toContain("<dialog");
     expect(procurementApproval).toContain("open");
     expect(procurementApproval).toContain('name="open-approval"');
+    expect(procurementApproval).toContain('name="review-details"');
+    expect(procurementApproval).toContain('id="submit-root"');
     expect(procurementApproval).toContain('action="/procurement-approval/submit"');
     expect(procurementApproval).toContain('data-step="1"');
     expect(procurementApproval).toContain('data-step="2"');
@@ -309,8 +313,10 @@ describe("release readiness docs", () => {
     expect(procurementApproval).toContain('name="urgent"');
     expect(procurementApproval).toContain('type="checkbox"');
     expect(procurementApprovalWorkflow).toContain("recording:");
+    expect(procurementApprovalWorkflow).toContain("when: after-fields");
     expect(procurementApprovalWorkflow).toContain("event: click");
     expect(procurementApprovalWorkflow).toContain('selector: button[name="open-approval"]');
+    expect(procurementApprovalWorkflow).toContain('selector: button[name="review-details"]');
     expect(crmUpdate).toContain('action="/crm-update/submit"');
     expect(crmUpdate).toContain('name="accountName"');
     expect(crmUpdate).toContain('name="stage"');

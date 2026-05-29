@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.
 - Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.
 - Add structured before-fields click steps with per-step screenshot artifacts.
 - Report setup-click selector drift with a machine-readable error role before field filling.

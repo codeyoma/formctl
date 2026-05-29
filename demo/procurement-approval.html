@@ -106,7 +106,8 @@
               Urgent request
             </label>
           </fieldset>
-          <button type="submit">Approve procurement</button>
+          <button type="button" name="review-details" disabled>Review entered details</button>
+          <div id="submit-root"></div>
         </form>
       </dialog>
     </template>
@@ -118,6 +119,21 @@
         }
 
         root.append(document.querySelector("#approval-template").content.cloneNode(true));
+        const form = root.querySelector("form");
+        const reviewButton = root.querySelector('button[name="review-details"]');
+        const submitRoot = root.querySelector("#submit-root");
+        const updateReviewState = () => {
+          reviewButton.disabled = !form.checkValidity();
+        };
+        form.addEventListener("input", updateReviewState);
+        form.addEventListener("change", updateReviewState);
+        reviewButton.addEventListener("click", () => {
+          if (submitRoot.childElementCount > 0) {
+            return;
+          }
+
+          submitRoot.innerHTML = '<button type="submit" name="final-submit">Approve procurement</button>';
+        });
       });
     </script>
   </body>

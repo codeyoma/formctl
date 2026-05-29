@@ -5,6 +5,10 @@ steps:
     action: click
     selector: button[name="open-approval"]
     when: before-fields
+  - name: review entered details
+    action: click
+    selector: button[name="review-details"]
+    when: after-fields
 recording:
   mode: manual
   events:
@@ -36,4 +40,4 @@ fields:
     selector: input[name="urgent"]
     type: checkbox
 submit:
-  selector: button[type="submit"]
+  selector: button[name="final-submit"]

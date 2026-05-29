@@ -426,6 +426,7 @@ npx formctl doctor
 - [x] Add structured before-fields click steps with per-step screenshot artifacts.
 - [x] Add a checked-in demo workflow that proves setup-click replay in package/demo smoke tests.
 - [x] Add structured after-fields confirmation click steps for known review controls.
+- [x] Add a checked-in demo workflow that proves after-fields confirmation replay in package/demo smoke tests.
 - [x] Add per-step selector checks, screenshots, JSON output, and audit events.
 - [x] Preserve dry-run stopping before the final submit action.
 - [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.

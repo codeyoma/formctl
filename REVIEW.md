@@ -2091,6 +2091,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add a checked-in demo workflow that exercises `after-fields` confirmation in the package/demo replay path, or keep Task 6.7 moving by designing bounded navigation steps separately from final submit approval.
 
+### 2026-05-29: Checked-In After-Fields Demo Proof
+
+**Date:** 2026-05-29
+
+**Experiment:** Make the shipped procurement approval demo require both a `before-fields` modal-opening step and an `after-fields` review step before the final submit control exists.
+
+**Hypothesis:** Runtime support is much easier to trust and recommend when the package/demo smoke path proves it from checked-in workflow YAML, not only from a unit fixture.
+
+**Result:** Passed. `demo/procurement-approval.html` now hides the final submit button until the reviewed `button[name="review-details"]` step runs after fields are filled. `.formctl/workflows/procurement-approval.yml` declares both `open approval modal` and `review entered details` steps, and uses `button[name="final-submit"]` as the final submit selector. The demo replay smoke test verifies two step screenshot artifacts, zero POSTs during dry-run, and exactly one POST after `--approve`.
+
+**Why This Was Highest Value:** The previous session added `after-fields` behavior but the public demo still only proved setup-step replay. For a 100k-star CLI, the README/demo/package path should demonstrate the most compelling safe multi-step flow without asking users to infer it from source tests.
+
+**Evidence:** RED was observed with `npx vitest run tests/demo-replay.test.ts` because the checked-in procurement workflow produced only one step artifact instead of the expected setup plus review artifacts. RED was also observed with `npx vitest run tests/release-readiness.test.ts -t "demo fixture"` because the demo HTML and workflow did not contain `review-details` or `when: after-fields`. Focused GREEN passed for both commands after updating the demo and workflow. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The demo needed the review button to exist before field filling so `after-fields` selector preflight can keep its no-mutation guarantee. The final submit button is now the element that appears after the after-field step; dry-run still stops before clicking it. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 44 package entries.
+
+**Suggested Next Task:** Write a separate bounded-navigation design note before adding any navigation replay, so Task 6.7 does not accidentally become generic browser automation.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
