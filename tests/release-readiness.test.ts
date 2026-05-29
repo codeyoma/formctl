@@ -186,6 +186,7 @@ describe("release readiness docs", () => {
     expect(guide).toContain("Use raw Playwright or a browser agent");
     expect(navigation).toContain("# Bounded Navigation Step Design");
     expect(navigation).toContain("Navigation step replay is not implemented yet.");
+    expect(navigation).toContain("`formctl validate` rejects workflow steps that include `waitFor`, `url`, or navigation actions until runtime support exists.");
     expect(navigation).toContain("A future navigation step must be triggered by a named non-submit click");
     expect(navigation).toContain("must not store full destination URLs");
     expect(navigation).toContain("same-origin");
@@ -201,6 +202,7 @@ describe("release readiness docs", () => {
     expect(task).toContain("- [x] Preserve dry-run stopping before the final submit action.");
     expect(task).toContain("- [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.");
     expect(task).toContain("- [x] Write a bounded-navigation design note before adding navigation replay.");
+    expect(task).toContain("- [x] Reject future navigation step shapes before runtime support exists.");
     expect(task).toContain("- [x] Constrain setup click replay to leading click events before field input begins.");
     expect(task).toContain("- [x] Replay bounded named setup clicks before field selector checks.");
     expect(task).toContain("- [x] Document current click/wait recording metadata as review-only before adding step replay.");
@@ -209,6 +211,7 @@ describe("release readiness docs", () => {
     expect(changelog).toContain("Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.");
     expect(changelog).toContain("Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.");
     expect(changelog).toContain("Document the bounded navigation step design before adding navigation replay.");
+    expect(changelog).toContain("Reject future navigation step shapes before bounded navigation replay is implemented.");
     expect(changelog).toContain("Constrain setup click replay to leading click events before field input begins.");
     expect(changelog).toContain("Replay bounded named setup clicks before field selector checks.");
   });

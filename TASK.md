@@ -432,6 +432,7 @@ npx formctl doctor
 - [x] Verify: A multi-step fixture passes dry-run and approved submit while selector drift still fails before mutation.
 - [x] Record where raw Playwright or browser agents remain a better fit in `REVIEW.md`.
 - [x] Write a bounded-navigation design note before adding navigation replay.
+- [x] Reject future navigation step shapes before runtime support exists.
 - [ ] Add workflow steps for known navigation and multi-page final form submission handoff.
 
 ---

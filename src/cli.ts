@@ -20,6 +20,7 @@ const WORKFLOW_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const INVALID_WORKFLOW_NAME_MESSAGE = "Invalid workflow name: use letters, numbers, dots, underscores, or dashes only.";
 const WORKFLOW_FIELD_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const RECORDING_CLICK_SELECTOR_PATTERN = /^[a-z][a-z0-9-]*\[name="[^"]+"\]$/;
+const WORKFLOW_STEP_KEYS = new Set(["name", "action", "selector", "when"]);
 const SUPPORTED_FIELD_TYPE_LIST = [
   "text",
   "email",
@@ -499,6 +500,7 @@ function hasValidWorkflowSteps(value: unknown): boolean {
   }
 
   return value.every((step) => isObject(step)
+    && Object.keys(step).every((key) => WORKFLOW_STEP_KEYS.has(key))
     && isNonEmptyString(step.name)
     && step.action === "click"
     && isNonEmptyString(step.selector)
@@ -617,8 +619,8 @@ function validateWorkflow(workflowName: string, workflow: unknown): ValidationCh
       buildValidationCheck(
         "workflow-steps",
         hasValidWorkflowSteps(workflowObject.steps),
-        "Workflow steps must be named before-fields or after-fields click steps with bounded selectors.",
-        "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields or after-fields.",
+        "Workflow steps currently support only named before-fields or after-fields click steps with bounded selectors and no navigation waits.",
+        "Remove waitFor, url, and navigation actions until bounded navigation step replay is implemented.",
       ),
     ]),
     ...(workflowObject.recording === undefined ? [] : [

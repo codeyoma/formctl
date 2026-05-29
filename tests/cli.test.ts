@@ -1354,11 +1354,83 @@ describe("formctl CLI", () => {
         {
           name: "workflow-steps",
           status: "error",
-          message: "Workflow steps must be named before-fields or after-fields click steps with bounded selectors.",
-          fix: "Use steps entries with name, action: click, selector: button[name=\"...\"] or input[name=\"...\"], and when: before-fields or after-fields.",
+          message: "Workflow steps currently support only named before-fields or after-fields click steps with bounded selectors and no navigation waits.",
+          fix: "Remove waitFor, url, and navigation actions until bounded navigation step replay is implemented.",
         },
       ],
     });
+  });
+
+  test("validate --json rejects navigation workflow steps before runtime support exists", () => {
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-step-navigation-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+
+    const writeWorkflow = (name: string, stepYaml: string[]) => {
+      writeFileSync(
+        path.join(workspace, ".formctl", "workflows", `${name}.yml`),
+        [
+          `name: ${name}`,
+          "url: http://localhost:3000/approval",
+          "steps:",
+          ...stepYaml,
+          ...workflowSafetyYaml,
+          "fields:",
+          "  - name: amount",
+          "    selector: input[name=\"amount\"]",
+          "    type: number",
+          "submit:",
+          "  selector: button[type=\"submit\"]",
+          "",
+        ].join("\n"),
+      );
+    };
+
+    writeWorkflow("full-url-navigation", [
+      "  - name: continue to details",
+      "    action: click",
+      "    selector: button[name=\"continue\"]",
+      "    when: after-fields",
+      "    waitFor:",
+      "      type: navigation",
+      "      sameOrigin: true",
+      "      url: https://admin.example.test/procurement/details?token=secret",
+    ]);
+    writeWorkflow("cross-origin-navigation", [
+      "  - name: continue to external approval",
+      "    action: click",
+      "    selector: button[name=\"continue\"]",
+      "    when: after-fields",
+      "    waitFor:",
+      "      type: navigation",
+      "      sameOrigin: false",
+      "      path: /procurement/details",
+    ]);
+    writeWorkflow("direct-navigation", [
+      "  - name: open details directly",
+      "    action: goto",
+      "    url: https://admin.example.test/procurement/details",
+      "    when: after-fields",
+    ]);
+
+    for (const workflowName of ["full-url-navigation", "cross-origin-navigation", "direct-navigation"]) {
+      const result = runFormctl(["validate", workflowName, "--json"], workspace);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toBe("");
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        status: "error",
+        workflow: workflowName,
+        exitCode: 1,
+        checks: expect.arrayContaining([
+          {
+            name: "workflow-steps",
+            status: "error",
+            message: "Workflow steps currently support only named before-fields or after-fields click steps with bounded selectors and no navigation waits.",
+            fix: "Remove waitFor, url, and navigation actions until bounded navigation step replay is implemented.",
+          },
+        ]),
+      });
+    }
   });
 
   test("validate --json accepts bounded before-fields and after-fields workflow steps", () => {

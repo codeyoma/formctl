@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reject future navigation step shapes before bounded navigation replay is implemented.
 - Document the bounded navigation step design before adding navigation replay.
 - Extend the checked-in procurement approval demo to prove after-fields confirmation replay in package/demo smoke tests.
 - Add structured after-fields confirmation click steps with selector preflight, audit events, and step screenshots.

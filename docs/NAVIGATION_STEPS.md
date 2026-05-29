@@ -22,6 +22,8 @@ steps:
 
 This is not accepted by `formctl validate` yet. The point of the shape is to keep navigation explicit, named, same-origin, and reviewable before runtime support exists.
 
+`formctl validate` rejects workflow steps that include `waitFor`, `url`, or navigation actions until runtime support exists.
+
 ## Required Contract
 
 - The trigger must be a named non-submit click, not a free-form browser action.

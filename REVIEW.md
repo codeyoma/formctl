@@ -2127,6 +2127,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Add a failing validation fixture for a future navigation-step shape before any implementation, especially rejecting full URLs, cross-origin waits, and direct navigation actions.
 
+### 2026-05-29: Reject Future Navigation Step Shapes
+
+**Date:** 2026-05-29
+
+**Experiment:** Add validation coverage for future navigation-step YAML before implementing navigation replay.
+
+**Hypothesis:** `formctl` should fail closed while navigation replay is still only a design note. Workflows that include `waitFor`, full destination URLs, cross-origin waits, or direct navigation actions should be rejected as `workflow_invalid` before browser work.
+
+**Result:** Passed. Workflow step validation now accepts only the current strict step keys: `name`, `action`, `selector`, and `when`. Any extra `waitFor` or `url` key is rejected, and non-click actions such as `goto` remain invalid. `docs/NAVIGATION_STEPS.md`, `TASK.md`, and `CHANGELOG.md` now describe the fail-closed boundary.
+
+**Why This Was Highest Value:** The previous session documented the navigation boundary but the runtime validation still accepted draft navigation metadata as harmless extra YAML. That gap could let users commit workflows that appear supported and may later carry sensitive URLs or unsafe navigation intent.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "navigation workflow steps"` because a step with `waitFor.url` validated successfully. Documentation RED was observed with `npx vitest run tests/release-readiness.test.ts -t "multi-step"` because the navigation design note did not state the current validation rejection. GREEN passed after strict step-key validation and docs updates. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The existing schema was intentionally permissive for earlier step evolution, but that permissiveness is risky now that a draft navigation shape exists in docs. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 45 package entries.
+
+**Suggested Next Task:** Before implementing navigation replay, split the future navigation contract into validation-level acceptance criteria: same-origin path-only wait target, no query or fragment, named non-submit trigger, and post-navigation interaction-required recheck.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0
