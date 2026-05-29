@@ -64,6 +64,7 @@ Branch on JSON fields such as `status`, `exitCode`, `requiresApproval`, and `art
 
 Treat exit code `5` as an approval gate, not a retryable failure.
 Treat `interaction_required`, `captcha_required`, and `mfa_required` as safe stops, not selector drift.
+When selector mismatch JSON includes `error.repair`, report the suggested selector and artifact paths, then wait for a workflow YAML update instead of retrying automatically.
 When `validate --json` returns `status: "error"`, report the failed check names plus their `message` and `fix` fields.
 For `readable-yaml` failures, report the YAML parse message and fix before retrying.
 Treat a `recording-metadata` validation failure as a possible sensitive-data leak.
@@ -114,6 +115,7 @@ MCP setup guide: docs/MCP.md
 - Dry-run artifacts include `summary.json`, `field-diff.json`, `dry-run.png`, and `audit.jsonl`.
 - Approved submit artifacts include `summary.json`, `field-diff.json`, `post-submit.png`, and `audit.jsonl`.
 - Selector mismatch failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
+- Selector repair suggestions are review hints only; they do not authorize approved submit.
 - Interaction-required failures are safe stops and include `failure.json`, `failure.png`, and `audit.jsonl`.
 - Agents should report artifact paths instead of embedding screenshots or file contents in chat.
 

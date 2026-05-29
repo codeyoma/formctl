@@ -399,11 +399,12 @@ npx formctl doctor
 
 **Goal:** Help users recover from page drift without silently healing selectors during submission.
 
-- [ ] Generate suggested selector replacements when selector mismatch artifacts provide enough evidence.
-- [ ] Require user review and workflow YAML update before replaying with a repaired selector.
-- [ ] Keep `submit` failing before filling or submitting when the current selector contract is broken.
-- [ ] Verify: A drift fixture produces a suggested repair but still exits `3` until the workflow is updated.
-- [ ] Record false positives in `REVIEW.md`.
+- [x] Generate suggested field selector replacements when selector mismatch artifacts provide enough evidence.
+- [x] Require user review and workflow YAML update before replaying with a repaired selector.
+- [x] Keep `submit` failing before filling or submitting when the current selector contract is broken.
+- [x] Verify: A drift fixture produces a suggested repair but still exits `3` until the workflow is updated.
+- [x] Record false positives in `REVIEW.md`.
+- [ ] Extend selector suggestions to submit and workflow-step selectors only after field suggestions prove useful.
 
 ### Task 6.6: Add Local Artifact Privacy Controls
 

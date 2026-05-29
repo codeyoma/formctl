@@ -2199,6 +2199,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Start Task 6.5 by writing a failing drift fixture that produces a reviewable selector repair suggestion while `submit` still exits `3` until the workflow YAML is updated.
 
+### 2026-05-29: Reviewable Field Selector Repair Suggestions
+
+**Date:** 2026-05-29
+
+**Experiment:** Add a conservative selector repair hint for missing field selectors without weakening selector drift safety.
+
+**Hypothesis:** `formctl` can help users recover from simple page drift if suggestions are review-only and based on strong local evidence. A missing field selector should still stop with exit code `3`, but when exactly one same-type field with the recorded label exists, the JSON failure can suggest the replacement selector for a human-reviewed YAML update.
+
+**Result:** Passed. Selector mismatch JSON and `failure.json` now include `error.repair` for the first supported case: missing field selector, recorded label present, exactly one candidate with matching label and type. The audit log emits `selector_repair_suggestion`. `submit` still exits `3`, writes failure artifacts, does not fill fields, and does not submit until the workflow YAML is manually updated and rerun.
+
+**Why This Was Highest Value:** After multi-step and navigation support, the next correctness bottleneck is page drift. This improves recovery without crossing into silent selector healing, which would weaken the trust contract.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "selector repair"` because selector mismatch JSON had no `error.repair`. GREEN passed after adding the conservative field suggestion path. Documentation RED was observed with `npx vitest run tests/release-readiness.test.ts -t "trust and comparison|multi-step"` because Task 6.5 and trust docs did not describe the new review-only behavior. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The repair path is intentionally narrow: it does not suggest anything without a recorded label, when multiple candidates match, or for submit/workflow-step selectors. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 48 package entries.
+
+**Suggested Next Task:** Extend selector suggestions to submit and workflow-step selectors only after adding failing ambiguity fixtures that prove suggestions are omitted when more than one candidate matches.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

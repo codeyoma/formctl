@@ -63,6 +63,12 @@ If a selector is missing or ambiguous, `formctl` stops with exit code `3` and wr
 
 `formctl` does not silently heal selectors. A broken selector is a review event, not an automatic repair.
 
+### Reviewable selector repair suggestions
+
+When a missing field selector has enough evidence, `formctl` may include `error.repair` in selector mismatch JSON and `failure.json`. The first supported signal is strict: one candidate field on the current page must have the same input type and the same recorded label.
+
+A selector repair suggestion is not applied automatically. `submit` still exits `3`, does not fill fields, and does not submit. Update the workflow YAML only after reviewing `failure.png`, `failure.json`, and `audit.jsonl`.
+
 ## Secret handling
 
 `formctl` does not store credentials in workflow files. Use existing browser sessions, environment variables, or an external secret manager.

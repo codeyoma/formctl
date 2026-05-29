@@ -189,6 +189,13 @@ type FailureArtifacts = {
 
 type SelectorFailureRole = "setup-click" | "workflow-step" | "field" | "submit";
 
+type SelectorRepairSuggestion = {
+  selector: string;
+  confidence: "high";
+  requiresReview: true;
+  reason: string;
+};
+
 type FieldDiff = {
   status: "field-diff";
   workflow: string;
@@ -212,6 +219,7 @@ type SelectorFailurePayload = {
     code: "selector_mismatch";
     selector: string;
     role?: SelectorFailureRole;
+    repair?: SelectorRepairSuggestion;
     message: string;
   } & (
     | { expectedMatches: 1; actualMatches: number }
@@ -890,6 +898,7 @@ function buildSelectorMismatchPayload(
   selector: string,
   actualMatches: number,
   role?: SelectorFailureRole,
+  repair?: SelectorRepairSuggestion,
 ): SelectorFailurePayload {
   const message = `Selector mismatch: ${selector} expected exactly 1 match, found ${actualMatches}`;
 
@@ -903,6 +912,7 @@ function buildSelectorMismatchPayload(
       code: "selector_mismatch",
       selector,
       ...(role === undefined ? {} : { role }),
+      ...(repair === undefined ? {} : { repair }),
       expectedMatches: 1,
       actualMatches,
       message,
@@ -1304,6 +1314,58 @@ async function readElementDescription(page: Page, selector: string): Promise<str
 
     return description.replace(/\s+/g, " ").trim();
   });
+}
+
+async function findFieldSelectorRepairSuggestion(
+  page: Page,
+  field: WorkflowField,
+): Promise<SelectorRepairSuggestion | undefined> {
+  if (field.label === undefined) {
+    return undefined;
+  }
+
+  const expectedType = normalizeFieldType(field.type);
+  const expectedLabel = normalizeLabel(field.label);
+  const candidates = await page.locator("input[name], textarea[name], select[name]").evaluateAll((elements) => elements.flatMap((element) => {
+    const tagName = element.tagName.toLowerCase();
+    const name = element.getAttribute("name") ?? "";
+    if (name.length === 0) {
+      return [];
+    }
+
+    const type = tagName === "input"
+      ? (element.getAttribute("type") ?? "text").toLowerCase()
+      : tagName;
+    const labelableElement = element as Element & { labels?: NodeListOf<HTMLLabelElement> | null };
+    const labels = Array.from(labelableElement.labels ?? []);
+    const label = labels
+      .map((labelElement) => labelElement.textContent?.replace(/\s+/g, " ").trim() ?? "")
+      .find((labelText) => labelText.length > 0)
+      ?? element.getAttribute("aria-label")
+      ?? "";
+
+    return [{
+      tagName,
+      name,
+      type,
+      label: label.replace(/\s+/g, " ").trim(),
+    }];
+  }));
+  const matches = candidates.filter((candidate) => candidate.type === expectedType
+    && candidate.label === expectedLabel
+    && WORKFLOW_FIELD_NAME_PATTERN.test(candidate.name));
+
+  if (matches.length !== 1) {
+    return undefined;
+  }
+
+  const match = matches[0];
+  return {
+    selector: `${match.tagName}[name="${match.name}"]`,
+    confidence: "high",
+    requiresReview: true,
+    reason: `Found exactly one ${expectedType} field with matching label "${expectedLabel}". Review failure.png before updating the workflow YAML.`,
+  };
 }
 
 async function detectInteractionRequired(page: Page): Promise<InteractionRequiredDetection | undefined> {
@@ -1908,10 +1970,27 @@ export async function run(
           result: matchCount === 1 ? "ok" : "mismatch",
         });
         if (matchCount !== 1) {
+          const repair = matchCount === 0
+            ? await findFieldSelectorRepairSuggestion(page, field)
+            : undefined;
+          if (repair !== undefined) {
+            auditEvents.push({
+              event: "selector_repair_suggestion",
+              role: "field",
+              field: field.name,
+              selector: field.selector,
+              suggestedSelector: repair.selector,
+              confidence: repair.confidence,
+              requiresReview: repair.requiresReview,
+              reason: repair.reason,
+            });
+          }
           const failurePayload = buildSelectorMismatchPayload(
             workflow.name,
             field.selector,
             matchCount,
+            undefined,
+            repair,
           );
           const failure = await writeSelectorMismatchFailureArtifacts(
             page,
