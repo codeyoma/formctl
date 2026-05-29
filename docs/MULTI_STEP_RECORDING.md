@@ -57,6 +57,7 @@ What this means:
 - Only leading `click` events before the first field or wait event are replayed as setup.
 - `submit` checks that each setup click selector resolves to exactly one non-submit control, clicks it, and writes `selector_check` plus `setup_click` audit events.
 - Setup click selector failures return selector-mismatch JSON with `role: "setup-click"` before any field filling or final submission.
+- Missing structured workflow-step selectors may include a review-only `error.repair` suggestion only when one named non-submit control matches the step name.
 - `wait` recording metadata documents a bounded navigation wait without storing the destination URL.
 - Field events can affect replay order because `submit` replays fields in the order the human first recorded them.
 - Raw recording `wait` events are not replayed by `submit`.
@@ -84,6 +85,7 @@ Validation rejects recording metadata that is not bounded and redacted:
 - setup click selectors must resolve to exactly one non-submit control before fields are checked
 - setup click selector drift is reported with `role: "setup-click"` in JSON failure output
 - structured step selector drift is reported with `role: "workflow-step"` in JSON failure output
+- structured workflow-step selector repair suggestions are omitted when controls are ambiguous or submit-typed
 - `after-fields` step selectors are checked before field filling, clicked after field replay, and screenshot artifacts are captured after the click
 - navigation steps must use `waitFor.type: navigation`, `sameOrigin: true`, and a path-only target with no query string or fragment
 - wait events must use `waitFor: navigation`

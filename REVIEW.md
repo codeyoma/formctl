@@ -2235,6 +2235,24 @@ Developers and AI agents need a safe CLI for web forms that have no useful API. 
 
 **Suggested Next Task:** Extend selector suggestions to workflow-step selectors only after writing failing fixtures for one safe candidate, multiple candidates, and submit-typed setup-click false positives.
 
+### 2026-05-29: Reviewable Workflow-Step Selector Repair Suggestions
+
+**Date:** 2026-05-29
+
+**Experiment:** Extend selector repair hints to explicit `workflow.steps` click selectors without applying them to raw recording setup clicks.
+
+**Hypothesis:** A reviewed workflow step has a human-readable `name`, so `formctl` can safely suggest a replacement only when exactly one named non-submit control matches that step name. It should still exit `3`, require YAML review, and omit suggestions for ambiguous or submit-typed controls.
+
+**Result:** Passed. Workflow-step selector mismatch JSON, `failure.json`, and `audit.jsonl` now include `error.repair` only for a missing explicit workflow-step selector with one matching non-submit candidate. Ambiguous pages and submit-typed controls produce no suggestion. The repaired YAML dry-run succeeds without submitting.
+
+**Why This Was Highest Value:** Task 6.5 had only one remaining unchecked runtime item. This closes the reviewable selector repair loop across fields, submit controls, and explicit workflow steps while preserving the product's no-silent-healing trust contract.
+
+**Evidence:** RED was observed with `npx vitest run tests/cli.test.ts -t "workflow-step selector repair"` because workflow-step mismatch JSON had no `error.repair`. GREEN passed after adding a workflow-step-only suggestion path. Focused regression verification passed with `npx vitest run tests/cli.test.ts -t "selector repair|workflow-step selector repair|machine-readable selector mismatch|setup-click selector drift"` and `npx vitest run tests/release-readiness.test.ts -t "README explains|trust and comparison|agent safety|multi-step"`. Broader verification passed with `git diff --check`, `npm run build`, `npx tsc --noEmit`, `npm test`, `npm run test:agent`, `npm run test:replay`, `npm run test:package`, and `npm pack --dry-run --json`.
+
+**Failures / Surprises:** The helper intentionally ignores raw recording setup-click drift because those clicks do not have a reviewed structured step name. Candidate matching is also strict: explicit `button[type="button"][name]` or `input[type="button"][name]`, safe `name`, and a label/text match to the step name. `npm run publish:check -- --json` remains blocked by npm `E401` / `npm_auth_unknown` and `npm_publish_protection_unknown`, while pack dry-run remains ok with 48 package entries.
+
+**Suggested Next Task:** Start Task 6.6 by adding local artifact privacy controls, beginning with a failing test that configures a shorter artifact retention or redaction policy without deleting current safe audit evidence.
+
 ## Launch Attempts
 
 ### 2026-05-26: GitHub Release v0.1.0

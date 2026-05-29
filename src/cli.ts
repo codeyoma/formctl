@@ -1147,11 +1147,28 @@ async function validateClickReplayStep(
     result: matchCount === 1 ? "ok" : "mismatch",
   });
   if (matchCount !== 1) {
+    const repair = matchCount === 0
+      ? await findWorkflowStepSelectorRepairSuggestion(page, clickEvent)
+      : undefined;
+    if (repair !== undefined) {
+      auditEvents.push({
+        event: "selector_repair_suggestion",
+        role: auditRole,
+        selector: clickEvent.selector,
+        ...(clickEvent.name === undefined ? {} : { stepName: clickEvent.name }),
+        suggestedSelector: repair.selector,
+        confidence: repair.confidence,
+        requiresReview: repair.requiresReview,
+        reason: repair.reason,
+      });
+    }
+
     return buildSelectorMismatchPayload(
       workflow.name,
       clickEvent.selector,
       matchCount,
       auditRole,
+      repair,
     );
   }
 
@@ -1406,6 +1423,49 @@ async function findSubmitSelectorRepairSuggestion(page: Page): Promise<SelectorR
     confidence: "high",
     requiresReview: true,
     reason: "Found exactly one named submit control. Review failure.png before updating the workflow YAML.",
+  };
+}
+
+async function findWorkflowStepSelectorRepairSuggestion(
+  page: Page,
+  clickEvent: SetupClickReplayStep,
+): Promise<SelectorRepairSuggestion | undefined> {
+  if (clickEvent.source !== "workflow-step" || clickEvent.name === undefined) {
+    return undefined;
+  }
+
+  const expectedName = normalizeLabel(clickEvent.name);
+  const expectedNameKey = expectedName.toLowerCase();
+  const candidates = await page.locator('button[type="button"][name], input[type="button"][name]').evaluateAll((elements) => elements.flatMap((element) => {
+    const tagName = element.tagName.toLowerCase();
+    const name = element.getAttribute("name") ?? "";
+    if (name.length === 0) {
+      return [];
+    }
+
+    const label = element.getAttribute("aria-label")
+      ?? (tagName === "input" ? element.getAttribute("value") : element.textContent)
+      ?? "";
+
+    return [{
+      tagName,
+      name,
+      label: label.replace(/\s+/g, " ").trim(),
+    }];
+  }));
+  const matches = candidates.filter((candidate) => WORKFLOW_FIELD_NAME_PATTERN.test(candidate.name)
+    && candidate.label.toLowerCase() === expectedNameKey);
+
+  if (matches.length !== 1) {
+    return undefined;
+  }
+
+  const candidate = matches[0];
+  return {
+    selector: `${candidate.tagName}[name="${candidate.name}"]`,
+    confidence: "high",
+    requiresReview: true,
+    reason: `Found exactly one non-submit control matching workflow step "${expectedName}". Review failure.png before updating the workflow YAML.`,
   };
 }
 

@@ -405,7 +405,7 @@ npx formctl doctor
 - [x] Verify: A drift fixture produces a suggested repair but still exits `3` until the workflow is updated.
 - [x] Record false positives in `REVIEW.md`.
 - [x] Extend selector suggestions to submit selectors after adding ambiguity coverage.
-- [ ] Extend selector suggestions to workflow-step selectors only after submit suggestions prove useful.
+- [x] Extend selector suggestions to workflow-step selectors after adding ambiguity and submit-typed coverage.
 
 ### Task 6.6: Add Local Artifact Privacy Controls
 

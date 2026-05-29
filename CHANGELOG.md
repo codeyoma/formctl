@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add reviewable workflow-step selector repair suggestions with ambiguity-safe omission.
 - Add reviewable submit selector repair suggestions with ambiguity-safe omission.
 - Add reviewable field selector repair suggestions while keeping selector mismatch runs failed until workflow YAML is updated.
 - Add a checked-in procurement handoff demo that proves navigation step replay in package and demo smoke tests.

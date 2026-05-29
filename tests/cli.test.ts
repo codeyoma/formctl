@@ -3705,6 +3705,199 @@ describe("formctl CLI", () => {
     }
   });
 
+  test("submit suggests a workflow-step selector repair but still exits 3 until YAML is updated", async () => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Approval">
+            <input name="amount" type="number" />
+            <button type="button" name="review-details">Review entered details</button>
+            <div id="submit-root"></div>
+          </form>
+          <script>
+            document.querySelector('button[name="review-details"]').addEventListener("click", () => {
+              document.querySelector("#submit-root").innerHTML = '<button type="submit" name="final-submit">Submit reviewed request</button>';
+            });
+          </script>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-workflow-step-selector-repair-"));
+    const workflowPath = path.join(workspace, ".formctl", "workflows", "approval-modal.yml");
+    mkdirSync(path.dirname(workflowPath), { recursive: true });
+    const brokenWorkflow = [
+      "name: approval-modal",
+      `url: ${fixture.url}`,
+      "steps:",
+      "  - name: review entered details",
+      "    action: click",
+      "    selector: button[name=\"review-old\"]",
+      "    when: after-fields",
+      ...workflowSafetyYaml,
+      "fields:",
+      "  - name: amount",
+      "    selector: input[name=\"amount\"]",
+      "    type: number",
+      "submit:",
+      "  selector: button[name=\"final-submit\"]",
+      "",
+    ].join("\n");
+    writeFileSync(workflowPath, brokenWorkflow);
+
+    try {
+      const broken = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const brokenJson = JSON.parse(broken.stdout);
+
+      expect(broken.status).toBe(3);
+      expect(broken.stderr).toBe("");
+      expect(brokenJson).toMatchObject({
+        status: "error",
+        workflow: "approval-modal",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          role: "workflow-step",
+          selector: 'button[name="review-old"]',
+          expectedMatches: 1,
+          actualMatches: 0,
+          repair: {
+            selector: 'button[name="review-details"]',
+            confidence: "high",
+            requiresReview: true,
+          },
+        },
+      });
+      expect(brokenJson.error.repair.reason).toContain('workflow step "review entered details"');
+      const failureJson = JSON.parse(readFileSync(path.join(workspace, brokenJson.artifacts.failure), "utf8"));
+      expect(failureJson.error.repair).toEqual(brokenJson.error.repair);
+      const auditLog = readFileSync(path.join(workspace, brokenJson.artifacts.audit), "utf8");
+      expect(auditLog).toContain('"event":"selector_repair_suggestion"');
+      expect(auditLog).toContain('"role":"workflow-step"');
+      expect(auditLog).toContain('"stepName":"review entered details"');
+      expect(auditLog).toContain('"suggestedSelector":"button[name=\\"review-details\\"]"');
+      expect(fixture.postCount()).toBe(0);
+
+      writeFileSync(workflowPath, brokenWorkflow.replace('button[name="review-old"]', brokenJson.error.repair.selector));
+      const repaired = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+
+      expect(repaired.status).toBe(0);
+      expect(JSON.parse(repaired.stdout)).toMatchObject({
+        status: "dry-run",
+        submitted: false,
+        fields: {
+          amount: "4500",
+        },
+      });
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  }, 35_000);
+
+  test.each([
+    {
+      name: "ambiguous named controls",
+      controls: [
+        '<button type="button" name="review-details">Review entered details</button>',
+        '<button type="button" name="confirm-details">Review entered details</button>',
+      ].join(""),
+    },
+    {
+      name: "submit-typed control",
+      controls: '<button type="submit" name="review-details">Review entered details</button>',
+    },
+  ])("submit omits workflow-step selector repair suggestions for $name", async ({ controls }) => {
+    const fixture = await serveFixture(`
+      <!doctype html>
+      <html>
+        <body>
+          <form method="post" action="/submit" aria-label="Approval">
+            <input name="amount" type="number" />
+            ${controls}
+            <button type="submit" name="final-submit">Submit reviewed request</button>
+          </form>
+        </body>
+      </html>
+    `);
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "formctl-workflow-step-repair-omitted-"));
+    mkdirSync(path.join(workspace, ".formctl", "workflows"), { recursive: true });
+    writeFileSync(
+      path.join(workspace, ".formctl", "workflows", "approval-modal.yml"),
+      [
+        "name: approval-modal",
+        `url: ${fixture.url}`,
+        "steps:",
+        "  - name: review entered details",
+        "    action: click",
+        "    selector: button[name=\"review-old\"]",
+        "    when: after-fields",
+        ...workflowSafetyYaml,
+        "fields:",
+        "  - name: amount",
+        "    selector: input[name=\"amount\"]",
+        "    type: number",
+        "submit:",
+        "  selector: button[name=\"final-submit\"]",
+        "",
+      ].join("\n"),
+    );
+
+    try {
+      const result = await runFormctlAsync([
+        "submit",
+        "approval-modal",
+        "--amount",
+        "4500",
+        "--dry-run",
+        "--json",
+        "--headless",
+      ], workspace);
+      const parsed = JSON.parse(result.stdout);
+
+      expect(result.status).toBe(3);
+      expect(result.stderr).toBe("");
+      expect(parsed).toMatchObject({
+        status: "error",
+        workflow: "approval-modal",
+        exitCode: 3,
+        submitted: false,
+        requiresApproval: false,
+        error: {
+          code: "selector_mismatch",
+          role: "workflow-step",
+          selector: 'button[name="review-old"]',
+          expectedMatches: 1,
+          actualMatches: 0,
+        },
+      });
+      expect(parsed.error.repair).toBeUndefined();
+      const auditLog = readFileSync(path.join(workspace, parsed.artifacts.audit), "utf8");
+      expect(auditLog).not.toContain('"event":"selector_repair_suggestion"');
+      expect(fixture.postCount()).toBe(0);
+    } finally {
+      await fixture.close();
+    }
+  }, 35_000);
+
   test.each([
     {
       name: "missing",
